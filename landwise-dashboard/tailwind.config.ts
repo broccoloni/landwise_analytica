@@ -16,7 +16,6 @@ const config: Config = {
           light: 'var(--accent-light)',
           medium: 'var(--accent-medium)',
           dark: 'var(--accent-dark)',
-
         },
       },
     },
