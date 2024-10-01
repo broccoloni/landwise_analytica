@@ -1,95 +1,175 @@
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic'; // For client-side libraries
-import { fromUrl } from 'geotiff';
-import 'leaflet/dist/leaflet.css'; // Make sure Leaflet's styles are included
+import { useEffect, useState, useRef } from "react";
+import { MapContainer, TileLayer, ImageOverlay } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import dynamic from "next/dynamic";
+import { Slider } from "@mui/material";
+import { fromArrayBuffer } from "geotiff";
+import chroma from 'chroma-js';
+import { valuesToNames } from '@/types/valuesToNames';
 
-// Dynamically load Leaflet components
-const LeafletMap = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const DynamicMapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+
+const colors = chroma.scale('Set3').colors(Object.keys(valuesToNames).length);
+
+const fetchRasterData = async (url) => {
+  const response = await fetch(url);
+
+  console.log("RESPONSE:", response);
+    
+  const arrayBuffer = await response.arrayBuffer();
+
+  console.log("arrayBuffer:", arrayBuffer);
+    
+  const tiff = await fromArrayBuffer(arrayBuffer);
+
+  console.log("tiff:", tiff);
+    
+  const image = await tiff.getImage();
+  const rasterData = await image.readRasters();
+
+  return rasterData[0]; // For simplicity, we assume single-band data
+};
 
 const LandHistory = ({ latitude, longitude }) => {
-  const [year, setYear] = useState(2014); // Initial year
-  const [landData, setLandData] = useState(null); // For raster data
+  const lat = parseFloat(latitude);
+  const lng = parseFloat(longitude);
+  const zoom = 14;
 
-  // Function to get the GeoTIFF file URL based on the selected year
-  const rasterFiles = (year) => {
-    return `/demo/land_history/prior_inventory/${year}.tif`;
-  };
+  const rasterDataCache = useRef();
+  const [year, setYear] = useState(2014);
+  const [rasterData, setRasterData] = useState(null);
+  const [selectedColors, setSelectedColors] = useState({});
 
+  // Fetch raster data for all years on mount
   useEffect(() => {
-    const loadGeoTIFF = async () => {
-      const rasterFile = rasterFiles(year);
-      try {
-        const geotiff = await fromUrl(rasterFile);
-        const image = await geotiff.getImage();
-        const data = await image.readRasters();
-        setLandData(data);
-        // Handle land data processing similar to your Streamlit code here...
-        // You can include your color mapping logic, transparency, etc.
-      } catch (error) {
-        console.error('Error loading GeoTIFF:', error);
+    const fetchAllRasterData = async () => {
+      const years = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021];
+      const rasterDataForYears = {};
+
+      for (const yr of years) {
+        const rasterFile = `/demo/land_history/prior_inventory/${yr}.tif`;
+        const data = await fetchRasterData(rasterFile);
+        rasterDataForYears[yr] = data;
       }
+
+      // Store all fetched data in cache
+      rasterDataCache.current = rasterDataForYears;
+
+      // Set initial year data
+      setRasterData(rasterDataForYears[year]);
+      updateLegend(rasterDataForYears[year]);
     };
 
-    loadGeoTIFF();
-  }, [year]); // Reload data when year changes
+    fetchAllRasterData();
+  }, []);
 
-  // Function to generate color mappings
-  const generateColorMappings = () => {
-    // Example mapping; you can modify this to fit your needs
-    const baseColors = ['#000000', '#3333ff', '#ff0000', '#00ff00', '#ffff00', '#00ffff', '#ff00ff'];
-    const names = ['Cloud', 'Water', 'Forest', 'Agriculture', 'Urban', 'Wetlands', 'Desert'];
+  // Update map and legend when the year is changed
+  useEffect(() => {
+    if (rasterDataCache.current && rasterDataCache.current[year]) {
+      setRasterData(rasterDataCache.current[year]);
+      updateLegend(rasterDataCache.current[year]);
+    }
+  }, [year]);
 
-    const valueToColor = {};
-    const nameToColor = {};
-
-    names.forEach((name, index) => {
-      valueToColor[index * 10] = baseColors[index % baseColors.length]; // Assign colors based on index
-      nameToColor[name] = baseColors[index % baseColors.length]; // Assign the same color to name
+  const updateLegend = (data) => {
+    const uniqueElements = new Set(data);
+    const newSelectedColors = {};
+    
+    uniqueElements.forEach((value) => {
+      const name = valuesToNames[value];
+      if (name) {
+        const index = Object.keys(valuesToNames).findIndex((key) => parseInt(key) === value);
+        newSelectedColors[name] = colors[index];
+      }
     });
-
-    return { valueToColor, nameToColor };
+    
+    setSelectedColors(newSelectedColors);
   };
 
-  const { valueToColor, nameToColor } = generateColorMappings(); // Generate mappings
-
-  const renderLegend = () => (
-    <div style={{ padding: '10px' }}>
-      <h4>Legend</h4>
-      {Object.entries(nameToColor).map(([name, color]) => (
-        <div key={name} style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ width: '20px', height: '20px', backgroundColor: color }} />
-          <span style={{ marginLeft: '10px' }}>{name}</span>
-        </div>
-      ))}
-    </div>
-  );
+  const handleYearChange = (event, newValue) => {
+    setYear(newValue);
+  };
 
   return (
-    <div style={{ display: 'flex' }}>
-      <div style={{ flex: 3, paddingRight: '10px' }}>
+    <div className="land-history-container">
+      <div className="controls">
         <h1>Land History</h1>
-        <label htmlFor="year-slider">Select Year for Land History</label>
-        <input
-          type="range"
-          id="year-slider"
-          min="2014"
-          max="2021"
-          step="1"
+        <Slider
           value={year}
-          onChange={(e) => setYear(Number(e.target.value))}
+          onChange={handleYearChange}
+          min={2014}
+          max={2021}
+          step={1}
+          valueLabelDisplay="auto"
+          marks
         />
-        <LeafletMap center={[latitude, longitude]} zoom={13}>
+      </div>
+
+      <div className="map-and-legend">
+        {/* Leaflet Map */}
+        <DynamicMapContainer
+          center={[lat, lng]}
+          zoom={zoom}
+          style={{ height: "400px", width: "100%" }}
+        >
           <TileLayer
-            url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-            attribution='© OpenStreetMap contributors'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {/* Add any additional layers to the map here, like your color-mapped raster data */}
-        </LeafletMap>
+          {rasterData && (
+            <ImageOverlay
+              url={rasterData} // Replace with the URL or base64 of the overlay image
+              bounds={[[lat - 0.01, lng - 0.01], [lat + 0.01, lng + 0.01]]} // Example bounds
+              opacity={0.7}
+            />
+          )}
+        </DynamicMapContainer>
+
+        {/* Legend */}
+        <div className="legend">
+          <h3>Legend</h3>
+          {Object.keys(selectedColors).map((key) => (
+            <div key={key} className="legend-item">
+              <span
+                className="legend-color"
+                style={{ backgroundColor: selectedColors[key] }}
+              ></span>
+              <span className="legend-label">{key}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      <div style={{ flex: 1 }}>
-        {renderLegend()}
-      </div>
+
+      <style jsx>{`
+        .land-history-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .controls {
+          margin-bottom: 20px;
+        }
+        .map-and-legend {
+          display: flex;
+          width: 100%;
+        }
+        .legend {
+          margin-left: 20px;
+        }
+        .legend-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 5px;
+        }
+        .legend-color {
+          width: 20px;
+          height: 20px;
+          margin-right: 10px;
+        }
+      `}</style>
     </div>
   );
 };

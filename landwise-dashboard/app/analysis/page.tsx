@@ -31,12 +31,8 @@ export default function Analysis() {
   const isDemoAddress = address === DEMO_ADDRESS.address;
 
   return (
-    <div className={`${roboto.className} flex bg-accent-light`}>
-      {/* Left Navigation Menu */}
-      <Nav />
-
-      {/* Main Content Area */}
-      <div className="w-[90%] relative m-4">
+    <div className={`${roboto.className} bg-accent-light text-black`}>
+      <div className="relative m-4">
         <Container className="mb-4">
           <section id="property">
             <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
