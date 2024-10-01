@@ -1,10 +1,4 @@
 {
-  "components/LandHistory.tsx -> react-leaflet": {
-    "id": "components/LandHistory.tsx -> react-leaflet",
-    "files": [
-      "static/chunks/_app-pages-browser_node_modules_react-leaflet_lib_index_js.js"
-    ]
-  },
   "node_modules/geotiff/dist-module/compression/index.js -> ./deflate.js": {
     "id": "node_modules/geotiff/dist-module/compression/index.js -> ./deflate.js",
     "files": [

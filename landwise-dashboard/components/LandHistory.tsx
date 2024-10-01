@@ -1,47 +1,70 @@
+'use client';
+
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, ImageOverlay } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import dynamic from "next/dynamic";
 import { Slider } from "@mui/material";
 import { fromArrayBuffer } from "geotiff";
 import chroma from 'chroma-js';
 import { valuesToNames } from '@/types/valuesToNames';
 
-const DynamicMapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-
-const colors = chroma.scale('Set3').colors(Object.keys(valuesToNames).length);
-
-const fetchRasterData = async (url) => {
-  const response = await fetch(url);
-
-  console.log("RESPONSE:", response);
-    
-  const arrayBuffer = await response.arrayBuffer();
-
-  console.log("arrayBuffer:", arrayBuffer);
-    
-  const tiff = await fromArrayBuffer(arrayBuffer);
-
-  console.log("tiff:", tiff);
-    
-  const image = await tiff.getImage();
-  const rasterData = await image.readRasters();
-
-  return rasterData[0]; // For simplicity, we assume single-band data
-};
-
 const LandHistory = ({ latitude, longitude }) => {
   const lat = parseFloat(latitude);
   const lng = parseFloat(longitude);
-  const zoom = 14;
+  const zoom = 15;
 
   const rasterDataCache = useRef();
   const [year, setYear] = useState(2014);
   const [rasterData, setRasterData] = useState(null);
+  const [imageBounds, setImageBounds] = useState(null);
   const [selectedColors, setSelectedColors] = useState({});
+
+  const colors = chroma.scale('Set3').colors(Object.keys(valuesToNames).length);
+    
+  const fetchRasterData = async (url) => {
+    const response = await fetch(url);    
+    const arrayBuffer = await response.arrayBuffer();    
+    const tiff = await fromArrayBuffer(arrayBuffer);    
+    const image = await tiff.getImage();    
+    const rasterData = await image.readRasters();
+    const width = image.getWidth();
+    const height = image.getHeight();
+    const bbox = image.getBoundingBox()
+
+    return {rasterData, width, height, bbox};
+  };
+    
+  const rasterToImageURL = (rasterData, width, height) => {
+    // Create a hidden canvas element
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    const imageData = ctx.createImageData(width, height);
+      
+    for (let i = 0; i < rasterData[0].length; i++) {
+      const value = rasterData[0][i];
+      const index = Object.keys(valuesToNames).findIndex((key) => parseInt(key) === value);
+      const color = index !== -1 ? chroma(colors[index]) : chroma('black');  // Handle missing colors
+      const [r, g, b] = color.rgb(); 
+
+      let a = 255;
+      if (value == 0 || value == 10){
+        a = 0;
+      }
+        
+      imageData.data[i * 4] = r;
+      imageData.data[i * 4 + 1] = g;
+      imageData.data[i * 4 + 2] = b;
+      imageData.data[i * 4 + 3] = a;
+    }
+      
+    ctx.putImageData(imageData, 0, 0);
+
+    return canvas.toDataURL();
+  };
+    
 
   // Fetch raster data for all years on mount
   useEffect(() => {
@@ -59,8 +82,13 @@ const LandHistory = ({ latitude, longitude }) => {
       rasterDataCache.current = rasterDataForYears;
 
       // Set initial year data
-      setRasterData(rasterDataForYears[year]);
-      updateLegend(rasterDataForYears[year]);
+      const rd = rasterDataForYears[year].rasterData;
+      const w = rasterDataForYears[year].width;
+      const h = rasterDataForYears[year].height;
+      const b = rasterDataForYears[year].bbox;
+      setRasterData(rasterToImageURL(rd, w, h));
+      setImageBounds(b);
+      updateLegend(rd);
     };
 
     fetchAllRasterData();
@@ -69,15 +97,20 @@ const LandHistory = ({ latitude, longitude }) => {
   // Update map and legend when the year is changed
   useEffect(() => {
     if (rasterDataCache.current && rasterDataCache.current[year]) {
-      setRasterData(rasterDataCache.current[year]);
-      updateLegend(rasterDataCache.current[year]);
+      const { rasterData, width, height, bbox } = rasterDataCache.current[year];
+      const imageUrl = rasterToImageURL(rasterData, width, height);
+        
+      setRasterData(imageUrl);
+      setImageBounds(bbox);
+      updateLegend(rasterData);
     }
   }, [year]);
-
-  const updateLegend = (data) => {
-    const uniqueElements = new Set(data);
+  
+  const updateLegend = (data) => {  
+    const flatData = data;
+    const uniqueElements = new Set(flatData);
     const newSelectedColors = {};
-    
+  
     uniqueElements.forEach((value) => {
       const name = valuesToNames[value];
       if (name) {
@@ -85,7 +118,7 @@ const LandHistory = ({ latitude, longitude }) => {
         newSelectedColors[name] = colors[index];
       }
     });
-    
+  
     setSelectedColors(newSelectedColors);
   };
 
@@ -95,22 +128,25 @@ const LandHistory = ({ latitude, longitude }) => {
 
   return (
     <div className="land-history-container">
-      <div className="controls">
-        <h1>Land History</h1>
-        <Slider
-          value={year}
-          onChange={handleYearChange}
-          min={2014}
-          max={2021}
-          step={1}
-          valueLabelDisplay="auto"
-          marks
-        />
+      <div className = "flex items-center">
+        <div className = "mr-4">Select The Year</div>
+        <div className="controls w-16">
+          <Slider
+            value={year}
+            onChange={handleYearChange}
+            min={2014}
+            max={2021}
+            step={1}
+            valueLabelDisplay="auto"
+            marks
+          />
+        </div>    
       </div>
+
 
       <div className="map-and-legend">
         {/* Leaflet Map */}
-        <DynamicMapContainer
+        <MapContainer
           center={[lat, lng]}
           zoom={zoom}
           style={{ height: "400px", width: "100%" }}
@@ -121,12 +157,12 @@ const LandHistory = ({ latitude, longitude }) => {
           />
           {rasterData && (
             <ImageOverlay
-              url={rasterData} // Replace with the URL or base64 of the overlay image
-              bounds={[[lat - 0.01, lng - 0.01], [lat + 0.01, lng + 0.01]]} // Example bounds
+              url={rasterData} 
+              bounds={[[imageBounds[1], imageBounds[0]], [imageBounds[3], imageBounds[2]]]}
               opacity={0.7}
             />
           )}
-        </DynamicMapContainer>
+        </MapContainer>
 
         {/* Legend */}
         <div className="legend">
@@ -169,7 +205,8 @@ const LandHistory = ({ latitude, longitude }) => {
           height: 20px;
           margin-right: 10px;
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 };

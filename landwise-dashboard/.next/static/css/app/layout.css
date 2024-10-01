@@ -547,6 +547,9 @@ video {
 .mt-\[74px\] {
   margin-top: 74px;
 }
+.mr-4 {
+  margin-right: 1rem;
+}
 .block {
   display: block;
 }
@@ -579,6 +582,9 @@ video {
 }
 .w-64 {
   width: 16rem;
+}
+.w-16 {
+  width: 4rem;
 }
 .max-w-lg {
   max-width: 32rem;
