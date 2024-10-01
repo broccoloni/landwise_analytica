@@ -7,6 +7,7 @@ import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import { useRouter } from 'next/navigation';
 import AddressSearch from '@/components/AddressSearch';
 import LandHistory from '@/components/LandHistory';
+import Trends from '@/components/Trends';
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
@@ -56,7 +57,7 @@ export default function Analysis() {
         <Container className="mb-4">
           <section id="land-history">
             <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-                Land History
+                Historical Land Use
             </div>
 
             <LandHistory latitude = {lat} longitude = {lng} />
@@ -68,6 +69,8 @@ export default function Analysis() {
             <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
                 Trends
             </div>
+
+            <Trends />
           </section>
         </Container>
 

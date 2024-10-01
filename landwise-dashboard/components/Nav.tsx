@@ -13,7 +13,7 @@ const navigationMenuItems = [
     icon: House,
   },
   {
-    label: 'Land History',
+    label: 'Historical Land Use',
     href: '#land-history',
     icon: BookMarked,
   },

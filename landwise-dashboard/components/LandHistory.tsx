@@ -1,5 +1,6 @@
 'use client';
 
+import { merriweather, roboto } from '@/ui/fonts';
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, ImageOverlay } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,7 +20,7 @@ const LandHistory = ({ latitude, longitude }) => {
   const [imageBounds, setImageBounds] = useState(null);
   const [selectedColors, setSelectedColors] = useState({});
 
-  const colors = chroma.scale('Set3').colors(Object.keys(valuesToNames).length);
+  const colors = chroma.scale('Set1').colors(Object.keys(valuesToNames).length);
     
   const fetchRasterData = async (url) => {
     const response = await fetch(url);    
@@ -34,35 +35,53 @@ const LandHistory = ({ latitude, longitude }) => {
     return {rasterData, width, height, bbox};
   };
     
-  const rasterToImageURL = (rasterData, width, height) => {
+  const rasterToImageURL = (rasterData, width, height, scaleFactor = 5) => {
     // Create a hidden canvas element
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
 
+    // Disable image smoothing to preserve sharpness
+    ctx.imageSmoothingEnabled = false;
+
     const imageData = ctx.createImageData(width, height);
-      
+
+    // Fill the imageData with the original raster data
     for (let i = 0; i < rasterData[0].length; i++) {
       const value = rasterData[0][i];
       const index = Object.keys(valuesToNames).findIndex((key) => parseInt(key) === value);
-      const color = index !== -1 ? chroma(colors[index]) : chroma('black');  // Handle missing colors
-      const [r, g, b] = color.rgb(); 
+      const color = index !== -1 ? chroma(colors[index]) : chroma('black');
+      const [r, g, b] = color.rgb();
 
       let a = 255;
-      if (value == 0 || value == 10){
+      if (value == 0 || value == 10) {
         a = 0;
       }
-        
+
       imageData.data[i * 4] = r;
       imageData.data[i * 4 + 1] = g;
       imageData.data[i * 4 + 2] = b;
       imageData.data[i * 4 + 3] = a;
     }
-      
+
+    // Put the imageData on the canvas at original resolution
     ctx.putImageData(imageData, 0, 0);
 
-    return canvas.toDataURL();
+    // Create a new canvas to hold the upscaled version
+    const scaledCanvas = document.createElement("canvas");
+    scaledCanvas.width = width * scaleFactor;
+    scaledCanvas.height = height * scaleFactor;
+    const scaledCtx = scaledCanvas.getContext("2d");
+
+    // Disable image smoothing on the scaled canvas
+    scaledCtx.imageSmoothingEnabled = false;
+
+    // Draw the original canvas onto the scaled canvas, applying the scale
+    scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+
+    // Return the scaled image as a data URL
+    return scaledCanvas.toDataURL();
   };
     
 
@@ -99,6 +118,8 @@ const LandHistory = ({ latitude, longitude }) => {
     if (rasterDataCache.current && rasterDataCache.current[year]) {
       const { rasterData, width, height, bbox } = rasterDataCache.current[year];
       const imageUrl = rasterToImageURL(rasterData, width, height);
+
+      console.log(imageUrl);
         
       setRasterData(imageUrl);
       setImageBounds(bbox);
@@ -106,19 +127,19 @@ const LandHistory = ({ latitude, longitude }) => {
     }
   }, [year]);
   
-  const updateLegend = (data) => {  
-    const flatData = data;
+  const updateLegend = (data) => {        
+    const flatData = data[0];
     const uniqueElements = new Set(flatData);
     const newSelectedColors = {};
   
     uniqueElements.forEach((value) => {
       const name = valuesToNames[value];
-      if (name) {
+      if (name && name != 'Cloud') {
         const index = Object.keys(valuesToNames).findIndex((key) => parseInt(key) === value);
         newSelectedColors[name] = colors[index];
       }
     });
-  
+      
     setSelectedColors(newSelectedColors);
   };
 
@@ -127,10 +148,10 @@ const LandHistory = ({ latitude, longitude }) => {
   };
 
   return (
-    <div className="land-history-container">
-      <div className = "flex items-center">
+    <div className={`${roboto.className} land-history-container`}>
+      <div className = "flex justify-center items-left">
         <div className = "mr-4">Select The Year</div>
-        <div className="controls w-16">
+        <div className="controls w-32">
           <Slider
             value={year}
             onChange={handleYearChange}
@@ -166,7 +187,7 @@ const LandHistory = ({ latitude, longitude }) => {
 
         {/* Legend */}
         <div className="legend">
-          <h3>Legend</h3>
+          <div className={`${merriweather.className} text-center mb-2 font-medium`}>Legend</div>
           {Object.keys(selectedColors).map((key) => (
             <div key={key} className="legend-item">
               <span
