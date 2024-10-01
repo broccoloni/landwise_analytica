@@ -1,10 +1,11 @@
 'use client';
 
-import { montserrat, roboto } from '@/ui/fonts';
+import { montserrat, roboto, merriweather, nunito, raleway } from '@/ui/fonts';
 import Link from 'next/link';
 import { House, BookMarked, ChartNoAxesCombined, Wheat, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
+import PlantInHandIcon from '@/components/PlantInHandIcon';
 
 const navigationMenuItems = [
   {
@@ -19,7 +20,7 @@ const navigationMenuItems = [
   },
   {
     label: 'Trends',
-    href: 'trends',
+    href: '#trends',
     icon: ChartNoAxesCombined,
   },
   {
@@ -38,14 +39,18 @@ const Nav = React.memo(() => {
   }, []);
 
   return (
-    <div className="fixed z-50 flex-col bg-accent h-screen w-64 border-b-0 p-1 shadow-xl transition sm:flex sm:w-72 sm:p-3">
+    <div className="fixed z-50 flex-col bg-accent h-screen w-52 border-b-0 p-1 shadow-xl transition sm:flex sm:w-64 sm:p-3">
       <div className="flex items-center justify-between p-3 mb-4">
         <Link href="/">
-          <div className="flex items-center gap-3 text-xl font-medium">
-            <div className={`${montserrat.className} text-2xl text-white`}>
-              Landwise Analytica
+          {/* Company Name and Logo */}
+          <div className="flex-row justify-center items-center text-center w-full pt-4">
+            <div className = "flex justify-center w-full">
+              <PlantInHandIcon className="" height={36} width = {36}/>
             </div>
-          </div>
+            <p className = {`${raleway.className} font-medium text-white text-lg mt-2`}>
+              LANDWISE ANALYTICA
+            </p>
+          </div>  
         </Link>
         <button 
           className="sm:hidden"

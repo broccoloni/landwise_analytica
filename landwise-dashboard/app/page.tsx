@@ -1,8 +1,9 @@
 'use client';
 
-import { montserrat } from '@/ui/fonts';
+import { montserrat, roboto, merriweather, nunito, raleway } from '@/ui/fonts';
 import Image from "next/image";
 import Wheat from '@/public/wheat.jpg';
+import PlantInHandIcon from '@/components/PlantInHandIcon';
 import AddressSearch from '@/components/AddressSearch';
 import { ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -35,14 +36,20 @@ export default function Home() {
       {/* Gradient Overlay */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/40 to-black/20 z-[-1]" />
 
-      {/* Centered Text */}
-      <div className="flex items-center justify-center h-full">
-        <div className="flex-row justify-center items-center">
-          <div className={`${montserrat.className} font-medium text-white text-8xl z-10 pb-10`}>
-            Landwise Analytica
-          </div>
 
-          <div className="flex items-center justify-center">
+      {/* Company Name and Logo */}
+      <div className="flex-row justify-center items-center text-center w-full pt-12">
+        <div className = "flex justify-center w-full">
+          <PlantInHandIcon className="" height={96} width = {96}/>
+        </div>
+        <p className = {`${raleway.className} font-medium text-white text-6xl mt-2`}>
+          LANDWISE ANALYTICA
+        </p>
+      </div>   
+        
+      <div className="absolute inset-0 flex items-center justify-center w-full"> 
+        <div className="flex-row w-full justify-center">
+          <div className="flex items-center justify-center px-4">
             <AddressSearch onAddressSelect={handleAddressSelect} prompt="Search for an address" /> 
           </div>
               
