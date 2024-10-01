@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import Plot from "react-plotly.js";
 import Papa from "papaparse";
+import { roboto } from '@/ui/fonts';
+import Dropdown from '@/components/Dropdown';
 
 export default function Trends() {
   const [selectedCrop, setSelectedCrop] = useState("Flaxseed");
@@ -42,22 +44,19 @@ export default function Trends() {
   }, []);
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <select
-          value={selectedCrop}
-          onChange={(e) => setSelectedCrop(e.target.value)}
-        >
-          {crops.map((crop) => (
-            <option key={crop} value={crop}>
-              {crop}
-            </option>
-          ))}
-        </select>
+    <div className={`${roboto.className} flex flex-col items-center`}>
+      {/* Title and Dropdown Container */}
+      <div className="flex items-center">
+        <div className={`${roboto.className} mr-2 mb-0`}>
+          Estimated Historic & Projected Land Suitability of
+        </div>
+        <Dropdown options={crops} selected={selectedCrop} onSelect={setSelectedCrop} />
       </div>
 
+      {/* Plot */}
       {plotData.length > 0 ? (
         <Plot
+          className="mt-0"
           data={plotData}
           layout={{
             xaxis: { title: "Year" },
@@ -72,7 +71,6 @@ export default function Trends() {
                 xref: "x",
                 yref: "paper",
                 line: { color: "grey", dash: "dash" },
-                annotation: { text: "2024" },
               },
             ],
           }}

@@ -38,21 +38,31 @@ const Nav = React.memo(() => {
     setShowMobileNavItems((prev) => !prev);
   }, []);
 
+  // Smooth scroll function
+  const handleScroll = (event, href) => {
+    event.preventDefault(); // Prevent the default anchor behavior
+    const target = document.querySelector(href);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+    setShowMobileNavItems(false); // Close mobile nav after selection
+  };
+
   return (
     <div className="fixed z-50 flex-col bg-accent h-screen w-52 border-b-0 p-1 shadow-xl transition sm:flex sm:w-64 sm:p-3">
       <div className="flex items-center justify-between p-3 mb-4">
         <Link href="/">
           {/* Company Name and Logo */}
-          <div className="flex-row justify-center items-center text-center w-full pt-4">
-            <div className = "flex justify-center w-full">
-              <PlantInHandIcon className="" height={36} width = {36}/>
+          <div className="flex-row justify-center items-center text-center w-full">
+            <div className="flex justify-center w-full">
+              <PlantInHandIcon className="" height={36} width={36} />
             </div>
-            <p className = {`${raleway.className} font-medium text-white text-lg mt-2`}>
+            <p className={`${raleway.className} font-medium text-white text-lg mt-2`}>
               LANDWISE ANALYTICA
             </p>
-          </div>  
+          </div>
         </Link>
-        <button 
+        <button
           className="sm:hidden"
           onClick={toggleMobileNav}
           aria-label="Toggle Navigation"
@@ -67,7 +77,7 @@ const Nav = React.memo(() => {
               <Link href={item.href}>
                 <button
                   className={`text-lg focus:outline-none w-full`}
-                  onClick={() => setShowMobileNavItems(false)}
+                  onClick={(event) => handleScroll(event, item.href)} // Updated to use handleScroll
                   tabIndex={-1}
                 >
                   <div className="flex justify-start items-center text-white hover:bg-accent-light hover:text-accent-dark rounded-lg w-full px-4 py-2">
