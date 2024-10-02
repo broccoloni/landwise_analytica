@@ -16,10 +16,8 @@ import Dropdown from '@/components/Dropdown';
 import { MoveRight, ArrowRight } from 'lucide-react';
 import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
-import getConfig from 'next/config';
 
-const { publicRuntimeConfig } = getConfig();
-const { basePath } = publicRuntimeConfig || {};
+const basePath = '/landwise_analytica'
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 

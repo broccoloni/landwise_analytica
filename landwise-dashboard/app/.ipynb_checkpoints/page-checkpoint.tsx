@@ -7,10 +7,8 @@ import PlantInHandIcon from '@/components/PlantInHandIcon';
 import AddressSearch from '@/components/AddressSearch';
 import { ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import getConfig from 'next/config';
 
-const { publicRuntimeConfig } = getConfig();
-const { basePath } = publicRuntimeConfig || {};
+const basePath = '/landwise_analytica'
 
 export default function Home() {
   const router = useRouter();
