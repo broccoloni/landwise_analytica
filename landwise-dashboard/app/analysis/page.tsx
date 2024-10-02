@@ -10,7 +10,7 @@ import Trends from '@/components/Trends';
 import chroma from 'chroma-js';
 import { valuesToNames } from '@/types/valuesToNames';
 import { fromArrayBuffer } from "geotiff";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { Slider } from "@mui/material";
 import Dropdown from '@/components/Dropdown';
 import { MoveRight, ArrowRight } from 'lucide-react';
@@ -42,16 +42,6 @@ export default function Analysis() {
   const lat = searchParams.get('lat');
   const lng = searchParams.get('lng');
   const scaleFactor=10;
-
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return null;
-  }
     
   // Callback to handle new selected address in property
   const handleNewAddressSelect = (newAddress: string, newLat: number, newLng: number) => {
@@ -62,11 +52,12 @@ export default function Analysis() {
   const isDemoAddress = address === DEMO_ADDRESS.address;
 
   // Load Raster data
-  const rasterDataCache = useRef<Record<number, any>>({});
   const [landHistoryYear, setLandHistoryYear] = useState<number>(2014);
-  const [rasterData, setRasterData] = useState<any>(null);
+  const [rasterDataCache, setRasterDataCache] = useState<Record<number, any>>({});
   const colors = chroma.scale('Set1').colors(Object.keys(valuesToNames).length);
 
+  const rasterData = rasterDataCache[landHistoryYear];
+    
   // Fetch raster data for all years on mount
   useEffect(() => {
     const fetchAllRasterData = async () => {
@@ -81,10 +72,8 @@ export default function Analysis() {
         }
 
         // Store all fetched data in cache
-        rasterDataCache.current = rasterDataForYears;
+        setRasterDataCache(rasterDataForYears);
 
-        // Set initial year data
-        setRasterData(rasterDataForYears[landHistoryYear]);
       } catch (error) {
         console.error('Error fetching raster data:', error);
       }
@@ -164,13 +153,6 @@ export default function Analysis() {
     scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
     return scaledCanvas.toDataURL();
   };
-
-  // Update map and legend when the year is changed
-  useEffect(() => {
-    if (rasterDataCache.current && rasterDataCache.current[landHistoryYear]) {
-      setRasterData(rasterDataCache.current[landHistoryYear]);
-    }
-  }, [landHistoryYear]);
 
   const handleLandHistoryYearChange = (event: Event, value: number | number[]) => {
     if (Array.isArray(value)) {
@@ -357,6 +339,16 @@ export default function Analysis() {
       'Corn':[['Corn', 'Fallow'], ['Corn', 'Soybeans'], ['Corn', 'Wheat', 'Clover']], 
       'Soy': [['Soy', 'Fallow'], ['Soy', 'Corn'], ['Soy', 'Wheat', 'Canola']]
   }
+
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
     
   return (
     <div className={`${roboto.className} bg-accent-light text-black`}>
@@ -389,9 +381,11 @@ export default function Analysis() {
                     </button>   
                   </div>
                 )}
-                <p className="mb-2">Address: {address}</p>
-                <p className="mb-2">Latitude: {lat}</p>
-                <p className="mb-2">Longitude: {lng}</p>
+                <Suspense>
+                  <p className="mb-2">Address: {address}</p>
+                  <p className="mb-2">Latitude: {lat}</p>
+                  <p className="mb-2">Longitude: {lng}</p>
+                </Suspense>
                 <div className="mt-8">
                   <AddressSearch onAddressSelect={handleNewAddressSelect} prompt="Search for a new address" />
                 </div>
@@ -437,7 +431,9 @@ export default function Analysis() {
                   <div className="w-full">
                     {/* Image on Map */}
                     {rasterData?.bbox && rasterData?.imageUrl ? (
-                      <MapImage latitude={lat} longitude={lng} zoom={15} bbox={rasterData.bbox} imageUrl={rasterData.imageUrl} />
+                      <Suspense>
+                        <MapImage latitude={lat} longitude={lng} zoom={15} bbox={rasterData.bbox} imageUrl={rasterData.imageUrl} />
+                      </Suspense>
                     ) : (
                       <div className="text-center text-gray-500">No map data available.</div>
                     )}
@@ -494,6 +490,7 @@ export default function Analysis() {
                   <div className="w-full">
                     {/* Image on Map */}
                     {rasterData?.bbox && rasterData?.imageUrl ? (
+                      <Suspense>
                       <MapImage 
                         latitude={lat} 
                         longitude={lng} 
@@ -501,6 +498,7 @@ export default function Analysis() {
                         bbox={rasterData.bbox} 
                         imageUrl={landUsePlanningImages[selectedLandUsePlanningCrop]} 
                       />
+                      </Suspense>
                     ) : (
                       <div className="text-center text-gray-500">No map data available.</div>
                     )}

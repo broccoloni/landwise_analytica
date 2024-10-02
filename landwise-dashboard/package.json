@@ -28,6 +28,7 @@
     "react-leaflet": "^4.2.1",
     "react-plotly.js": "^2.6.0",
     "request": "^2.88.2",
+    "sharp": "^0.33.5",
     "webpack": "^5.95.0"
   },
   "devDependencies": {
