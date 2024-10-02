@@ -8,13 +8,11 @@ import AddressSearch from '@/components/AddressSearch';
 import { ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const basePath = '/landwise_analytica'
-
 export default function Home() {
   const router = useRouter();
 
   const handleAddressSelect = (address: string, lat: number, lng: number) => {
-    router.push(`${basePath}/analysis?address=${encodeURIComponent(address)}&lat=${lat}&lng=${lng}`);
+    router.push(`/analysis?address=${encodeURIComponent(address)}&lat=${lat}&lng=${lng}`);
   };
 
   const handleDemoAddress = () => {

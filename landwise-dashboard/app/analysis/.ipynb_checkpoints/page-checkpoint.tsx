@@ -17,8 +17,6 @@ import { MoveRight, ArrowRight } from 'lucide-react';
 import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
 
-const basePath = '/landwise_analytica'
-
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
 type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Float32Array | Float64Array;
@@ -64,7 +62,7 @@ export default function Analysis() {
 
     
   const handleNewAddressSelect = (newAddress: string, newLat: number, newLng: number) => {
-    router.push(`${basePath}/analysis?address=${encodeURIComponent(newAddress)}&lat=${newLat}&lng=${newLng}`);
+    router.push(`/analysis?address=${encodeURIComponent(newAddress)}&lat=${newLat}&lng=${newLng}`);
   };
 
   const [landHistoryYear, setLandHistoryYear] = useState<number>(2014);
@@ -323,7 +321,7 @@ export default function Analysis() {
                       className="flex items-center p-2"
                       onClick={() =>
                         router.push(
-                          `${basePath}/analysis?address=${encodeURIComponent(
+                          `/analysis?address=${encodeURIComponent(
                             DEMO_ADDRESS.address
                           )}&lat=${DEMO_ADDRESS.lat}&lng=${DEMO_ADDRESS.lng}`
                         )
