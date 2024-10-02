@@ -1,13 +1,19 @@
 import React, { useRef, useEffect, useState } from "react";
 
-const Dropdown = ({ options, selected, onSelect }) => {
+interface DropdownProps {
+  options: any[];
+  selected: any;
+  onSelect: (option: any) => void;
+}
+
+const Dropdown: React.FC<DropdownProps> = ({ options, selected, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null); // Reference for the dropdown
+  const dropdownRef = useRef<HTMLDivElement | null>(null); // Reference for the dropdown
 
   // Close dropdown when clicking outside of it
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };

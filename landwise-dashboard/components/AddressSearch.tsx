@@ -8,14 +8,18 @@ type AddressSearchProps = {
   prompt: string;
 };
 
-const libraries = ["places"];
+const libraries: any  = ["places"];
 
 export default function AddressSearch({ onAddressSelect, prompt }: AddressSearchProps) {
+  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+    console.error("Google Maps API key is not set");
+    return null; //Implement some display to show google api key isn't working
+  }
+    
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     libraries,
-    loading: { async: true },
   });
 
   useEffect(() => {
@@ -44,7 +48,7 @@ export default function AddressSearch({ onAddressSelect, prompt }: AddressSearch
   const handlePlaceChanged = (autocomplete: google.maps.places.Autocomplete) => {
     const place = autocomplete.getPlace(); // Use the passed autocomplete instance
 
-    if (place?.formatted_address && place?.geometry) {
+    if (place?.formatted_address && place?.geometry?.location) {
       const lat = place.geometry.location.lat();
       const lng = place.geometry.location.lng();
       onAddressSelect(place.formatted_address, lat, lng);

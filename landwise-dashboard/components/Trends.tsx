@@ -1,12 +1,25 @@
+'use client';
+
 import { useState, useEffect } from "react";
-import Plot from "react-plotly.js";
 import Papa from "papaparse";
 import { roboto } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
 
+import dynamic from 'next/dynamic';
+
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+
+
+interface CropData {
+  Crop: string;
+  Year: number;
+  Yield: number;
+  levels: string;
+}
+
 export default function Trends() {
   const [selectedCrop, setSelectedCrop] = useState("Flaxseed");
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<CropData[]>([]); // Explicitly define the type
   const crops = ["Flaxseed", "Wheat", "Barley", "Oats", "Canola", "Peas", "Corn", "Soy"];
 
   // Fetch CSV data directly from public folder
@@ -14,7 +27,7 @@ export default function Trends() {
     const fetchData = async () => {
       const response = await fetch("/demo/trends/crop_yield_per_year.csv");
       const csv = await response.text();
-      const parsed = Papa.parse(csv, { header: true, dynamicTyping: true });
+      const parsed = Papa.parse<CropData>(csv, { header: true, dynamicTyping: true }); // Specify type here
       setData(parsed.data);
     };
 
@@ -41,7 +54,7 @@ export default function Trends() {
       });
     }
     return acc;
-  }, []);
+  }, [] as { x: number[]; y: number[]; name: string; mode: string }[]); // Define the accumulator type here
 
   return (
     <div className={`${roboto.className} flex flex-col items-center`}>

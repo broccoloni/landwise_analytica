@@ -4,7 +4,7 @@ import { montserrat, roboto, merriweather, nunito, raleway } from '@/ui/fonts';
 import Link from 'next/link';
 import { House, BookMarked, ChartNoAxesCombined, Wheat, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import * as React from 'react';
+import React, { MouseEvent } from 'react';
 import PlantInHandIcon from '@/components/PlantInHandIcon';
 
 const navigationMenuItems = [
@@ -34,7 +34,7 @@ const Nav = () => {
   const pathname = usePathname();
   const [showMobileNavItems, setShowMobileNavItems] = React.useState(false);
 
-  const handleScroll = (event, href) => {
+  const handleScroll = (event: MouseEvent<HTMLButtonElement>, href: string) => {
     event.preventDefault(); // Prevent the default anchor behavior
     const target = document.querySelector(href);
     if (target) {

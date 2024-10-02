@@ -6,7 +6,6 @@ import Container from '@/components/Container';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import { useRouter } from 'next/navigation';
 import AddressSearch from '@/components/AddressSearch';
-import MapImage from '@/components/MapImage';
 import Trends from '@/components/Trends';
 import chroma from 'chroma-js';
 import { valuesToNames } from '@/types/valuesToNames';
@@ -16,6 +15,19 @@ import { Slider } from "@mui/material";
 import Dropdown from '@/components/Dropdown';
 import { MoveRight, ArrowRight } from 'lucide-react';
 import NextImage from 'next/image';
+import dynamic from 'next/dynamic';
+
+const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
+
+type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Float32Array | Float64Array;
+type LandUsePlanningCrop = "Flaxseed" | "Wheat" | "Barley" | "Oats" | "Canola" | "Peas" | "Corn" | "Soy";
+
+interface ColorBarProps {
+  vmin: number; // Minimum value
+  vmax: number; // Maximum value
+  numIntervals?: number; // Optional number of intervals
+}
+
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
@@ -30,6 +42,16 @@ export default function Analysis() {
   const lat = searchParams.get('lat');
   const lng = searchParams.get('lng');
   const scaleFactor=10;
+
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
     
   // Callback to handle new selected address in property
   const handleNewAddressSelect = (newAddress: string, newLat: number, newLng: number) => {
@@ -78,12 +100,12 @@ export default function Analysis() {
     const arrayBuffer = await response.arrayBuffer();
     const tiff = await fromArrayBuffer(arrayBuffer);
     const image = await tiff.getImage();
-    const data = await image.readRasters();
+    const data: TypedArray[] = await image.readRasters() as TypedArray[]; 
     const width = image.getWidth();
     const height = image.getHeight();
 
     const imageUrl = rasterToImageURL(data, width, height);
-    const uniqueElements = new Set(data[0]);
+    const uniqueElements = new Set(Array.from(data[0]));
     const legend: Record<string, string> = {};
     
     uniqueElements.forEach((value) => {
@@ -103,6 +125,11 @@ export default function Analysis() {
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+        throw new Error("Failed to get canvas 2D context");
+    }
+       
     ctx.imageSmoothingEnabled = false;
 
     const imageData = ctx.createImageData(width, height);
@@ -129,6 +156,10 @@ export default function Analysis() {
     scaledCanvas.height = height * scaleFactor;
     const scaledCtx = scaledCanvas.getContext("2d");
 
+    if (!scaledCtx) {
+        throw new Error("Failed to get scaled canvas 2D context");
+    }
+
     scaledCtx.imageSmoothingEnabled = false;
     scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
     return scaledCanvas.toDataURL();
@@ -141,13 +172,19 @@ export default function Analysis() {
     }
   }, [landHistoryYear]);
 
-  const handleLandHistoryYearChange = (event: Event, newValue: number) => {
-    setLandHistoryYear(newValue);
+  const handleLandHistoryYearChange = (event: Event, value: number | number[]) => {
+    if (Array.isArray(value)) {
+      // If value is an array, set landHistoryYear to the first element
+      setLandHistoryYear(value[0]);
+    } else {
+      // If value is a single number, set landHistoryYear directly
+      setLandHistoryYear(value);
+    }
   };
 
   // LAND USE PLANNING
-  const landUsePlanningCrops = ["Flaxseed", "Wheat", "Barley", "Oats", "Canola", "Peas", "Corn", "Soy"];
-  const landUsePlanningThresholds = {
+  const landUsePlanningCrops: LandUsePlanningCrop[] = ["Flaxseed", "Wheat", "Barley", "Oats", "Canola", "Peas", "Corn", "Soy"];
+  const landUsePlanningThresholds: Record<LandUsePlanningCrop, { vmin: number; vmax: number }> = {
     Flaxseed: { vmin: 56, vmax: 96 },
     Wheat: { vmin: 77, vmax: 117 },
     Barley: { vmin: 61, vmax: 101 },
@@ -157,15 +194,15 @@ export default function Analysis() {
     Corn: { vmin: 63, vmax: 103 },
     Soy: { vmin: 63, vmax: 103 },
   };
-  const [selectedLandUsePlanningCrop, setSelectedLandUsePlanningCrop] = useState(landUsePlanningCrops[0]);
-  const [landUsePlanningImages, setLandUsePlanningImages] = useState({});
+  const [selectedLandUsePlanningCrop, setSelectedLandUsePlanningCrop] = useState<LandUsePlanningCrop>(landUsePlanningCrops[0]);
+  const [landUsePlanningImages, setLandUsePlanningImages] = useState<{ [key in LandUsePlanningCrop]: string }>({} as any);
   const heatmapColors = ['blue', 'green', 'yellow', 'red'];
     
   // Preload land use planning images so we can normalize them
   useEffect(() => {
     const preloadAndProcessImages = () => {
       const promises = landUsePlanningCrops.map((crop) => {
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
           const img = new Image();
           img.src = `/demo/ag_tips/${crop}.png`;
 
@@ -173,7 +210,11 @@ export default function Analysis() {
             // Create a canvas to draw and process the image
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-  
+
+            if (!ctx) {
+                throw new Error("Failed to get canvas 2D context");
+            }
+              
             // Set the canvas size to match the image
             canvas.width = img.width;
             canvas.height = img.height;
@@ -196,7 +237,11 @@ export default function Analysis() {
             scaledCanvas.width = img.width * scaleFactor;
             scaledCanvas.height = img.height * scaleFactor;
             const scaledCtx = scaledCanvas.getContext("2d");
-        
+
+            if (!scaledCtx) {
+                throw new Error("Failed to get scaled canvas 2D context");
+            }
+              
             scaledCtx.imageSmoothingEnabled = false;
             scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
 
@@ -222,7 +267,7 @@ export default function Analysis() {
     preloadAndProcessImages();
   }, []);
 
-  const applyHeatMapToImageData = (data) => {
+  const applyHeatMapToImageData = (data: TypedArray) => {
     // Create a chroma.js color scale (from blue to red, or you can use others like 'Viridis', 'Inferno', etc.)
     const heatMapScale = chroma.scale(heatmapColors).domain([0, 1]);
 
@@ -246,11 +291,11 @@ export default function Analysis() {
 
   const currentThreshold = landUsePlanningThresholds[selectedLandUsePlanningCrop];
     
-  const ColorBar = ({ vmin, vmax, numIntervals = 5 }) => {
-    const canvasRef = useRef(null);
+  const ColorBar: React.FC<ColorBarProps>  = ({ vmin, vmax, numIntervals = 5 }) => {
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     // Calculate the intermediate values based on vmin and vmax
-    const getIntermediateValues = (vmin, vmax, numIntervals) => {
+    const getIntermediateValues = (vmin: number, vmax: number, numIntervals: number) => {
       const step = (vmax - vmin) / (numIntervals - 1);  // Divide the range into equal steps
       const values = [];
       for (let i = 0; i < numIntervals; i++) {
@@ -261,7 +306,16 @@ export default function Analysis() {
 
     useEffect(() => {
       const canvas = canvasRef.current;
+      if (!canvas) {
+        console.error("Canvas element not found");
+        return;
+      }
+        
       const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        throw new Error("Failed to get canvas 2D context");
+      }
 
       // Create a chroma.js scale for the color bar (from vmax to vmin)
       const scale = chroma.scale(heatmapColors).domain([vmax, vmin]); // Reverse the order here
@@ -470,9 +524,9 @@ export default function Analysis() {
                     {`Common crop rotations for ${selectedLandUsePlanningCrop}:`}
                   </div>
                   <ul className="ml-4">
-                    {commonCropRotations[selectedLandUsePlanningCrop]?.map(rotation => {
+                    {commonCropRotations[selectedLandUsePlanningCrop]?.map((rotation,index) => {
                       return (
-                        <li key={rotation} className="mb-1">
+                        <li key={index} className="mb-1">
                           {Array.isArray(rotation) ? (
                             rotation.map((crop, i) => (
                               <span key={i}>
