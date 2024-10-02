@@ -1,4 +1,5 @@
 import '@/ui/globals.css';
+import Screen from '@/components/Screen';
 
 export const metadata = {
   title: 'Landwise Analytica',
@@ -17,7 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <Screen>
+          {children}        
+        </Screen>
       </body>
     </html>
   );

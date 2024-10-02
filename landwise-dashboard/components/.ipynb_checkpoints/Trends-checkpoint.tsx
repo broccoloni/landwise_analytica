@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import Papa from "papaparse";
 import { roboto } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
-
+import { Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 const basePath = '/landwise_analytica';
+// const basePath = '';
 
 interface CropData {
   Crop: string;
@@ -90,7 +91,9 @@ export default function Trends() {
           }}
         />
       ) : (
-        <p>Loading data...</p>
+        <div className="flex justify-center h-full w-full my-20">
+          <Loader2 className="h-20 w-20 animate-spin text-black" />
+        </div>
       )}
     </div>
   );

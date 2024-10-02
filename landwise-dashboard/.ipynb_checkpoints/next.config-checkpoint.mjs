@@ -5,8 +5,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  basePath: '/landwise_analytica/landwise-dashboard',
-  assetPrefix: '/landwise_analytica/landwise-dashboard',
+  basePath: '/landwise_analytica',
+  assetPrefix: '/landwise_analytica',
 };
 
 export default nextConfig;

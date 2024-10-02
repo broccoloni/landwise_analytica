@@ -1,6 +1,6 @@
 import Nav from '@/components/Nav';
 
-export default function Layout({
+export default function Screen({
   children,
 }: Readonly<{
   children: React.ReactNode;
