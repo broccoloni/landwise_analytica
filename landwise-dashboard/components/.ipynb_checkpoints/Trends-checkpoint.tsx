@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
+const basePath = '/landwise_analytica';
 
 interface CropData {
   Crop: string;
@@ -25,7 +26,7 @@ export default function Trends() {
   // Fetch CSV data directly from public folder
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch("/demo/trends/crop_yield_per_year.csv");
+      const response = await fetch(`${basePath}/demo/trends/crop_yield_per_year.csv`);
       const csv = await response.text();
       const parsed = Papa.parse<CropData>(csv, { header: true, dynamicTyping: true }); // Specify type here
       setData(parsed.data);

@@ -17,6 +17,8 @@ import { MoveRight, ArrowRight } from 'lucide-react';
 import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
 
+const basePath = '/landwise_analytica';
+
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
 type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Float32Array | Float64Array;
@@ -76,7 +78,7 @@ export default function Analysis() {
       const rasterDataForYears: Record<number, any> = {};
       try {
         for (const yr of years) {
-          const rasterFile = `/demo/land_history/prior_inventory/${yr}.tif`;
+          const rasterFile = `${basePath}/demo/land_history/prior_inventory/${yr}.tif`;
           const data = await fetchRasterData(rasterFile);
           rasterDataForYears[yr] = data;
         }
@@ -183,7 +185,7 @@ export default function Analysis() {
       const promises = landUsePlanningCrops.map((crop) => {
         return new Promise<void>((resolve, reject) => {
           const img = new Image();
-          img.src = `/demo/ag_tips/${crop}.png`;
+          img.src = `${basePath}/demo/ag_tips/${crop}.png`;
 
           img.onload = () => {
             // Create a canvas to draw and process the image
@@ -345,7 +347,7 @@ export default function Analysis() {
               </div>
               <div className="sm:ml-4 sm:mt-0 mt-4">
                 <NextImage
-                  src="/farm.png"
+                  src={`${basePath}/farm.png`}
                   alt="Photo of Property"
                   width={512}
                   height={512}
