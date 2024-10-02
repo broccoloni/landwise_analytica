@@ -15,6 +15,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Slider } from "@mui/material";
 import Dropdown from '@/components/Dropdown';
 import { MoveRight, ArrowRight } from 'lucide-react';
+import NextImage from 'next/image';
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
@@ -245,52 +246,52 @@ export default function Analysis() {
 
   const currentThreshold = landUsePlanningThresholds[selectedLandUsePlanningCrop];
     
-const ColorBar = ({ vmin, vmax, numIntervals = 5 }) => {
-  const canvasRef = useRef(null);
+  const ColorBar = ({ vmin, vmax, numIntervals = 5 }) => {
+    const canvasRef = useRef(null);
 
-  // Calculate the intermediate values based on vmin and vmax
-  const getIntermediateValues = (vmin, vmax, numIntervals) => {
-    const step = (vmax - vmin) / (numIntervals - 1);  // Divide the range into equal steps
-    const values = [];
-    for (let i = 0; i < numIntervals; i++) {
-      values.push(vmin + i * step);  // Calculate each intermediate value
-    }
-    return values;
-  };
+    // Calculate the intermediate values based on vmin and vmax
+    const getIntermediateValues = (vmin, vmax, numIntervals) => {
+      const step = (vmax - vmin) / (numIntervals - 1);  // Divide the range into equal steps
+      const values = [];
+      for (let i = 0; i < numIntervals; i++) {
+        values.push(vmin + i * step);  // Calculate each intermediate value
+      }
+      return values;
+    };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
 
-    // Create a chroma.js scale for the color bar (from vmax to vmin)
-    const scale = chroma.scale(heatmapColors).domain([vmax, vmin]); // Reverse the order here
+      // Create a chroma.js scale for the color bar (from vmax to vmin)
+      const scale = chroma.scale(heatmapColors).domain([vmax, vmin]); // Reverse the order here
 
-    // Draw the vertical color bar gradient
-    for (let y = 0; y < canvas.height; y++) {
-      // Calculate the corresponding value in the [vmin, vmax] range
-      const value = vmin + ((vmax - vmin) * (y / canvas.height));
-      const color = scale(value).hex();  // Get color for the value
+      // Draw the vertical color bar gradient
+      for (let y = 0; y < canvas.height; y++) {
+        // Calculate the corresponding value in the [vmin, vmax] range
+        const value = vmin + ((vmax - vmin) * (y / canvas.height));
+        const color = scale(value).hex();  // Get color for the value
 
-      // Draw the color for this section of the bar
-      ctx.fillStyle = color;
-      ctx.fillRect(0, y, canvas.width, 1);  // Draw a 1px wide line across the canvas width
-    }
-  }, [vmin, vmax]);
+        // Draw the color for this section of the bar
+        ctx.fillStyle = color;
+        ctx.fillRect(0, y, canvas.width, 1);  // Draw a 1px wide line across the canvas width
+      }
+    }, [vmin, vmax]);
 
-  const intermediateValues = getIntermediateValues(vmin, vmax, numIntervals);
+    const intermediateValues = getIntermediateValues(vmin, vmax, numIntervals);
 
-  return (
-    <div className="flex justify-center">
-      {/* Render the vertical color bar */}
-      <canvas ref={canvasRef} width={30} height={300} />
-      <div className="flex flex-col justify-between ml-2">
-        {intermediateValues.reverse().map((value, index) => (
-          <span key={index}>{value.toFixed(1)}</span>
-        ))}
+    return (
+      <div className="flex justify-center">
+        {/* Render the vertical color bar */}
+        <canvas ref={canvasRef} width={30} height={300} />
+        <div className="flex flex-col justify-between ml-2">
+          {intermediateValues.reverse().map((value, index) => (
+            <span key={index}>{value.toFixed(1)}</span>
+          ))}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
     
   const commonCropRotations = {
       'Flaxseed': [['Flaxseed', 'Flaxseed'], ['Flaxseed', 'Grass'], ['Flaxseed', 'Barley', 'Grass']], 
@@ -311,32 +312,45 @@ const ColorBar = ({ vmin, vmax, numIntervals = 5 }) => {
             <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
               Property
             </div>
-            {isDemoAddress ? (
-              <p className="mb-2 text-accent text-xl text-center">This is the demo address!</p>
-            ) : (
-              <div className="flex w-full justify-center">
-                <button
-                  className="flex items-center p-2"
-                  onClick={() =>
-                    router.push(
-                      `/analysis?address=${encodeURIComponent(
-                        DEMO_ADDRESS.address
-                      )}&lat=${DEMO_ADDRESS.lat}&lng=${DEMO_ADDRESS.lng}`
-                    )
-                  }
-                >
-                  <div className="flex bg-accent-medium text-white py-2 px-4 rounded-lg">
-                    <p className="mr-2">Please Use The Demo Address</p>
-                    <ArrowRight />
+            <div className="sm:flex flex-row">
+              <div className="w-full">
+                {isDemoAddress ? (
+                  <p className="mb-2 text-accent text-xl text-center">This is the demo address!</p>
+                ) : (
+                  <div className="flex w-full justify-center">
+                    <button
+                      className="flex items-center p-2"
+                      onClick={() =>
+                        router.push(
+                          `/analysis?address=${encodeURIComponent(
+                            DEMO_ADDRESS.address
+                          )}&lat=${DEMO_ADDRESS.lat}&lng=${DEMO_ADDRESS.lng}`
+                        )
+                      }
+                    >
+                      <div className="flex bg-accent-medium text-white py-2 px-4 rounded-lg">
+                        <p className="mr-2">Please Use The Demo Address</p>
+                        <ArrowRight />
+                      </div>
+                    </button>   
                   </div>
-                </button>   
+                )}
+                <p className="mb-2">Address: {address}</p>
+                <p className="mb-2">Latitude: {lat}</p>
+                <p className="mb-2">Longitude: {lng}</p>
+                <div className="mt-8">
+                  <AddressSearch onAddressSelect={handleNewAddressSelect} prompt="Search for a new address" />
+                </div>
               </div>
-            )}
-            <p className="mb-2">Address: {address}</p>
-            <p className="mb-2">Latitude: {lat}</p>
-            <p className="mb-2">Longitude: {lng}</p>
-            <div className="mt-8">
-              <AddressSearch onAddressSelect={handleNewAddressSelect} prompt="Search for a new address" />
+              <div className="sm:ml-4 sm:mt-0 mt-4">
+                <NextImage
+                  src="/farm.png"
+                  alt="Photo of Property"
+                  width={512}
+                  height={512}
+                  quality={50}
+                />
+              </div>
             </div>
           </section>
         </Container>

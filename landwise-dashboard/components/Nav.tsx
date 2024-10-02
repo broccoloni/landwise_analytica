@@ -78,7 +78,7 @@ const Nav = () => {
               <li key={item.label} className="p-1">
                 <Link href={item.href}>
                   <button
-                    className={`w-full justify-start text-lg text-accent hover:bg-accent-light`}
+                    className={`w-full justify-start text-lg text-accent rounded-lg hover:bg-accent-light`}
                     onClick={(event) => handleScroll(event, item.href)}
                     tabIndex={-1}
                   >
