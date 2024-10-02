@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import Nav from '@/components/Nav'; // Import the SidebarNav component
+import Nav from '@/components/Nav';
 import Container from '@/components/Container';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import { useRouter } from 'next/navigation';
@@ -23,11 +23,10 @@ type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | F
 type LandUsePlanningCrop = "Flaxseed" | "Wheat" | "Barley" | "Oats" | "Canola" | "Peas" | "Corn" | "Soy";
 
 interface ColorBarProps {
-  vmin: number; // Minimum value
-  vmax: number; // Maximum value
-  numIntervals?: number; // Optional number of intervals
+  vmin: number;
+  vmax: number;
+  numIntervals?: number;
 }
-
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
@@ -37,48 +36,55 @@ const DEMO_ADDRESS = {
 
 export default function Analysis() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const address = searchParams.get('address');
-  const lat = searchParams.get('lat');
-  const lng = searchParams.get('lng');
   const scaleFactor=10;
     
-  // Callback to handle new selected address in property
+  const [isDemoAddress, setIsDemoAddress] = useState<boolean>(false);
+  const [address, setAddress] = useState<string | null>(null);
+  const [lat, setLat] = useState<string | null>(null);
+  const [lng, setLng] = useState<string | null>(null);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const queryAddress = searchParams.get('address');
+    const queryLat = searchParams.get('lat');
+    const queryLng = searchParams.get('lng');
+
+    setAddress(queryAddress);
+    setLat(queryLat);
+    setLng(queryLng);
+
+    if (queryAddress === DEMO_ADDRESS.address) {
+      setIsDemoAddress(true);
+    } else {
+      setIsDemoAddress(false);
+    }
+  }, []);
+
+    
   const handleNewAddressSelect = (newAddress: string, newLat: number, newLng: number) => {
     router.push(`/analysis?address=${encodeURIComponent(newAddress)}&lat=${newLat}&lng=${newLng}`);
   };
 
-  // Check if the current address is the demo address
-  const isDemoAddress = address === DEMO_ADDRESS.address;
-
-  // Load Raster data
   const [landHistoryYear, setLandHistoryYear] = useState<number>(2014);
   const [rasterDataCache, setRasterDataCache] = useState<Record<number, any>>({});
   const colors = chroma.scale('Set1').colors(Object.keys(valuesToNames).length);
-
   const rasterData = rasterDataCache[landHistoryYear];
     
-  // Fetch raster data for all years on mount
   useEffect(() => {
     const fetchAllRasterData = async () => {
       const years = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021];
       const rasterDataForYears: Record<number, any> = {};
-
       try {
         for (const yr of years) {
           const rasterFile = `/demo/land_history/prior_inventory/${yr}.tif`;
           const data = await fetchRasterData(rasterFile);
           rasterDataForYears[yr] = data;
         }
-
-        // Store all fetched data in cache
         setRasterDataCache(rasterDataForYears);
-
       } catch (error) {
         console.error('Error fetching raster data:', error);
       }
     };
-
     fetchAllRasterData();
   }, []);
 
@@ -120,26 +126,19 @@ export default function Analysis() {
     }
        
     ctx.imageSmoothingEnabled = false;
-
     const imageData = ctx.createImageData(width, height);
-
-    // Fill the imageData with the original raster data
     for (let i = 0; i < rasterData[0].length; i++) {
       const value = rasterData[0][i];
       const index = Object.keys(valuesToNames).findIndex((key) => parseInt(key) === value);
       const color = index !== -1 ? chroma(colors[index]) : chroma('black');
       const [r, g, b] = color.rgb();
-
       imageData.data[i * 4] = r;
       imageData.data[i * 4 + 1] = g;
       imageData.data[i * 4 + 2] = b;
       imageData.data[i * 4 + 3] = (value === 0 || value === 10) ? 0 : 255; // Set alpha
     }
-
-    // Put the imageData on the canvas at original resolution
     ctx.putImageData(imageData, 0, 0);
 
-    // Create a new canvas to hold the upscaled version
     const scaledCanvas = document.createElement("canvas");
     scaledCanvas.width = width * scaleFactor;
     scaledCanvas.height = height * scaleFactor;
@@ -156,10 +155,8 @@ export default function Analysis() {
 
   const handleLandHistoryYearChange = (event: Event, value: number | number[]) => {
     if (Array.isArray(value)) {
-      // If value is an array, set landHistoryYear to the first element
       setLandHistoryYear(value[0]);
     } else {
-      // If value is a single number, set landHistoryYear directly
       setLandHistoryYear(value);
     }
   };
@@ -178,7 +175,7 @@ export default function Analysis() {
   };
   const [selectedLandUsePlanningCrop, setSelectedLandUsePlanningCrop] = useState<LandUsePlanningCrop>(landUsePlanningCrops[0]);
   const [landUsePlanningImages, setLandUsePlanningImages] = useState<{ [key in LandUsePlanningCrop]: string }>({} as any);
-  const heatmapColors = ['blue', 'green', 'yellow', 'red'];
+  const heatmapColors = ['black', 'red', 'yellow', 'white'];
     
   // Preload land use planning images so we can normalize them
   useEffect(() => {
@@ -196,25 +193,14 @@ export default function Analysis() {
             if (!ctx) {
                 throw new Error("Failed to get canvas 2D context");
             }
-              
-            // Set the canvas size to match the image
             canvas.width = img.width;
             canvas.height = img.height;
-  
-            // Draw the image onto the canvas
             ctx.drawImage(img, 0, 0);
-  
-            // Get the image data (pixel data)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
-
-            // Normalize and apply the heatmap
             applyHeatMapToImageData(data);
-
-            // Put the processed image data back onto the canvas
             ctx.putImageData(imageData, 0, 0);
 
-            // Create a new canvas to hold the upscaled version
             const scaledCanvas = document.createElement("canvas");
             scaledCanvas.width = img.width * scaleFactor;
             scaledCanvas.height = img.height * scaleFactor;
@@ -226,22 +212,19 @@ export default function Analysis() {
               
             scaledCtx.imageSmoothingEnabled = false;
             scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-
-            // Convert the canvas to a data URL and store it
             const processedImageUrl = scaledCanvas.toDataURL();
             setLandUsePlanningImages(prev => ({ ...prev, [crop]: processedImageUrl }));
   
-            resolve();  // Resolve the promise after processing
+            resolve();
           };
 
           img.onerror = () => {
             console.error(`Failed to load image for ${crop}`);
-            reject();  // Reject if the image fails to load
+            reject();
           };
         });
       });
 
-      // After all images are processed
       Promise.all(promises)
         .catch((err) => console.error("Error preloading and processing images:", err));
     };
@@ -250,21 +233,11 @@ export default function Analysis() {
   }, []);
 
   const applyHeatMapToImageData = (data: TypedArray) => {
-    // Create a chroma.js color scale (from blue to red, or you can use others like 'Viridis', 'Inferno', etc.)
-    const heatMapScale = chroma.scale(heatmapColors).domain([0, 1]);
-
-    // Loop through each pixel (RGBA format, so steps of 4)
+    const heatMapScale = chroma.scale(heatmapColors).correctLightness().domain([0, 1]);
     for (let i = 0; i < data.length; i += 4) {
-      // Get the brightness of the pixel (could also use a more advanced method)
       const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-
-      // Normalize brightness (0-255 to 0-1 range)
       const normalized = brightness / 255;
-
-      // Get the color from the heat map using chroma.js
       const heatColor = heatMapScale(normalized).rgb(); // Returns [r, g, b]
-
-      // Update pixel data with heatmap color
       data[i] = heatColor[0];     // Red
       data[i + 1] = heatColor[1]; // Green
       data[i + 2] = heatColor[2]; // Blue
@@ -275,13 +248,11 @@ export default function Analysis() {
     
   const ColorBar: React.FC<ColorBarProps>  = ({ vmin, vmax, numIntervals = 5 }) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-    // Calculate the intermediate values based on vmin and vmax
     const getIntermediateValues = (vmin: number, vmax: number, numIntervals: number) => {
-      const step = (vmax - vmin) / (numIntervals - 1);  // Divide the range into equal steps
+      const step = (vmax - vmin) / (numIntervals - 1);
       const values = [];
       for (let i = 0; i < numIntervals; i++) {
-        values.push(vmin + i * step);  // Calculate each intermediate value
+        values.push(vmin + i * step);
       }
       return values;
     };
@@ -294,23 +265,16 @@ export default function Analysis() {
       }
         
       const ctx = canvas.getContext("2d");
-
       if (!ctx) {
         throw new Error("Failed to get canvas 2D context");
       }
 
-      // Create a chroma.js scale for the color bar (from vmax to vmin)
-      const scale = chroma.scale(heatmapColors).domain([vmax, vmin]); // Reverse the order here
-
-      // Draw the vertical color bar gradient
+      const scale = chroma.scale(heatmapColors).domain([vmax, vmin]);
       for (let y = 0; y < canvas.height; y++) {
-        // Calculate the corresponding value in the [vmin, vmax] range
         const value = vmin + ((vmax - vmin) * (y / canvas.height));
-        const color = scale(value).hex();  // Get color for the value
-
-        // Draw the color for this section of the bar
+        const color = scale(value).hex();
         ctx.fillStyle = color;
-        ctx.fillRect(0, y, canvas.width, 1);  // Draw a 1px wide line across the canvas width
+        ctx.fillRect(0, y, canvas.width, 1);
       }
     }, [vmin, vmax]);
 
@@ -318,7 +282,6 @@ export default function Analysis() {
 
     return (
       <div className="flex justify-center">
-        {/* Render the vertical color bar */}
         <canvas ref={canvasRef} width={30} height={300} />
         <div className="flex flex-col justify-between ml-2">
           {intermediateValues.reverse().map((value, index) => (
@@ -338,16 +301,6 @@ export default function Analysis() {
       'Peas': [['Peas', 'Oats', 'Corn'], ['Peas', 'Flaxseed', 'Peas']], 
       'Corn':[['Corn', 'Fallow'], ['Corn', 'Soybeans'], ['Corn', 'Wheat', 'Clover']], 
       'Soy': [['Soy', 'Fallow'], ['Soy', 'Corn'], ['Soy', 'Wheat', 'Canola']]
-  }
-
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return null;
   }
     
   return (
@@ -381,11 +334,11 @@ export default function Analysis() {
                     </button>   
                   </div>
                 )}
-                <Suspense>
+                <>
                   <p className="mb-2">Address: {address}</p>
                   <p className="mb-2">Latitude: {lat}</p>
                   <p className="mb-2">Longitude: {lng}</p>
-                </Suspense>
+                </>
                 <div className="mt-8">
                   <AddressSearch onAddressSelect={handleNewAddressSelect} prompt="Search for a new address" />
                 </div>
@@ -431,9 +384,9 @@ export default function Analysis() {
                   <div className="w-full">
                     {/* Image on Map */}
                     {rasterData?.bbox && rasterData?.imageUrl ? (
-                      <Suspense>
+                      <>
                         <MapImage latitude={lat} longitude={lng} zoom={15} bbox={rasterData.bbox} imageUrl={rasterData.imageUrl} />
-                      </Suspense>
+                      </>
                     ) : (
                       <div className="text-center text-gray-500">No map data available.</div>
                     )}
@@ -490,25 +443,26 @@ export default function Analysis() {
                   <div className="w-full">
                     {/* Image on Map */}
                     {rasterData?.bbox && rasterData?.imageUrl ? (
-                      <Suspense>
-                      <MapImage 
-                        latitude={lat} 
-                        longitude={lng} 
-                        zoom={15} 
-                        bbox={rasterData.bbox} 
-                        imageUrl={landUsePlanningImages[selectedLandUsePlanningCrop]} 
-                      />
-                      </Suspense>
+                      <>
+                        <MapImage 
+                          latitude={lat} 
+                          longitude={lng} 
+                          zoom={15} 
+                          bbox={rasterData.bbox} 
+                          imageUrl={landUsePlanningImages[selectedLandUsePlanningCrop]} 
+                        />
+                      </>
                     ) : (
                       <div className="text-center text-gray-500">No map data available.</div>
                     )}
                   </div>
                   <div className="w-32 pl-4">
                     {/* Legend */}
-                    <div className="flex-row justify-center items-center text-center">
-                      <div className={`text-center mb-2 font-medium`}>
-                          Yield (Bushels/Acre)
-                      </div>
+                    <div className="flex-row justify-center items-center text-center font-medium">
+                      <p className={`${merriweather.className}`}>
+                        Yield 
+                      </p>
+                      <p className="mb-2">(Bushels/Acre)</p>
                       <ColorBar 
                         vmin={currentThreshold.vmin} 
                         vmax={currentThreshold.vmax} 

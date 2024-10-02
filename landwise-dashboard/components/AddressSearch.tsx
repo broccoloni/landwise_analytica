@@ -63,7 +63,7 @@ export default function AddressSearch({ onAddressSelect, prompt }: AddressSearch
         type="text"
         ref={inputRef}
         placeholder={prompt}
-        className="w-full text-black px-6 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500"
+        className="w-full text-black px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500"
       />
     </div>
   );
