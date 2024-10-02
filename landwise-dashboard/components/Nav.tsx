@@ -30,15 +30,10 @@ const navigationMenuItems = [
   },
 ];
 
-const Nav = React.memo(() => {
+const Nav = () => {
   const pathname = usePathname();
   const [showMobileNavItems, setShowMobileNavItems] = React.useState(false);
 
-  const toggleMobileNav = React.useCallback(() => {
-    setShowMobileNavItems((prev) => !prev);
-  }, []);
-
-  // Smooth scroll function
   const handleScroll = (event, href) => {
     event.preventDefault(); // Prevent the default anchor behavior
     const target = document.querySelector(href);
@@ -47,11 +42,12 @@ const Nav = React.memo(() => {
     }
     setShowMobileNavItems(false); // Close mobile nav after selection
   };
-
+    
   return (
-    <div className="fixed z-50 flex-col bg-accent h-screen w-52 border-b-0 p-1 shadow-xl transition sm:flex sm:w-64 sm:p-3">
-      <div className="flex items-center justify-between p-3 mb-4">
+    <div className="fixed z-50 w-full flex-col bg-accent sm:fixed sm:flex sm:h-screen sm:w-52 sm:border-b-0 sm:p-1 lg:w-64 lg:p-3">
+      <div className="flex items-center justify-between p-3 sm:mb-4">
         <Link href="/">
+            
           {/* Company Name and Logo */}
           <div className="flex-row justify-center items-center text-center w-full">
             <div className="flex justify-center w-full">
@@ -64,34 +60,39 @@ const Nav = React.memo(() => {
         </Link>
         <button
           className="sm:hidden"
-          onClick={toggleMobileNav}
-          aria-label="Toggle Navigation"
+          onClick={() => setShowMobileNavItems(!showMobileNavItems)}
         >
           <Menu />
         </button>
       </div>
-      <nav className={`flex-1 p-2 pb-3 shadow-xl transition ${showMobileNavItems ? 'flex' : 'hidden'} sm:flex sm:p-0 sm:shadow-none`}>
-        <ul className="flex-col w-full">
-          {navigationMenuItems.map((item) => (
-            <li key={item.label} className="flex-row justify-start items-center w-full p-1">
-              <Link href={item.href}>
-                <button
-                  className={`text-lg focus:outline-none w-full`}
-                  onClick={(event) => handleScroll(event, item.href)} // Updated to use handleScroll
-                  tabIndex={-1}
-                >
-                  <div className="flex justify-start items-center text-white hover:bg-accent-light hover:text-accent-dark rounded-lg w-full px-4 py-2">
-                    <item.icon className="mr-2" size={20} />
-                    {item.label}
-                  </div>
-                </button>
-              </Link>
-            </li>
-          ))}
+      <nav
+        className={`${showMobileNavItems ? 'flex' : 'hidden'} w-full flex-1 p-2 pb-3 shadow-xl transition sm:flex sm:p-0 sm:shadow-none`}
+      >
+        <ul className="w-full flex-col">
+          {navigationMenuItems
+            .map((item) => (
+              <li key={item.label} className="p-1">
+                <Link href={item.href}>
+                  <button
+                    className={`w-full justify-start text-lg text-accent hover:bg-accent-light`}
+                    onClick={(event) => handleScroll(event, item.href)}
+                    tabIndex={-1}
+                  >
+                    <div className="flex justify-start items-center text-white hover:bg-accent-light hover:text-accent-dark rounded-lg w-full px-4 py-2">
+                      <item.icon className="mr-2" size={20} />
+                      {item.label}
+                    </div>
+                  </button>
+                </Link>
+              </li>
+            ))}
         </ul>
       </nav>
     </div>
   );
-});
+};
 
 export default Nav;
+
+
+

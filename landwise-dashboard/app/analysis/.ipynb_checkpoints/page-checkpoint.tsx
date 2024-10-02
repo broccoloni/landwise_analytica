@@ -158,7 +158,6 @@ export default function Analysis() {
   };
   const [selectedLandUsePlanningCrop, setSelectedLandUsePlanningCrop] = useState(landUsePlanningCrops[0]);
   const [landUsePlanningImages, setLandUsePlanningImages] = useState({});
-  // const [imagesLoaded, setImagesLoaded] = useState(false);  // Track when images are loaded
   const heatmapColors = ['blue', 'green', 'yellow', 'red'];
     
   // Preload land use planning images so we can normalize them
@@ -216,7 +215,6 @@ export default function Analysis() {
 
       // After all images are processed
       Promise.all(promises)
-        .then(() => setImagesLoaded(true))
         .catch((err) => console.error("Error preloading and processing images:", err));
     };
 
@@ -389,9 +387,9 @@ const ColorBar = ({ vmin, vmax, numIntervals = 5 }) => {
         </Container>
 
         <Container>
-          <section id="agriculture-tips">
+          <section id="agriculture-insights">
             <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-              Agriculture Tips
+              Agriculture Insights
             </div>
             <div className="flex items-center justify-center mb-2">
               <div className={`${roboto.className} mr-2 mb-0`}>
