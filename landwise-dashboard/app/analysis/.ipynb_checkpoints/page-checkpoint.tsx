@@ -14,7 +14,7 @@ import { fromArrayBuffer } from "geotiff";
 import { useState, useEffect, useRef } from 'react';
 import { Slider } from "@mui/material";
 import Dropdown from '@/components/Dropdown';
-import { MoveRight } from 'lucide-react';
+import { MoveRight, ArrowRight } from 'lucide-react';
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
@@ -311,8 +311,26 @@ const ColorBar = ({ vmin, vmax, numIntervals = 5 }) => {
             <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
               Property
             </div>
-            {isDemoAddress && (
+            {isDemoAddress ? (
               <p className="mb-2 text-accent text-xl text-center">This is the demo address!</p>
+            ) : (
+              <div className="flex w-full justify-center">
+                <button
+                  className="flex items-center p-2"
+                  onClick={() =>
+                    router.push(
+                      `/analysis?address=${encodeURIComponent(
+                        DEMO_ADDRESS.address
+                      )}&lat=${DEMO_ADDRESS.lat}&lng=${DEMO_ADDRESS.lng}`
+                    )
+                  }
+                >
+                  <div className="flex bg-accent-medium text-white py-2 px-4 rounded-lg">
+                    <p className="mr-2">Please Use The Demo Address</p>
+                    <ArrowRight />
+                  </div>
+                </button>   
+              </div>
             )}
             <p className="mb-2">Address: {address}</p>
             <p className="mb-2">Latitude: {lat}</p>
@@ -323,139 +341,143 @@ const ColorBar = ({ vmin, vmax, numIntervals = 5 }) => {
           </section>
         </Container>
 
-        <Container className="mb-4">
-          <section id="land-history">
-            <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-              Historical Land Use
-            </div>
-
-            {/* Land History Year Slider */}
-            <div className="flex justify-center items-left">
-              <div className="mr-4">Select The Year</div>
-              <div className="controls w-32">
-                <Slider
-                  value={landHistoryYear}
-                  onChange={handleLandHistoryYearChange}
-                  min={2014}
-                  max={2021}
-                  step={1}
-                  valueLabelDisplay="auto"
-                  marks
-                />
-              </div>
-            </div>
-
-            <div className = "flex">
-              <div className="w-full">
-                {/* Image on Map */}
-                {rasterData?.bbox && rasterData?.imageUrl ? (
-                  <MapImage latitude={lat} longitude={lng} zoom={15} bbox={rasterData.bbox} imageUrl={rasterData.imageUrl} />
-                ) : (
-                  <div className="text-center text-gray-500">No map data available.</div>
-                )}
-              </div>
-              <div className="w-32 pl-4">
-                {/* Legend */}
-                <div className="legend">
-                  <div className={`${merriweather.className} text-center mb-2 font-medium`}>Legend</div>
-                  {rasterData?.legend ? (
-                    Object.keys(rasterData.legend).map((key) => (
-                      <div key={key} className="legend-item flex items-center mb-1">
-                        <span
-                          className="legend-color block w-4 h-4 mr-2"
-                          style={{ backgroundColor: rasterData.legend[key] }}
-                        ></span>
-                        <span className="legend-label">{key}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-gray-500">No legend available.</div>
-                  )}
+        {isDemoAddress && (
+          <>
+            <Container className="mb-4">
+              <section id="land-history">
+                <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
+                  Historical Land Use
                 </div>
-              </div>
-            </div>
-          </section>
-        </Container>
-
-        <Container className="mb-4">
-          <section id="trends">
-            <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-              Trends
-            </div>
-            <Trends />
-          </section>
-        </Container>
-
-        <Container>
-          <section id="agriculture-insights">
-            <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-              Agriculture Insights
-            </div>
-            <div className="flex items-center justify-center mb-2">
-              <div className={`${roboto.className} mr-2 mb-0`}>
-                Estimated Land Suitability of:
-              </div>              
-              <Dropdown 
-                options={landUsePlanningCrops} 
-                selected={selectedLandUsePlanningCrop} 
-                onSelect={setSelectedLandUsePlanningCrop} 
-              />
-            </div>
-              
-            <div className = "flex mb-4">
-              <div className="w-full">
-                {/* Image on Map */}
-                {rasterData?.bbox && rasterData?.imageUrl ? (
-                  <MapImage 
-                    latitude={lat} 
-                    longitude={lng} 
-                    zoom={15} 
-                    bbox={rasterData.bbox} 
-                    imageUrl={landUsePlanningImages[selectedLandUsePlanningCrop]} 
-                  />
-                ) : (
-                  <div className="text-center text-gray-500">No map data available.</div>
-                )}
-              </div>
-              <div className="w-32 pl-4">
-                {/* Legend */}
-                <div className="flex-row justify-center items-center text-center">
-                  <div className={`text-center mb-2 font-medium`}>
-                      Yield (Bushels/Acre)
+    
+                {/* Land History Year Slider */}
+                <div className="flex justify-center items-left">
+                  <div className="mr-4">Select The Year</div>
+                  <div className="controls w-32">
+                    <Slider
+                      value={landHistoryYear}
+                      onChange={handleLandHistoryYearChange}
+                      min={2014}
+                      max={2021}
+                      step={1}
+                      valueLabelDisplay="auto"
+                      marks
+                    />
                   </div>
-                  <ColorBar 
-                    vmin={currentThreshold.vmin} 
-                    vmax={currentThreshold.vmax} 
-                  />
                 </div>
-              </div>
-            </div>
-
-            <div className="ml-4">
-              <div className={`${montserrat.className} font-lg mb-2`}>
-                {`Common crop rotations for ${selectedLandUsePlanningCrop}:`}
-              </div>
-              <ul className="ml-4">
-                {commonCropRotations[selectedLandUsePlanningCrop]?.map(rotation => {
-                  return (
-                    <li key={rotation} className="mb-1">
-                      {Array.isArray(rotation) ? (
-                        rotation.map((crop, i) => (
-                          <span key={i}>
-                            {crop}
-                            {i < rotation.length - 1 && <MoveRight className="inline-block mx-1" />}
-                          </span>
+    
+                <div className = "flex">
+                  <div className="w-full">
+                    {/* Image on Map */}
+                    {rasterData?.bbox && rasterData?.imageUrl ? (
+                      <MapImage latitude={lat} longitude={lng} zoom={15} bbox={rasterData.bbox} imageUrl={rasterData.imageUrl} />
+                    ) : (
+                      <div className="text-center text-gray-500">No map data available.</div>
+                    )}
+                  </div>
+                  <div className="w-32 pl-4">
+                    {/* Legend */}
+                    <div className="legend">
+                      <div className={`${merriweather.className} text-center mb-2 font-medium`}>Legend</div>
+                      {rasterData?.legend ? (
+                        Object.keys(rasterData.legend).map((key) => (
+                          <div key={key} className="legend-item flex items-center mb-1">
+                            <span
+                              className="legend-color block w-4 h-4 mr-2"
+                              style={{ backgroundColor: rasterData.legend[key] }}
+                            ></span>
+                            <span className="legend-label">{key}</span>
+                          </div>
                         ))
                       ) : (
-                        <span>{rotation}</span>
+                        <div className="text-center text-gray-500">No legend available.</div>
                       )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>  
-          </section>
-        </Container>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </Container>
+    
+            <Container className="mb-4">
+              <section id="trends">
+                <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
+                  Trends
+                </div>
+                <Trends />
+              </section>
+            </Container>
+    
+            <Container>
+              <section id="agriculture-insights">
+                <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
+                  Agriculture Insights
+                </div>
+                <div className="flex items-center justify-center mb-2">
+                  <div className={`${roboto.className} mr-2 mb-0`}>
+                    Estimated Land Suitability of:
+                  </div>              
+                  <Dropdown 
+                    options={landUsePlanningCrops} 
+                    selected={selectedLandUsePlanningCrop} 
+                    onSelect={setSelectedLandUsePlanningCrop} 
+                  />
+                </div>
+                  
+                <div className = "flex mb-4">
+                  <div className="w-full">
+                    {/* Image on Map */}
+                    {rasterData?.bbox && rasterData?.imageUrl ? (
+                      <MapImage 
+                        latitude={lat} 
+                        longitude={lng} 
+                        zoom={15} 
+                        bbox={rasterData.bbox} 
+                        imageUrl={landUsePlanningImages[selectedLandUsePlanningCrop]} 
+                      />
+                    ) : (
+                      <div className="text-center text-gray-500">No map data available.</div>
+                    )}
+                  </div>
+                  <div className="w-32 pl-4">
+                    {/* Legend */}
+                    <div className="flex-row justify-center items-center text-center">
+                      <div className={`text-center mb-2 font-medium`}>
+                          Yield (Bushels/Acre)
+                      </div>
+                      <ColorBar 
+                        vmin={currentThreshold.vmin} 
+                        vmax={currentThreshold.vmax} 
+                      />
+                    </div>
+                  </div>
+                </div>
+    
+                <div className="ml-4">
+                  <div className={`${montserrat.className} font-lg mb-2`}>
+                    {`Common crop rotations for ${selectedLandUsePlanningCrop}:`}
+                  </div>
+                  <ul className="ml-4">
+                    {commonCropRotations[selectedLandUsePlanningCrop]?.map(rotation => {
+                      return (
+                        <li key={rotation} className="mb-1">
+                          {Array.isArray(rotation) ? (
+                            rotation.map((crop, i) => (
+                              <span key={i}>
+                                {crop}
+                                {i < rotation.length - 1 && <MoveRight className="inline-block mx-1" />}
+                              </span>
+                            ))
+                          ) : (
+                            <span>{rotation}</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>  
+              </section>
+            </Container>
+          </>
+        )}
       </div>
     </div>
   );
