@@ -26,6 +26,17 @@ const MapImage = ({ latitude, longitude, zoom, bbox, imageUrl }) => {
           />
         )}
       </MapContainer>
+      <style jsx global>{`
+        .leaflet-control {
+          z-index: 0 !important;
+        }
+        .leaflet-pane {
+          z-index: 0 !important;
+        }
+        .leaflet-top, .leaflet-bottom {
+          z-index: 0 !important;
+        }
+      `}</style>
     </div>
   );
 };

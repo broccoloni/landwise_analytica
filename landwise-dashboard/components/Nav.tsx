@@ -57,7 +57,7 @@ const Nav = React.memo(() => {
             <div className="flex justify-center w-full">
               <PlantInHandIcon className="" height={36} width={36} />
             </div>
-            <p className={`${raleway.className} font-medium text-white text-lg mt-2`}>
+            <p className={`${raleway.className} font-medium text-white text-center text-lg mt-2`}>
               LANDWISE ANALYTICA
             </p>
           </div>
