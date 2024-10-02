@@ -7,12 +7,16 @@ import PlantInHandIcon from '@/components/PlantInHandIcon';
 import AddressSearch from '@/components/AddressSearch';
 import { ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const { basePath } = publicRuntimeConfig || {};
 
 export default function Home() {
   const router = useRouter();
 
   const handleAddressSelect = (address: string, lat: number, lng: number) => {
-    router.push(`/analysis?address=${encodeURIComponent(address)}&lat=${lat}&lng=${lng}`);
+    router.push(`${basePath}/analysis?address=${encodeURIComponent(address)}&lat=${lat}&lng=${lng}`);
   };
 
   const handleDemoAddress = () => {

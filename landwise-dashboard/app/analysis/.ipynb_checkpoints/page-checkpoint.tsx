@@ -16,6 +16,10 @@ import Dropdown from '@/components/Dropdown';
 import { MoveRight, ArrowRight } from 'lucide-react';
 import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const { basePath } = publicRuntimeConfig || {};
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
@@ -62,7 +66,7 @@ export default function Analysis() {
 
     
   const handleNewAddressSelect = (newAddress: string, newLat: number, newLng: number) => {
-    router.push(`/analysis?address=${encodeURIComponent(newAddress)}&lat=${newLat}&lng=${newLng}`);
+    router.push(`${basePath}/analysis?address=${encodeURIComponent(newAddress)}&lat=${newLat}&lng=${newLng}`);
   };
 
   const [landHistoryYear, setLandHistoryYear] = useState<number>(2014);
@@ -321,7 +325,7 @@ export default function Analysis() {
                       className="flex items-center p-2"
                       onClick={() =>
                         router.push(
-                          `/analysis?address=${encodeURIComponent(
+                          `${basePath}/analysis?address=${encodeURIComponent(
                             DEMO_ADDRESS.address
                           )}&lat=${DEMO_ADDRESS.lat}&lng=${DEMO_ADDRESS.lng}`
                         )
