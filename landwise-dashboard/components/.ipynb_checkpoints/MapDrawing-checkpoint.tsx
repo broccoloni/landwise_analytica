@@ -2,30 +2,12 @@
 
 import { MapContainer, TileLayer, Polygon, CircleMarker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MousePointer, Dot, Undo, Redo, RotateCcw } from 'lucide-react';
 
-// Utility to calculate distance between two points (Haversine formula approximation for short distances)
-// const calculateDistance = (point1: number[], point2: number[]) => {
-//   const [lat1, lng1] = point1;
-//   const [lat2, lng2] = point2;
-//   const R = 6371000; // radius of Earth in meters
-//   const phi1 = (lat1 * Math.PI) / 180;
-//   const phi2 = (lat2 * Math.PI) / 180;
-//   const dphi = ((lat2 - lat1) * Math.PI) / 180;
-//   const dlambda = ((lng2 - lng1) * Math.PI) / 180;
-
-//   const a =
-//     Math.sin(dphi / 2) * Math.sin(dphi / 2) +
-//     Math.cos(phi1) * Math.cos(phi2) * Math.sin(dlambda / 2) * Math.sin(dlambda / 2);
-//   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-//   return R * c; // distance in meters
-// };
-
 interface MapDrawingProps {
-  latitude: string | null; // Latitude can be a string or null
-  longitude: string | null; // Longitude can be a string or null
+  latitude: string | null;
+  longitude: string | null;
   zoom: number;
 }
 
@@ -37,14 +19,15 @@ const ChangeView = ({ lat, lng, zoom }: { lat: number; lng: number; zoom: number
 
 // Main MapDrawing component
 export default function MapDrawing({ latitude: initialLatitude, longitude: initialLongitude, zoom: initialZoom }: MapDrawingProps) {
-  const [points, setPoints] = useState<number[][]>([]);  // Array of latitude/longitude points
-  const [hoverPoint, setHoverPoint] = useState<number[] | null>(null);  // Hover point
+  const [points, setPoints] = useState<number[][]>([]);
+  const [hoverPoint, setHoverPoint] = useState<number[] | null>(null);
   const [isPolygonClosed, setIsPolygonClosed] = useState(false);  // Whether the polygon is finalized
   const [latitude, setLatitude] = useState<string>(initialLatitude);
   const [longitude, setLongitude] = useState<string>(initialLongitude);
-  const [zoom, setZoom] = useState<number>(initialZoom);  // Store the zoom level in state
+  const [zoom, setZoom] = useState<number>(initialZoom);
   const [redoStack, setRedoStack] = useState<number[][]>([]);
   const [isPlacingMode, setIsPlacingMode] = useState(true);
+  const [draggedPointIndex, setDraggedPointIndex] = useState<number | null>(null);
   
   if (latitude === null || longitude === null) {
     throw new Error('Both Latitude and Longitude must be provided to MapDrawing');
@@ -56,7 +39,6 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
     throw new Error('Invalid Latitude or Longitude provided to MapDrawing');
   }
 
-  // Handle center change
   const handleCenterChange = (newLat: number, newLng: number) => {
     setLatitude(newLat.toString());
     setLongitude(newLng.toString());
@@ -65,24 +47,27 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
   const handlePointAdd = (point: number[]) => {
     if (isPlacingMode && !isPolygonClosed) {
       if (points.length === 0 || (point[0] !== points[points.length - 1][0] || point[1] !== points[points.length - 1][1])) {
-        setPoints([...points, point]);  // Add new point
+        setPoints([...points, point]);
+      }
+      if (redoStack.length !== 0) {
+        setRedoStack([]);
       }
     }
   };
 
   // Handle moving an existing point
   const handlePointMove = (point: number[]) => {
-    if (!isPlacingMode && hoverPoint) {
-      const updatedPoints = points.map((p, index) =>
-        index === points.length - 1 ? point : p // Move the last point (or implement a more complex logic if needed)
-      );
+    if (!isPlacingMode && draggedPointIndex !== null) {
+      const updatedPoints = [...points];
+      updatedPoints[draggedPointIndex] = point;
       setPoints(updatedPoints);
     }
   };
 
+
   // Handle hover point change
   const handlePointHover = (point: number[]) => {
-    if (!isPolygonClosed) {
+    if (isPlacingMode && !isPolygonClosed) {
       setHoverPoint(point);
     }
   };
@@ -91,6 +76,7 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
   const handlePolygonClose = () => {
     if (points.length >= 3) {
       setIsPolygonClosed(true);
+      setIsPlacingMode(false);
       console.log("Final Polygon Points:", points);
     } else {
       alert("At least 3 points are required to create a polygon.");
@@ -100,23 +86,24 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
   const handleUndo = () => {
     if (points.length > 0) {
       const lastPoint = points[points.length - 1];
-      setRedoStack([...redoStack, lastPoint]); // Push the last point to the redo stack
-      setPoints(points.slice(0, -1));  // Remove the last point
+        
+      setRedoStack([...redoStack, lastPoint]);
+      setPoints(points.slice(0, -1));
     }
   };
 
   const handleRedo = () => {
     if (redoStack.length > 0) {
       const lastRedoPoint = redoStack[redoStack.length - 1];
-      setPoints([...points, lastRedoPoint]); // Add the last point from the redo stack
-      setRedoStack(redoStack.slice(0, -1)); // Remove it from the redo stack
+      setPoints([...points, lastRedoPoint]);
+      setRedoStack(redoStack.slice(0, -1));
     }
   };
     
-  // Handle reset and starting a new polygon
   const handleReset = () => {
     setPoints([]);
     setIsPolygonClosed(false);
+    setIsPlacingMode(true);
     setHoverPoint(null);
   };
 
@@ -125,33 +112,64 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
       click(e) {
         const { lat, lng } = e.latlng;
         if (isPlacingMode) {
-          onPointAdd([lat, lng]);  // Add point on click
+          onPointAdd([lat, lng]);
         } else {
-          handlePointMove([lat, lng]); // Move existing point
+          handlePointMove([lat, lng]);
         }
       },
       dblclick() {
-        onPolygonClose();  // Close polygon on double-click
+        onPolygonClose();
       },
       mousemove(e) {
         const { lat, lng } = e.latlng;
-        onPointHover([lat, lng]);  // Track mouse position
+        if (!isPlacingMode && draggedPointIndex !== null) {
+          handlePointMove([lat, lng]);
+        } else if (isPlacingMode) {
+          onPointHover([lat, lng]);
+        }
       },
       zoomend(e) {
-        onZoomChange(e.target.getZoom());  // Update zoom level when zooming ends
+        onZoomChange(e.target.getZoom());
       },
       moveend(e) {
-        const { lat, lng } = e.target.getCenter(); // Get new center of the map
-        onCenterChange(lat, lng);  // Update latitude and longitude
+        const { lat, lng } = e.target.getCenter();
+        onCenterChange(lat, lng);
       }
     });
     return null;
   };
     
   // Combine the points and the hovered point to show a preview
-  const polygonPoints = hoverPoint ? [...points, hoverPoint] : points;
+  const polygonPoints = hoverPoint && isPlacingMode ? [...points, hoverPoint] : points;
 
   const cursorStyle = isPlacingMode ? 'crosshair' : 'move';
+
+  const Drawing = ({ polygonPoints }: { polygonPoints: number[][] }) => {
+    return (
+      <>
+        <Polygon
+          positions={polygonPoints}
+          pathOptions={{ color: 'black', fillColor: 'grey', fillOpacity: 0.5 }}
+        />
+        {polygonPoints.map((point, index) => (
+          <CircleMarker
+            key={index}
+            center={point}
+            radius={2}
+            pathOptions={{ color: 'black' }}
+            eventHandlers={{
+              mousedown: () => {
+                setDraggedPointIndex(index);
+              },
+              mouseup: () => {
+                setDraggedPointIndex(null);
+              }
+            }}
+          />
+        ))}
+      </>
+    );
+  };
 
     
   return (
@@ -160,15 +178,23 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
         <div className="inline-flex justify-start rounded-md mr-4">
           <button
             className={`py-2 px-4 bg-accent text-white ${!isPlacingMode && 'opacity-75'} rounded-l-md hover:opacity-75`}
-            onClick={() => setIsPlacingMode(false)}
+            onClick={() => {
+              setIsPlacingMode(false);
+              if (!isPolygonClosed) {
+                handlePolygonClose(); // Close the polygon if it's not already closed
+              }
+            }}
           >
-            <MousePointer /> {/* Icon for moving mode */}
+            <MousePointer />
           </button>
           <button
             className={`py-2 px-4 bg-accent text-white ${isPlacingMode && 'opacity-75'} rounded-r-md hover:opacity-75`}
-            onClick={() => setIsPlacingMode(true)}
+            onClick={() => {
+              setIsPlacingMode(true);
+              setIsPolygonClosed(false); // Reopen the polygon when switching back to placing mode
+            }}
           >
-            <Dot /> {/* Icon for placing mode */}
+            <Dot />
           </button>
         </div>
         <div className="inline-flex rounded-md">
@@ -197,7 +223,7 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
         
       <MapContainer
           style={{ height: "400px", width: "100%", cursor: cursorStyle }}
-          doubleClickZoom={false}  // Disable default double-click zoom
+          doubleClickZoom={false}
       >
         <ChangeView lat={lat} lng={lng} zoom={zoom} />
         <TileLayer
@@ -208,7 +234,7 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
           onPointHover={handlePointHover}
           onPolygonClose={handlePolygonClose}
           onZoomChange={setZoom}
-          onCenterChange={handleCenterChange}  // Pass center change handler
+          onCenterChange={handleCenterChange}
         />
         {polygonPoints.length > 0 && (
           <>
@@ -222,6 +248,10 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
                 center={point}
                 radius={2}
                 pathOptions={{ color: 'black' }}
+                eventHandlers={{
+                  mousedown: () => setDraggedPointIndex(index),
+                  mouseup: () => setDraggedPointIndex(null)  // Stop dragging on mouse up
+                }}
               />
             ))}
           </>

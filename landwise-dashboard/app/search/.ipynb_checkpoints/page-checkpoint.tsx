@@ -81,7 +81,7 @@ export default function Search() {
             </div>
             <div className="">
               <button
-                className="bg-accent-medium rounded-lg px-4 py-2 text-white"
+                className="bg-accent-medium rounded-lg px-4 py-2 text-white hover:opacity-75"
                 onClick={handleUseDemoAddress}
               >
                 Use Demo Address
@@ -145,7 +145,7 @@ export default function Search() {
                   Map
                 </div>
                 <div className="w-full h-full flex justify-center items-center">
-                  <MapDrawing latitude={latitude} longitude={longitude} zoom={17} />
+                  <MapDrawing latitude={latitude} longitude={longitude} zoom={15} />
                 </div>
               </section>
             </Container>
