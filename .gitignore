@@ -1,4 +1,5 @@
 landwise_env/
+property_data/
 landwise-dashboard/.env
 landwise-dashboard/.next/
 landwise-dashboard/node_modules/

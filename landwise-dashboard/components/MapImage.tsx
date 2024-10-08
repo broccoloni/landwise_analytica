@@ -8,7 +8,7 @@ interface MapImageProps {
   latitude: string | null; // Latitude can be a string or null
   longitude: string | null; // Longitude can be a string or null
   zoom: number; 
-  bbox: number[]; // Assuming bbox is an array of numbers
+  bbox?: number[]; // Assuming bbox is an array of numbers
   imageUrl?: string; // Optional prop
 }
 
@@ -19,9 +19,11 @@ const ChangeView = ({ lat, lng, zoom }: { lat: number; lng: number; zoom: number
   return null; // This component doesn't render anything
 };
 
-const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox, imageUrl }) => {
+const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox=[], imageUrl='' }) => {
   const [isClient, setIsClient] = useState(false);
 
+  console.log(latitude, longitude, zoom, bbox, imageUrl);
+    
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -54,13 +56,11 @@ const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox, im
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {imageUrl && bbox && (
-          <div>
-            <ImageOverlay
-              url={imageUrl} 
-              bounds={[[bbox[1], bbox[0]], [bbox[3], bbox[2]]]}
-            />
-          </div>
+        {imageUrl && bbox && bbox.length === 4 && (
+          <ImageOverlay
+            url={imageUrl}
+            bounds={[[bbox[1], bbox[0]], [bbox[3], bbox[2]]]}
+          />
         )}
       </MapContainer>
       <style jsx global>{`

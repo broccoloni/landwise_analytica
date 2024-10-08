@@ -1,6 +1,5 @@
 'use client';
 
-import Nav from '@/components/Nav';
 import Container from '@/components/Container';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import { useRouter } from 'next/navigation';
@@ -15,8 +14,8 @@ import { MoveRight, ArrowRight, Loader2 } from 'lucide-react';
 import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
 
-const basePath = '/landwise_analytica';
-// const basePath = '';
+// const basePath = '/landwise_analytica';
+const basePath = '';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 

@@ -9,8 +9,8 @@ import dynamic from 'next/dynamic';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
-const basePath = '/landwise_analytica';
-// const basePath = '';
+// const basePath = '/landwise_analytica';
+const basePath = '';
 
 interface CropData {
   Crop: string;
