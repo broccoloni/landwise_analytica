@@ -9,19 +9,31 @@ interface MapDrawingProps {
   latitude: string | null;
   longitude: string | null;
   zoom: number;
+  setLandGeometry: React.Dispatch<React.SetStateAction<number[][]>>;
 }
 
 const ChangeView = ({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) => {
   const map = useMap();
-  map.setView([lat, lng], zoom);
+
+  useEffect(() => {
+    map.setView([lat, lng], zoom);
+    map.doubleClickZoom.disable();
+  }, [lat, lng, zoom, map]);
+
   return null;
 };
 
+
 // Main MapDrawing component
-export default function MapDrawing({ latitude: initialLatitude, longitude: initialLongitude, zoom: initialZoom }: MapDrawingProps) {
+export default function MapDrawing({
+  latitude: initialLatitude,
+  longitude: initialLongitude,
+  zoom: initialZoom,
+  setLandGeometry,
+}: MapDrawingProps) {
   const [points, setPoints] = useState<number[][]>([]);
   const [hoverPoint, setHoverPoint] = useState<number[] | null>(null);
-  const [isPolygonClosed, setIsPolygonClosed] = useState(false);  // Whether the polygon is finalized
+  const [isPolygonClosed, setIsPolygonClosed] = useState(false);
   const [latitude, setLatitude] = useState<string>(initialLatitude);
   const [longitude, setLongitude] = useState<string>(initialLongitude);
   const [zoom, setZoom] = useState<number>(initialZoom);
@@ -77,7 +89,6 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
     if (points.length >= 3) {
       setIsPolygonClosed(true);
       setIsPlacingMode(false);
-      console.log("Final Polygon Points:", points);
     } else {
       alert("At least 3 points are required to create a polygon.");
     }
@@ -107,7 +118,16 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
     setHoverPoint(null);
   };
 
+  const handleGenerateReport = () => {
+    setLandGeometry(points);
+    setIsPolygonClosed(true);
+    setIsPlacingMode(false);
+    setHoverPoint(null);
+  };
+    
   const MapClickHandler = ({ onPointAdd, onPointHover, onPolygonClose, onZoomChange, onCenterChange }) => {
+    const map = useMap();
+      
     useMapEvents({
       click(e) {
         const { lat, lng } = e.latlng;
@@ -118,6 +138,7 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
         }
       },
       dblclick() {
+        map.doubleClickZoom.disable();
         onPolygonClose();
       },
       mousemove(e) {
@@ -136,6 +157,20 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
         onCenterChange(lat, lng);
       }
     });
+
+    useEffect(() => {
+      map.doubleClickZoom.disable();
+      if (!isPlacingMode && draggedPointIndex !== null) {
+        // Disable map dragging while dragging a point
+        map.dragging.disable();
+        map.doubleClickZoom.disable();
+      } else {
+        // Enable map dragging when not dragging a point
+        map.dragging.enable();
+        map.doubleClickZoom.enable();
+      }
+    }, [isPlacingMode, draggedPointIndex, map]);
+      
     return null;
   };
     
@@ -143,80 +178,62 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
   const polygonPoints = hoverPoint && isPlacingMode ? [...points, hoverPoint] : points;
 
   const cursorStyle = isPlacingMode ? 'crosshair' : 'move';
-
-  const Drawing = ({ polygonPoints }: { polygonPoints: number[][] }) => {
-    return (
-      <>
-        <Polygon
-          positions={polygonPoints}
-          pathOptions={{ color: 'black', fillColor: 'grey', fillOpacity: 0.5 }}
-        />
-        {polygonPoints.map((point, index) => (
-          <CircleMarker
-            key={index}
-            center={point}
-            radius={2}
-            pathOptions={{ color: 'black' }}
-            eventHandlers={{
-              mousedown: () => {
-                setDraggedPointIndex(index);
-              },
-              mouseup: () => {
-                setDraggedPointIndex(null);
-              }
-            }}
-          />
-        ))}
-      </>
-    );
-  };
-
     
   return (
     <div className="w-full">
-      <div className="">
-        <div className="inline-flex justify-start rounded-md mr-4">
-          <button
-            className={`py-2 px-4 bg-accent text-white ${!isPlacingMode && 'opacity-75'} rounded-l-md hover:opacity-75`}
-            onClick={() => {
-              setIsPlacingMode(false);
-              if (!isPolygonClosed) {
-                handlePolygonClose(); // Close the polygon if it's not already closed
-              }
-            }}
-          >
-            <MousePointer />
-          </button>
-          <button
-            className={`py-2 px-4 bg-accent text-white ${isPlacingMode && 'opacity-75'} rounded-r-md hover:opacity-75`}
-            onClick={() => {
-              setIsPlacingMode(true);
-              setIsPolygonClosed(false); // Reopen the polygon when switching back to placing mode
-            }}
-          >
-            <Dot />
-          </button>
+      <div className="flex justify-between">
+        <div className="">
+          <div className="inline-flex justify-start rounded-md mr-4">
+            <button
+              className={`py-2 px-4 bg-accent text-white ${!isPlacingMode && 'opacity-75'} border border-white rounded-l-md hover:opacity-75`}
+              onClick={() => {
+                setIsPlacingMode(false);
+                if (!isPolygonClosed) {
+                  handlePolygonClose(); // Close the polygon if it's not already closed
+                }
+              }}
+            >
+              <MousePointer />
+            </button>
+            <button
+              className={`py-2 px-4 bg-accent text-white ${isPlacingMode && 'opacity-75'} border border-white rounded-r-md hover:opacity-75`}
+              onClick={() => {
+                setIsPlacingMode(true);
+                setIsPolygonClosed(false); // Reopen the polygon when switching back to placing mode
+              }}
+            >
+              <Dot />
+            </button>
+          </div>
+          <div className="inline-flex rounded-md">
+            <button
+              className="bg-accent text-white py-2 px-4 rounded-l-md border border-white hover:opacity-75"
+              onClick={handleUndo}
+              disabled={points.length === 0}
+            >
+              <Undo />
+            </button> 
+            <button
+              className="bg-accent text-white py-2 px-4 border border-white hover:opacity-75"
+              onClick={handleRedo}
+              disabled={redoStack.length === 0}
+            >
+              <Redo />
+            </button> 
+            <button
+              className="bg-accent text-white py-2 px-4 rounded-r-md border border-white hover:opacity-75"
+              onClick={handleReset}
+            >
+              <RotateCcw />
+            </button>
+          </div>
         </div>
-        <div className="inline-flex rounded-md">
+        <div className="">
           <button
-            className="bg-accent text-white py-2 px-4 rounded-l-md border border-white hover:opacity-75"
-            onClick={handleUndo}
-            disabled={points.length === 0}
+            className="bg-accent-dark text-white py-2 px-4 rounded-md border border-white hover:opacity-75"
+            onClick={handleGenerateReport}
           >
-            <Undo />
-          </button> 
-          <button
-            className="bg-accent text-white py-2 px-4 border border-white hover:opacity-75"
-            onClick={handleRedo}
-            disabled={redoStack.length === 0}
-          >
-            <Redo />
-          </button> 
-          <button
-            className="bg-accent text-white py-2 px-4 rounded-r-md border border-white hover:opacity-75"
-            onClick={handleReset}
-          >
-            <RotateCcw />
+            Generate Report
           </button>
         </div>
       </div>
@@ -237,24 +254,24 @@ export default function MapDrawing({ latitude: initialLatitude, longitude: initi
           onCenterChange={handleCenterChange}
         />
         {polygonPoints.length > 0 && (
-          <>
-            <Polygon
-              positions={polygonPoints}
-              pathOptions={{ color: 'black', fillColor: 'grey', fillOpacity: 0.5 }}
+        <>
+          <Polygon
+            positions={polygonPoints}
+            pathOptions={{ color: 'black', fillColor: 'grey', fillOpacity: 0.5 }}
+          />
+          {polygonPoints.map((point, index) => (
+            <CircleMarker
+              key={index}
+              center={point}
+              radius={2}
+              pathOptions={{ color: 'black' }}
+              eventHandlers={{
+                mousedown: () => setDraggedPointIndex(index),
+                mouseup: () => setDraggedPointIndex(null)  // Stop dragging on mouse up
+              }}
             />
-            {polygonPoints.map((point, index) => (
-              <CircleMarker
-                key={index}
-                center={point}
-                radius={2}
-                pathOptions={{ color: 'black' }}
-                eventHandlers={{
-                  mousedown: () => setDraggedPointIndex(index),
-                  mouseup: () => setDraggedPointIndex(null)  // Stop dragging on mouse up
-                }}
-              />
-            ))}
-          </>
+          ))}
+        </>
         )}
       </MapContainer>
     </div>

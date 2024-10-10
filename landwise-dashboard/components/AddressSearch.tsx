@@ -1,51 +1,80 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
-import { useLoadScript } from "@react-google-maps/api";
+import React, { useRef, useEffect, useState } from 'react';
 
 type AddressSearchProps = {
   onAddressSelect: (address: string, lat: number, lng: number, addressComponents: Record<string, string>) => void;
   prompt: string;
 };
 
-const libraries: any = ["places"];
-
 export default function AddressSearch({ onAddressSelect, prompt }: AddressSearchProps) {
-  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-    console.error("Google Maps API key is not set");
-    return null; //Implement some display to show google api key isn't working
-  }
-
+  const [googleApiKey, setGoogleApiKey] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
+  const [scriptLoaded, setScriptLoaded] = useState<boolean>(false);
+
+  // Fetch the API key from the server-side API route
+  const fetchGoogleMapsApiKey = async () => {
+    try {
+      const response = await fetch('/api/getGoogleApiKey');
+      const data = await response.json();
+        
+      if (data.apiKey) {
+        setGoogleApiKey(data.apiKey);
+      } else {
+        console.error('Failed to retrieve Google Maps API Key');
+      }
+    } catch (error) {
+      console.error('Error fetching Google Maps API key:', error);
+    }
+  };
+
+  // Dynamically load the Google Maps script
+  const loadGoogleMapsScript = (apiKey: string) => {
+    if (typeof window === "undefined" || scriptLoaded) return; // Avoid loading script multiple times
+
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setScriptLoaded(true);
+    document.head.appendChild(script);
+  };
 
   useEffect(() => {
-    if (!isLoaded || loadError || !inputRef.current) return; // Ensure inputRef is available
+    fetchGoogleMapsApiKey();
+  }, []);
 
-    const options = {
-      componentRestrictions: { country: "ca" }, // restrict to Canada
-      fields: ["formatted_address", "geometry", "address_components"], // include address components
-    };
+  useEffect(() => {
+    if (googleApiKey) {
+      loadGoogleMapsScript(googleApiKey);
+    }
+  }, [googleApiKey]);
 
-    // Initialize Autocomplete
-    const autocomplete = new google.maps.places.Autocomplete(inputRef.current, options);
+  useEffect(() => {
+    if (!scriptLoaded || !inputRef.current) return;
 
-    // Add the event listener
-    const placeChangedListener = autocomplete.addListener("place_changed", () => {
-      handlePlaceChanged(autocomplete); // Pass the autocomplete instance to the handler
+    const autocomplete = new google.maps.places.Autocomplete(inputRef.current!, {
+      componentRestrictions: { country: "ca" },
+      fields: ["formatted_address", "geometry", "address_components"],
     });
 
-    // Cleanup function to remove the listener and unbind all events
-    return () => {
-      google.maps.event.removeListener(placeChangedListener);
-      autocomplete.unbindAll();
-    };
-  }, [isLoaded, loadError]);
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place?.formatted_address && place?.geometry?.location && place?.address_components) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const addressComponents = extractAddressComponents(place.address_components);
+        onAddressSelect(place.formatted_address, lat, lng, addressComponents);
+      } else {
+        console.error("No place details available");
+      }
+    });
 
-  // Helper function to extract address components
+    return () => {
+      google.maps.event.clearInstanceListeners(autocomplete);
+    };
+  }, [scriptLoaded]);
+
   const extractAddressComponents = (addressComponents: google.maps.GeocoderAddressComponent[]) => {
     const componentForm: Record<string, string> = {};
 
@@ -62,19 +91,6 @@ export default function AddressSearch({ onAddressSelect, prompt }: AddressSearch
     });
 
     return componentForm;
-  };
-
-  const handlePlaceChanged = (autocomplete: google.maps.places.Autocomplete) => {
-    const place = autocomplete.getPlace(); // Use the passed autocomplete instance
-
-    if (place?.formatted_address && place?.geometry?.location && place?.address_components) {
-      const lat = place.geometry.location.lat();
-      const lng = place.geometry.location.lng();
-      const addressComponents = extractAddressComponents(place.address_components);
-      onAddressSelect(place.formatted_address, lat, lng, addressComponents);
-    } else {
-      console.error("No place details available");
-    }
   };
 
   return (

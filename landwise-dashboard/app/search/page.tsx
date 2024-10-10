@@ -7,12 +7,11 @@ import { useState, useEffect } from 'react';
 import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
-import MapDrawing from '@/components/MapDrawing';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
 
-// const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
+const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
 type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Float32Array | Float64Array;
 type LandUsePlanningCrop = "Flaxseed" | "Wheat" | "Barley" | "Oats" | "Canola" | "Peas" | "Corn" | "Soy";
@@ -44,7 +43,9 @@ export default function Search() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
-
+  const [landGeometry, setLandGeometry] = useState<number[][]>([]);
+  const [eeData, setEeData] = useState(null);
+    
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
     console.log(components);
       
@@ -60,6 +61,43 @@ export default function Search() {
     setLongitude(DEMO_ADDRESS.lng);
     setAddressComponents(DEMO_ADDRESS.components);
   };
+
+  const fetchEarthEngineData = async (points: number[][]) => {
+    console.log("Going to fetch data for:", points);
+    try {
+      const response = await fetch('/api/getEarthEngineData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ points }),
+      });
+      console.log("Response:", response);
+        
+      if (!response.ok) {
+        throw new Error('Failed to fetch data from the API');
+      }
+
+      const data = await response.json();
+      setEeData(data);
+      console.log('Fetched Earth Engine data:', data);
+      // You can now use the fetched data as needed
+    } catch (error) {
+      console.error('Error fetching Earth Engine data:', error);
+    }
+  };
+    
+  useEffect(() => {
+    if (landGeometry.length > 0) {
+      fetchEarthEngineData(landGeometry);
+    }
+  }, [landGeometry]);
+
+  useEffect(() => {
+    if (eeData) {
+      console.log("EE DATA:", eeData);
+    }
+  }, [eeData]);
     
 
   return (
@@ -139,13 +177,32 @@ export default function Search() {
                 </div>
               </section>
             </Container>
-            <Container>
+            <Container className="mb-4">
               <section id="Map">
                 <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
                   Map
                 </div>
                 <div className="w-full h-full flex justify-center items-center">
-                  <MapDrawing latitude={latitude} longitude={longitude} zoom={15} />
+                  <MapDrawing latitude={latitude} longitude={longitude} zoom={15} setLandGeometry={setLandGeometry} />
+                </div>
+              </section>
+            </Container>
+          </>
+        )}
+        {landGeometry.length > 0 && (
+          <>
+            <Container className="mb-4">
+              <section id='data'>
+                <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
+                  Data
+                </div>
+                <div className="">
+                  {landGeometry.map((point, index) => (
+                    <div key={index} className="pb-2">
+                      <span>Point {index + 1}:</span> 
+                      <span>Latitude: {point[0]}</span>, <span>Longitude: {point[1]}</span>
+                    </div>
+                  ))}
                 </div>
               </section>
             </Container>

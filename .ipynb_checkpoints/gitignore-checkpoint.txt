@@ -1,5 +1,0 @@
-landwise_env/
-landwise-dashboard/.env
-landwise-dashboard/.next/
-landwise-dashboard/node_modules/
-pmbc_parcel_fabric_poly_svw.gdb/
