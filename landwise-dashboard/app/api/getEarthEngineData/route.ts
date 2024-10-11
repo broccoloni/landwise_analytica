@@ -16,11 +16,11 @@ const years = ['2022'];
 // ];
 
 const cropNames = [
-  'Barley'
+  'Barley', 'Corn for grain', 'Oats',
 ];
 
 // const crops = [133, 147, 136, 158, 153, 154, 174, 155, 162, 146, 145, 163, 139];
-const crops = [133];
+const crops = [133, 147, 136];
 
 const bands = [
   'BRDF_Albedo_Band_Mandatory_Quality_Band1',
@@ -73,12 +73,11 @@ async function fescBand(image) {
 }
 
 async function retrieveCrops(geometry) {
-  const results = [];
+  const results = {};
 
-  for (const crop of crops) {
-      console.log(`Processing geometry for crop: ${cropNames[crops.indexOf(crop)]}`);
-      for (const year of years) {
-        console.log(`Year: ${year}`);
+  for (const year of years) {
+      for (const crop of crops) {
+        console.log(`Processing geometry for crop: ${cropNames[crops.indexOf(crop)]} of year ${year}`);
         try {
           var AAFC_mask = ee.ImageCollection('AAFC/ACI')
             .filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`)).first()
@@ -134,18 +133,17 @@ async function retrieveCrops(geometry) {
             scale: 50,
             maxPixels: 1e13
           });
+
+          if (!results[year]) {
+            results[year] = {};
+          }
             
-          results.push({
-            crop: cropNames[crops.indexOf(crop)],
-            year: year,
-            pixelValues: pixelValues
-          });
+          results[year][cropNames[crops.indexOf(crop)]] = pixelValues;
             
         } catch (error) {
           console.error(`Error processing crop ${cropNames[crops.indexOf(crop)]} for year ${year}:`, error);
         }
       }
-    
   }
   return results;
 }

@@ -7,6 +7,9 @@ import { useState, useEffect } from 'react';
 import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
+import { MapContainer, TileLayer } from 'react-leaflet';
+import Dropdown from '@/components/Dropdown';
+import { Loader2 } from 'lucide-react';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -14,13 +17,6 @@ const basePath = '';
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
 type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Float32Array | Float64Array;
-type LandUsePlanningCrop = "Flaxseed" | "Wheat" | "Barley" | "Oats" | "Canola" | "Peas" | "Corn" | "Soy";
-
-interface ColorBarProps {
-  vmin: number;
-  vmax: number;
-  numIntervals?: number;
-}
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
@@ -45,6 +41,12 @@ export default function Search() {
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
   const [landGeometry, setLandGeometry] = useState<number[][]>([]);
   const [eeData, setEeData] = useState(null);
+  const [years, setYears] = useState<number[]>([]);
+  const [curYear, setCurYear] = useState<number|null>(null);
+  const [crops, setCrops] = useState<string[]>([]);
+  const [curCrop, setCurCrop] = useState<string|null>(null);
+  const [curData, setCurData] = useState<any>(null);
+  const [loadingData, setLoadingData] = useState(true);
     
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
     console.log(components);
@@ -79,8 +81,27 @@ export default function Search() {
       }
 
       const data = await response.json();
-      setEeData(data);
+      setEeData(data.results);
+
+      const data_years = Object.keys(data.results);
+      setYears(data_years);
+
+      // Extract crops (keys of the first year's crops)
+      if (data_years.length > 0) {
+        const firstYear = data_years[0];
+        const data_crops = Object.keys(data.results[firstYear]);
+        setCrops(data_crops);
+
+        setCurYear(firstYear);
+
+        if (data_crops.length > 0) {
+          setCurCrop(data_crops[0]);
+        }
+      }
+        
       console.log('Fetched Earth Engine data:', data);
+
+      setLoadingData(false);
       // You can now use the fetched data as needed
     } catch (error) {
       console.error('Error fetching Earth Engine data:', error);
@@ -94,12 +115,57 @@ export default function Search() {
   }, [landGeometry]);
 
   useEffect(() => {
-    if (eeData) {
-      console.log("EE DATA:", eeData);
-    }
-  }, [eeData]);
-    
+    if (eeData && curYear && curCrop){
+      console.log(curYear, curCrop);
+      console.log("Cur Data Updated:", eeData[curYear][curCrop]);
 
+      setCurData(eeData[curYear][curCrop]);
+    }
+  }, [eeData,curYear,curCrop]);
+    
+  const PrintGeometry = () => {
+    if (landGeometry.length === 0) {
+      return null;
+    }
+    return (
+      <div className="">
+        {landGeometry.map((point, index) => (
+          <div key={index} className="pb-2">
+            <span className="mr-4">Point {index + 1}:</span> 
+            <span>Latitude: {point[0]}</span>, <span>Longitude: {point[1]}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const CropSelector = () => {
+    if (crops.length === 0 || !curCrop) {
+      return null;
+    }
+    return (
+      <Dropdown 
+        options={crops} 
+        selected={curCrop} 
+        onSelect={setCurCrop} 
+      />
+    );
+  };
+
+  const YearSelector = () => {
+    if (years.length === 0 || !curYear) {
+      return null;
+    }
+    return (
+      <Dropdown 
+        options={years} 
+        selected={curYear} 
+        onSelect={setCurYear} 
+        className="mr-2"
+      />
+    );
+  };
+    
   return (
     <div className={`${roboto.className} bg-accent-light text-black`}>
       <div className="relative m-4">
@@ -196,14 +262,16 @@ export default function Search() {
                 <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
                   Data
                 </div>
-                <div className="">
-                  {landGeometry.map((point, index) => (
-                    <div key={index} className="pb-2">
-                      <span>Point {index + 1}:</span> 
-                      <span>Latitude: {point[0]}</span>, <span>Longitude: {point[1]}</span>
-                    </div>
-                  ))}
-                </div>
+                {loadingData ? (
+                  <div className="flex justify-center h-full w-full my-20">
+                    <Loader2 className="h-20 w-20 animate-spin text-black" />
+                  </div>
+                ) : (
+                  <div className="flex">
+                    <YearSelector />
+                    <CropSelector />
+                  </div>  
+                )}
               </section>
             </Container>
           </>
