@@ -8,19 +8,19 @@ var privateKey = require('/landwise-analytica-service-key.json');
 // const years = ['2017', '2018', '2019', '2020', '2021', '2022'];
 const years = ['2022'];
 
-// const cropNames = [
-//   'Barley', 'Corn for grain', 'Oats', 'Soybeans', 'Canola', 
-//   'Flaxseed', 'Lentils', 'Mustard seed', 'Peas, dry', 
-//   'Wheat, spring', 'Wheat, winter remaining', 'Chick peas', 
-//   'Triticale'
-// ];
-
 const cropNames = [
-  'Barley', 'Corn for grain', 'Oats',
+  'Barley', 'Corn for grain', 'Oats', 'Soybeans', 'Canola', 
+  'Flaxseed', 'Lentils', 'Mustard seed', 'Peas, dry', 
+  'Wheat, spring', 'Wheat, winter remaining', 'Chick peas', 
+  'Triticale'
 ];
 
-// const crops = [133, 147, 136, 158, 153, 154, 174, 155, 162, 146, 145, 163, 139];
-const crops = [133, 147, 136];
+// const cropNames = [
+//   'Barley',
+// ];
+
+const crops = [133, 147, 136, 158, 153, 154, 174, 155, 162, 146, 145, 163, 139];
+// const crops = [133];
 
 const bands = [
   'BRDF_Albedo_Band_Mandatory_Quality_Band1',
@@ -58,7 +58,11 @@ async function fescBand(image) {
       var FPAR_adjusted = FPAR.add(0.0000001);
       var fesc = (NIR.multiply(NDVI).divide(FPAR_adjusted)).rename('fesc');
 
-      return image.addBands(fesc);
+      return image.addBands({
+        srcImg: fesc,
+        overwrite: true,
+      });
+        
     } else {
       console.log("Error: Not all necessary bands found (NIR, FPAR, NDVI)");
       console.log('NIR exists:', !!NIR);
@@ -134,11 +138,28 @@ async function retrieveCrops(geometry) {
             maxPixels: 1e13
           });
 
+          const clientSidePixelValues = await new Promise((resolve, reject) => {
+            pixelValues.evaluate((result, error) => {
+              if (error) {
+                console.error("Error evaluating pixel values:", error);
+                reject(error);
+              } else {
+                resolve(result);
+              }
+            });
+          });
+            
           if (!results[year]) {
             results[year] = {};
-          }
+          }        
             
-          results[year][cropNames[crops.indexOf(crop)]] = pixelValues;
+          // Debug logging for client-side pixel values
+          if (clientSidePixelValues) {
+            console.log("Client-side pixel values:", clientSidePixelValues);  
+            results[year][cropNames[crops.indexOf(crop)]] = clientSidePixelValues;
+          } else {
+            console.log("No client-side pixel values returned.");
+          }            
             
         } catch (error) {
           console.error(`Error processing crop ${cropNames[crops.indexOf(crop)]} for year ${year}:`, error);
@@ -149,10 +170,8 @@ async function retrieveCrops(geometry) {
 }
 
 export async function POST(req: NextRequest) {
-  console.log('POST request received');
   try {
     const { points } = await req.json();
-    console.log('Received points:', points);
       
     if (!points || !Array.isArray(points) || points.length === 0) {
       console.log('Invalid input');

@@ -65,7 +65,6 @@ export default function Search() {
   };
 
   const fetchEarthEngineData = async (points: number[][]) => {
-    console.log("Going to fetch data for:", points);
     try {
       const response = await fetch('/api/getEarthEngineData', {
         method: 'POST',
@@ -74,7 +73,6 @@ export default function Search() {
         },
         body: JSON.stringify({ points }),
       });
-      console.log("Response:", response);
         
       if (!response.ok) {
         throw new Error('Failed to fetch data from the API');
@@ -86,10 +84,15 @@ export default function Search() {
       const data_years = Object.keys(data.results);
       setYears(data_years);
 
+      console.log("Years available:", data_years);
+        
       // Extract crops (keys of the first year's crops)
       if (data_years.length > 0) {
         const firstYear = data_years[0];
         const data_crops = Object.keys(data.results[firstYear]);
+
+        console.log("Crops available:", data_crops);
+          
         setCrops(data_crops);
 
         setCurYear(firstYear);
@@ -119,7 +122,7 @@ export default function Search() {
       console.log(curYear, curCrop);
       console.log("Cur Data Updated:", eeData[curYear][curCrop]);
 
-      setCurData(eeData[curYear][curCrop]);
+      setCurData(eeData[curYear][curCrop].toArray());
     }
   }, [eeData,curYear,curCrop]);
     
