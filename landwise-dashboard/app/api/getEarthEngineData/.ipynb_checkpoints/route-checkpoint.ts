@@ -48,19 +48,17 @@ async function sampleDate(imgCollection, date) {
 
 async function fescBand(image) {
   try {
-    const NIR = image.select('sur_refl_b02');
-    const FPAR = image.select('Fpar_500m');
-    const NDVI = image.select('NDVI');
+    var NIR = image.select('sur_refl_b02');
+    var FPAR = image.select('Fpar_500m');
+    var NDVI = image.select('NDVI');
 
     if (NIR && FPAR && NDVI) {
-      console.log('Adding fesc band');
       
       // Avoid division by zero by adding a small value to FPAR
-      const FPAR_adjusted = FPAR.add(0.0000001);
-      const Fesc = NIR.multiply(NDVI).divide(FPAR_adjusted);
+      var FPAR_adjusted = FPAR.add(0.0000001);
+      var fesc = (NIR.multiply(NDVI).divide(FPAR_adjusted)).rename('fesc');
 
-      console.log('Fesc band created');
-      return image.addBands(Fesc.rename('fesc'));
+      return image.addBands(fesc);
     } else {
       console.log("Error: Not all necessary bands found (NIR, FPAR, NDVI)");
       console.log('NIR exists:', !!NIR);
@@ -82,13 +80,13 @@ async function retrieveCrops(geometry) {
       for (const year of years) {
         console.log(`Year: ${year}`);
         try {
-          const AAFC_mask = ee.ImageCollection('AAFC/ACI')
+          var AAFC_mask = ee.ImageCollection('AAFC/ACI')
             .filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`)).first()
             .eq(crop);
 
-          const MOD15A2H = ee.ImageCollection('MODIS/061/MOD15A2H').filterDate(`${year}-01-01`, `${year}-12-31`);
-          const MOD13Q1 = ee.ImageCollection('MODIS/061/MOD13Q1').filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`));
-          const MCD43A4 = ee.ImageCollection('MODIS/061/MCD43A4').filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`));
+          var MOD15A2H = ee.ImageCollection('MODIS/061/MOD15A2H').filterDate(`${year}-01-01`, `${year}-12-31`);
+          var MOD13Q1 = ee.ImageCollection('MODIS/061/MOD13Q1').filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`));
+          var MCD43A4 = ee.ImageCollection('MODIS/061/MCD43A4').filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`));
 
           const full_dates = await MOD13Q1.aggregate_array('system:time_start').getInfo();
           const dates = full_dates.map(timestamp => {
@@ -98,54 +96,51 @@ async function retrieveCrops(geometry) {
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
           });
-          console.log("Extracted dates:", dates);
             
           const combinedImages = [];
 
           for (const date of dates) {
-            const image_MOD13Q1 = await sampleDate(MOD13Q1, date);              
-            const image_MOD15A2H = await sampleDate(MOD15A2H, date);
-            const image_MCD43A4 = await sampleDate(MCD43A4, date);
-          
+            var image_MOD13Q1 = await sampleDate(MOD13Q1, date);              
+            var image_MOD15A2H = await sampleDate(MOD15A2H, date);
+            var image_MCD43A4 = await sampleDate(MCD43A4, date);
+              
             if (image_MOD13Q1 && image_MOD15A2H && image_MCD43A4) {
-              const combinedImage = image_MOD13Q1.addBands(image_MOD15A2H).addBands(image_MCD43A4);
+              var combinedImage = image_MOD13Q1.addBands({
+                srcImg: image_MOD15A2H,
+                overwrite: true,
+              }).addBands({
+                srcImg: image_MCD43A4,
+                overwrite: true,
+              });
               combinedImages.push(combinedImage);
             } else {
               console.log(`Skipping date ${date} due to missing image`);
             }
           }
 
-          // console.log("Combined Images:", combinedImages);
-
-          const vegReflectanceImages = ee.ImageCollection.fromImages(combinedImages);
-          console.log("veg reflectance images:", vegReflectanceImages);
-            
+          const vegReflectanceImages = ee.ImageCollection.fromImages(combinedImages);            
           const vegReflectance = vegReflectanceImages.map(fescBand);
-          console.log("veg reflectance:", vegReflectance);
+          var vegReflectanceBands = vegReflectance.toBands();
+          var pixelArea = ee.Image.pixelArea();
 
-          let vegReflectanceBands = vegReflectance.toBands();
-          const pixelAreaBand = ee.Image.pixelArea();
-          vegReflectanceBands = vegReflectanceBands.addBands(pixelAreaBand).unmask(0).updateMask(AAFC_mask);
+          vegReflectanceBands = vegReflectanceBands.addBands({
+            srcImg: pixelArea,
+            overwrite: true,
+          }).unmask(0).updateMask(AAFC_mask);
             
           const pixelValues = await vegReflectanceBands.reduceRegion({
             reducer: ee.Reducer.toList(),
             geometry: geometry,
             scale: 50,
             maxPixels: 1e13
-          }).getInfo();
-
-          console.log("pixel values:", pixelValues);
+          });
             
           results.push({
             crop: cropNames[crops.indexOf(crop)],
             year: year,
-            geometry: geometry,
             pixelValues: pixelValues
           });
-
-          console.log("results:", results);
             
-          console.log(`Pixel values for ${cropNames[crops.indexOf(crop)]} in ${year}:`, pixelValues);
         } catch (error) {
           console.error(`Error processing crop ${cropNames[crops.indexOf(crop)]} for year ${year}:`, error);
         }
@@ -185,10 +180,7 @@ export async function POST(req: NextRequest) {
         });
     });
 
-    const multiPoint = ee.Geometry.MultiPoint(points);
-
-    console.log("multiPoint:", multiPoint);
-      
+    const multiPoint = ee.Geometry.MultiPoint(points);      
     const results = await retrieveCrops(multiPoint);
 
     return NextResponse.json({ message: 'Processing completed', results }, { status: 200 });
