@@ -42,38 +42,65 @@ const bands = [
   'sur_refl_b03', 'sur_refl_b07'
 ];
 
+async function getOverlappingDates(collections) {
+  return new Promise((resolve, reject) => {
+    try {
+      var all_timestamps = collections.map(function(collection) {
+        return collection.aggregate_array('system:time_start');
+      });
+
+      var flattened_timestamps = ee.List(all_timestamps).flatten();
+      var date_strings = flattened_timestamps.map(function(timestamp) {
+        return ee.Date(ee.Number(timestamp)).format('YYYY-MM-dd');
+      });
+
+      var frequencyDict = date_strings.reduce(ee.Reducer.frequencyHistogram());
+
+      var valid_timestamps = ee.Dictionary(frequencyDict);
+      var overlapping_dates = valid_timestamps.keys().map(function(key) {
+        var count = ee.Number(valid_timestamps.get(key));
+        var date = ee.Date(ee.Number(key)).format('YYYY-MM-dd');
+        return ee.Algorithms.If(count.eq(collections.length), date, null);
+      }).filter(ee.Filter.notNull(['item']));
+
+      overlapping_dates.evaluate(function(dates) {
+        resolve(dates);
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 async function sampleDate(imgCollection, date) {
   return imgCollection.filterDate(date).first();
 }
 
 async function fescBand(image) {
-  try {
-    var NIR = image.select('sur_refl_b02');
-    var FPAR = image.select('Fpar_500m');
-    var NDVI = image.select('NDVI');
+  return new Promise((resolve, reject) => {
+    try {
+      var NIR = image.select('sur_refl_b02');
+      var FPAR = image.select('Fpar_500m');
+      var NDVI = image.select('NDVI');
 
-    if (NIR && FPAR && NDVI) {
-      
-      // Avoid division by zero by adding a small value to FPAR
-      var FPAR_adjusted = FPAR.add(0.0000001);
-      var fesc = (NIR.multiply(NDVI).divide(FPAR_adjusted)).rename('fesc');
+      if (NIR && FPAR && NDVI) {
+        var FPAR_adjusted = FPAR.add(0.0000001);
+        var fesc = NIR.multiply(NDVI).divide(FPAR_adjusted).rename('fesc');
 
-      return image.addBands({
-        srcImg: fesc,
-        overwrite: true,
-      });
-        
-    } else {
-      console.log("Error: Not all necessary bands found (NIR, FPAR, NDVI)");
-      console.log('NIR exists:', !!NIR);
-      console.log('FPAR exists:', !!FPAR);
-      console.log('NDVI exists:', !!NDVI);
+        var updatedImage = image.addBands({
+          srcImg: fesc,
+          overwrite: true,
+        });
+
+        resolve(updatedImage);
+      } else {
+        resolve(image);
+      }
+    } catch (error) {
+      console.error('Error in fescBand function:', error);
+      reject(error);
     }
-  } catch (error) {
-    console.error('Error in fescBand function:', error);
-  }
-
-  return image;
+  });
 }
 
 async function retrieveCrops(geometry) {
@@ -90,77 +117,65 @@ async function retrieveCrops(geometry) {
           var MOD15A2H = ee.ImageCollection('MODIS/061/MOD15A2H').filterDate(`${year}-01-01`, `${year}-12-31`);
           var MOD13Q1 = ee.ImageCollection('MODIS/061/MOD13Q1').filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`));
           var MCD43A4 = ee.ImageCollection('MODIS/061/MCD43A4').filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`));
-
-          const full_dates = await MOD13Q1.aggregate_array('system:time_start').getInfo();
-          const dates = full_dates.map(timestamp => {
-            const date = new Date(timestamp);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-          });
+        
+          const overlappingDates = await getOverlappingDates([MOD15A2H, MOD13Q1, MCD43A4]);
+          if (overlappingDates.length === 0) {
+            throw new Error("No overlapping dates");
+          }
             
-          const combinedImages = [];
-
-          for (const date of dates) {
+          var combinedImagesPromises = overlappingDates.map(async function(date) {
             var image_MOD13Q1 = await sampleDate(MOD13Q1, date);              
             var image_MOD15A2H = await sampleDate(MOD15A2H, date);
             var image_MCD43A4 = await sampleDate(MCD43A4, date);
-              
+          
             if (image_MOD13Q1 && image_MOD15A2H && image_MCD43A4) {
-              var combinedImage = image_MOD13Q1.addBands({
-                srcImg: image_MOD15A2H,
-                overwrite: true,
-              }).addBands({
-                srcImg: image_MCD43A4,
-                overwrite: true,
-              });
-              combinedImages.push(combinedImage);
+              return ee.Image(image_MOD13Q1).addBands(image_MOD15A2H).addBands(image_MCD43A4);
             } else {
               console.log(`Skipping date ${date} due to missing image`);
+              return null;
             }
-          }
+          });
+        
+          var combinedImages = await Promise.all(combinedImagesPromises);
+          combinedImages = combinedImages.filter(image => image !== null);            
 
-          const vegReflectanceImages = ee.ImageCollection.fromImages(combinedImages);            
-          const vegReflectance = vegReflectanceImages.map(fescBand);
+          var vegReflectanceImagesPromises = combinedImages.map(fescBand);
+          var vegReflectanceImages = await Promise.all(vegReflectanceImagesPromises);
+          var vegReflectance = ee.ImageCollection(vegReflectanceImages);
           var vegReflectanceBands = vegReflectance.toBands();
+            
           var pixelArea = ee.Image.pixelArea();
-
           vegReflectanceBands = vegReflectanceBands.addBands({
             srcImg: pixelArea,
             overwrite: true,
           }).unmask(0).updateMask(AAFC_mask);
             
-          const pixelValues = await vegReflectanceBands.reduceRegion({
+          var pixelValues = await vegReflectanceBands.reduceRegion({
             reducer: ee.Reducer.toList(),
             geometry: geometry,
-            scale: 50,
+            scale: 500,
             maxPixels: 1e13
-          });
-
-          const clientSidePixelValues = await new Promise((resolve, reject) => {
-            pixelValues.evaluate((result, error) => {
-              if (error) {
-                console.error("Error evaluating pixel values:", error);
-                reject(error);
-              } else {
-                resolve(result);
-              }
-            });
           });
             
           if (!results[year]) {
             results[year] = {};
           }        
+                      
+          // results[year][cropNames[crops.indexOf(crop)]] = pixelValues;
             
-          // Debug logging for client-side pixel values
-          if (clientSidePixelValues) {
-            console.log("Client-side pixel values:", clientSidePixelValues);  
-            results[year][cropNames[crops.indexOf(crop)]] = clientSidePixelValues;
-          } else {
-            console.log("No client-side pixel values returned.");
-          }            
-            
+          // Evaluate the pixel values with error handling
+          var evaluatedPixelValues = await new Promise((resolve, reject) => {
+            pixelValues.evaluate(function(evaluatedPixelValues, error) {
+              if (error) {
+                reject(new Error(error));
+              } else {
+                resolve(evaluatedPixelValues);
+              }
+            });
+          });
+          
+          results[year][cropNames[crops.indexOf(crop)]] = evaluatedPixelValues;
+
         } catch (error) {
           console.error(`Error processing crop ${cropNames[crops.indexOf(crop)]} for year ${year}:`, error);
         }

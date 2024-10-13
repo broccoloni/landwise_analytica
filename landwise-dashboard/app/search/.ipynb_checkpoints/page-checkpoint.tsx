@@ -10,6 +10,7 @@ import AddressSearch from '@/components/AddressSearch';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import Dropdown from '@/components/Dropdown';
 import { Loader2 } from 'lucide-react';
+import ee from '@google/earthengine';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -79,33 +80,39 @@ export default function Search() {
       }
 
       const data = await response.json();
-      setEeData(data.results);
 
-      const data_years = Object.keys(data.results);
-      setYears(data_years);
-
-      console.log("Years available:", data_years);
-        
-      // Extract crops (keys of the first year's crops)
-      if (data_years.length > 0) {
-        const firstYear = data_years[0];
-        const data_crops = Object.keys(data.results[firstYear]);
-
-        console.log("Crops available:", data_crops);
+      if (data && data.results) {    
+        setEeData(data.results);
           
-        setCrops(data_crops);
+        const data_years = Object.keys(data.results);
+        setYears(data_years);
+ 
+        console.log("Years available:", data_years);
+        
+        // Extract crops (keys of the first year's crops)
+        if (data_years.length > 0) {
+          const firstYear = data_years[0];
+          const data_crops = Object.keys(data.results[firstYear]);
 
-        setCurYear(firstYear);
+          console.log("Crops available:", data_crops);
 
-        if (data_crops.length > 0) {
-          setCurCrop(data_crops[0]);
+          console.log("first year:", firstYear);
+          console.log("first crop:", data_crops[0]);
+          console.log("r1:", data.results[firstYear]);
+          console.log("r2:", data.results[firstYear][data_crops[0]]);
+
+          setCrops(data_crops);
+          setCurYear(firstYear);
+
+          if (data_crops.length > 0) {
+            setCurCrop(data_crops[0]);
+          }
         }
-      }
+      }        
         
       console.log('Fetched Earth Engine data:', data);
-
       setLoadingData(false);
-      // You can now use the fetched data as needed
+        
     } catch (error) {
       console.error('Error fetching Earth Engine data:', error);
     }
@@ -122,7 +129,7 @@ export default function Search() {
       console.log(curYear, curCrop);
       console.log("Cur Data Updated:", eeData[curYear][curCrop]);
 
-      setCurData(eeData[curYear][curCrop].toArray());
+      setCurData(eeData[curYear][curCrop]);
     }
   }, [eeData,curYear,curCrop]);
     
@@ -270,10 +277,13 @@ export default function Search() {
                     <Loader2 className="h-20 w-20 animate-spin text-black" />
                   </div>
                 ) : (
-                  <div className="flex">
-                    <YearSelector />
-                    <CropSelector />
-                  </div>  
+                  <div className="">
+                    <div className="flex">
+                      <YearSelector />
+                      <CropSelector />
+                    </div>  
+                    <PrintGeometry />
+                  </div>
                 )}
               </section>
             </Container>
