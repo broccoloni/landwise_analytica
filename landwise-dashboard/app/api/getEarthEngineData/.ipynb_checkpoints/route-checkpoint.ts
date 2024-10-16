@@ -3,6 +3,8 @@ import ee from '@google/earthengine';
 import fs from 'fs';
 import path from 'path';
 
+// NOTE: Longitude must come first in google earth engine.
+
 var privateKey = require('/landwise-analytica-service-key.json');
 
 // const years = ['2017', '2018', '2019', '2020', '2021', '2022'];
@@ -103,83 +105,103 @@ async function fescBand(image) {
   });
 }
 
+async function reduceAndEvaluateImage(image, geometry) {
+  if (!image || !geometry) {
+    throw new Error('Invalid image or geometry provided');
+  }
+  try {         
+    var reduced_image = image.reduceRegion({
+      reducer: ee.Reducer.toList(),
+      geometry: geometry,
+      scale: 30,
+      maxPixels: 1e13
+    });
+
+    return new Promise((resolve, reject) => {
+      reduced_image.evaluate((result, error) => {
+        if (error) {
+          console.error('Error evaluating the reduced image:', error);
+          reject(new Error(`Failed to evaluate image: ${error.message}`));
+        } else {
+          resolve(result);  // Resolve the Promise with the result
+        }
+      });
+    });
+      
+  } catch (error) {
+    console.error('Error in reduceAndEvaluateImage function:', error.message);
+    throw error;
+  }
+}
+
 async function retrieveCrops(geometry) {
   const results = {};
 
   for (const year of years) {
+    try {
+      // Contains Leaf Area Index (LAI) and Fraction of Photosynthetically Active Radiation (FPAR)
+      var MOD15A2H = ee.ImageCollection('MODIS/061/MOD15A2H').filterDate(`${year}-01-01`,`${year}-12-31`);
+
+      // Contains Normalized Difference Vegetation Index (NDVI) and the Enhanced Vegetation Index (EVI)
+      var MOD13Q1 = ee.ImageCollection('MODIS/061/MOD13Q1').filterDate(`${year}-01-01`,`${year}-12-31`);
+
+      // Contains surface reflectance values
+      var MCD43A4 = ee.ImageCollection('MODIS/061/MCD43A4').filterDate(`${year}-01-01`,`${year}-12-31`);
+    
+      const overlappingDates = await getOverlappingDates([MOD15A2H, MOD13Q1, MCD43A4]);
+      if (overlappingDates.length === 0) {
+        throw new Error("No overlapping dates");
+      }
+        
+      var combinedImagesPromises = overlappingDates.map(async function(date) {
+        var image_MOD13Q1 = await sampleDate(MOD13Q1, date);              
+        var image_MOD15A2H = await sampleDate(MOD15A2H, date);
+        var image_MCD43A4 = await sampleDate(MCD43A4, date);
+      
+        if (image_MOD13Q1 && image_MOD15A2H && image_MCD43A4) {
+          return ee.Image(image_MOD13Q1).addBands(image_MOD15A2H).addBands(image_MCD43A4);
+        } else {
+          console.log(`Skipping date ${date} due to missing image`);
+          return null;
+        }
+      });
+    
+      var combinedImages = await Promise.all(combinedImagesPromises);
+      combinedImages = combinedImages.filter(image => image !== null);            
+
+      var vegReflectanceImagesPromises = combinedImages.map(fescBand);
+      var vegReflectanceImages = await Promise.all(vegReflectanceImagesPromises);
+      var vegReflectance = ee.ImageCollection(vegReflectanceImages);
+      var vegReflectanceBands = vegReflectance.toBands();
+        
+      var pixelArea = ee.Image.pixelArea();
+      vegReflectanceBands = vegReflectanceBands.addBands({
+        srcImg: pixelArea,
+        overwrite: true,
+      }).unmask(0)
+
+      // Get the historical land use
+      var AAFC_image = ee.ImageCollection('AAFC/ACI')
+          .filterDate('2022-01-01','2022-12-31')
+          .first();
+      var AAFCData = await reduceAndEvaluateImage(AAFC_image, geometry);
+        
+      results[year] = { AAFCData };
+        
       for (const crop of crops) {
         console.log(`Processing geometry for crop: ${cropNames[crops.indexOf(crop)]} of year ${year}`);
-        try {
-          var AAFC_mask = ee.ImageCollection('AAFC/ACI')
-            .filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`)).first()
-            .eq(crop);
-
-          var MOD15A2H = ee.ImageCollection('MODIS/061/MOD15A2H').filterDate(`${year}-01-01`, `${year}-12-31`);
-          var MOD13Q1 = ee.ImageCollection('MODIS/061/MOD13Q1').filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`));
-          var MCD43A4 = ee.ImageCollection('MODIS/061/MCD43A4').filter(ee.Filter.date(`${year}-01-01`, `${year}-12-31`));
-        
-          const overlappingDates = await getOverlappingDates([MOD15A2H, MOD13Q1, MCD43A4]);
-          if (overlappingDates.length === 0) {
-            throw new Error("No overlapping dates");
-          }
-            
-          var combinedImagesPromises = overlappingDates.map(async function(date) {
-            var image_MOD13Q1 = await sampleDate(MOD13Q1, date);              
-            var image_MOD15A2H = await sampleDate(MOD15A2H, date);
-            var image_MCD43A4 = await sampleDate(MCD43A4, date);
+    
+        vegReflectanceBands.updateMask(AAFC_image.eq(crop));
+                  
+        // returns an image where each 'pixel' has the value from each of the 30+ bands 
+        var pixelValues = await reduceAndEvaluateImage(vegReflectanceBands, geometry);
           
-            if (image_MOD13Q1 && image_MOD15A2H && image_MCD43A4) {
-              return ee.Image(image_MOD13Q1).addBands(image_MOD15A2H).addBands(image_MCD43A4);
-            } else {
-              console.log(`Skipping date ${date} due to missing image`);
-              return null;
-            }
-          });
-        
-          var combinedImages = await Promise.all(combinedImagesPromises);
-          combinedImages = combinedImages.filter(image => image !== null);            
+        results[year][cropNames[crops.indexOf(crop)]] = pixelValues;
 
-          var vegReflectanceImagesPromises = combinedImages.map(fescBand);
-          var vegReflectanceImages = await Promise.all(vegReflectanceImagesPromises);
-          var vegReflectance = ee.ImageCollection(vegReflectanceImages);
-          var vegReflectanceBands = vegReflectance.toBands();
-            
-          var pixelArea = ee.Image.pixelArea();
-          vegReflectanceBands = vegReflectanceBands.addBands({
-            srcImg: pixelArea,
-            overwrite: true,
-          }).unmask(0).updateMask(AAFC_mask);
-            
-          var pixelValues = await vegReflectanceBands.reduceRegion({
-            reducer: ee.Reducer.toList(),
-            geometry: geometry,
-            scale: 500,
-            maxPixels: 1e13
-          });
-            
-          if (!results[year]) {
-            results[year] = {};
-          }        
-                      
-          // results[year][cropNames[crops.indexOf(crop)]] = pixelValues;
-            
-          // Evaluate the pixel values with error handling
-          var evaluatedPixelValues = await new Promise((resolve, reject) => {
-            pixelValues.evaluate(function(evaluatedPixelValues, error) {
-              if (error) {
-                reject(new Error(error));
-              } else {
-                resolve(evaluatedPixelValues);
-              }
-            });
-          });
-          
-          results[year][cropNames[crops.indexOf(crop)]] = evaluatedPixelValues;
-
-        } catch (error) {
-          console.error(`Error processing crop ${cropNames[crops.indexOf(crop)]} for year ${year}:`, error);
-        }
       }
+    } catch (error) {
+      console.error(`Error processing crop ${cropNames[crops.indexOf(crop)]} for year ${year}:`, error);
+    }
   }
   return results;
 }
@@ -212,8 +234,8 @@ export async function POST(req: NextRequest) {
         });
     });
 
-    const multiPoint = ee.Geometry.MultiPoint(points);      
-    const results = await retrieveCrops(multiPoint);
+    const polygon = ee.Geometry.Polygon(points);      
+    const results = await retrieveCrops(polygon);
 
     return NextResponse.json({ message: 'Processing completed', results }, { status: 200 });
   } catch (error) {

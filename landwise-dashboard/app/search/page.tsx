@@ -142,7 +142,7 @@ export default function Search() {
         {landGeometry.map((point, index) => (
           <div key={index} className="pb-2">
             <span className="mr-4">Point {index + 1}:</span> 
-            <span>Latitude: {point[0]}</span>, <span>Longitude: {point[1]}</span>
+            <span>Longitude: {point[0]}</span>, <span>Latitude: {point[1]}</span>
           </div>
         ))}
       </div>
