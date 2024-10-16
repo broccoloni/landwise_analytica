@@ -105,7 +105,7 @@ async function fescBand(image) {
   });
 }
 
-async function reduceAndEvaluateImage(image, geometry) {
+async function reduceAndEvaluateImage(image, geometry, scale) {
   if (!image || !geometry) {
     throw new Error('Invalid image or geometry provided');
   }
@@ -113,7 +113,7 @@ async function reduceAndEvaluateImage(image, geometry) {
     var reduced_image = image.reduceRegion({
       reducer: ee.Reducer.toList(),
       geometry: geometry,
-      scale: 30,
+      scale: scale,
       maxPixels: 1e13
     });
 
@@ -182,9 +182,9 @@ async function retrieveCrops(geometry) {
 
       // Get the historical land use
       var AAFC_image = ee.ImageCollection('AAFC/ACI')
-          .filterDate('2022-01-01','2022-12-31')
+          .filterDate(`${year}-01-01`,`${year}-12-31`)
           .first();
-      var AAFCData = await reduceAndEvaluateImage(AAFC_image, geometry);
+      var AAFCData = await reduceAndEvaluateImage(AAFC_image, geometry, 30);
         
       results[year] = { AAFCData };
         
@@ -194,7 +194,7 @@ async function retrieveCrops(geometry) {
         vegReflectanceBands.updateMask(AAFC_image.eq(crop));
                   
         // returns an image where each 'pixel' has the value from each of the 30+ bands 
-        var pixelValues = await reduceAndEvaluateImage(vegReflectanceBands, geometry);
+        var pixelValues = await reduceAndEvaluateImage(vegReflectanceBands, geometry, 50);
           
         results[year][cropNames[crops.indexOf(crop)]] = pixelValues;
 
