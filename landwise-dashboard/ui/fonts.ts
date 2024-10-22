@@ -18,6 +18,8 @@ export const nunito = Nunito({
     subsets: ['latin'] 
 });
 
-export const raleway = Raleway({ 
-    subsets: ['latin'] 
+export const raleway = Raleway({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  display: 'swap',
 });

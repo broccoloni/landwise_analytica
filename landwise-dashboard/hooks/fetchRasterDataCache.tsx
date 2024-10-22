@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import chroma from 'chroma-js';
+import { valuesToNames } from '@/types/valuesToNames';
+import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
+import { fromArrayBuffer } from "geotiff";
 
 export const fetchRasterDataCache = (basePath: string) => {
   const [rasterDataCache, setRasterDataCache] = useState<Record<number, any>>({});
@@ -26,37 +29,73 @@ export const fetchRasterDataCache = (basePath: string) => {
   return rasterDataCache;
 };
 
+  const colors = chroma.scale('Set1').colors(Object.keys(valuesToNames).length);
+
 // Function to fetch and process the raster data
 const fetchRasterData = async (url: string) => {
+  // Fetch and parse the TIFF raster data
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch ${url}`);
 
   const arrayBuffer = await response.arrayBuffer();
   const tiff = await fromArrayBuffer(arrayBuffer);
   const image = await tiff.getImage();
-  const data: TypedArray[] = await image.readRasters() as TypedArray[]; 
+  const data: TypedArray[] = await image.readRasters() as TypedArray[];
   const width = image.getWidth();
   const height = image.getHeight();
 
+  // Flatten the raster data array
   const flattenedData = Array.from(data[0]);
+
+  // Count occurrences of each value
   const counts: Record<number, number> = {};
   flattenedData.forEach((value) => {
     counts[value] = (counts[value] || 0) + 1;
   });
-
-  // Calculate the threshold for 1% of the total values
+    
+  // Remove values that are only present less than 2% of the time
   const totalValues = flattenedData.length;
-  const threshold = totalValues * 0.011;
+  const threshold = totalValues * 0.02;
+
+  console.log("Counts:", counts);
+  console.log("Threshold:", threshold);
+    
   flattenedData.forEach((value, index) => {
     if (counts[value] < threshold) {
       flattenedData[index] = 0;
     }
   });
 
+  // Initialize counters for total and farmable area
+  let totalSum = 0;
+  let cropSum = 0;
+  const majorCommodityCropsGrown: string[] = [];
+
+  // Calculate the total area and the area used for major commodity crops
+  Object.keys(counts).forEach((key) => {
+    const numericKey = parseInt(key);
+    const commodityName = valuesToNames[numericKey];
+
+    if (majorCommodityCrops.includes(commodityName)) {
+      const cropCount = counts[numericKey];
+      cropSum += cropCount; 
+      if (!majorCommodityCropsGrown.includes(commodityName) && cropCount >= threshold) {
+        majorCommodityCropsGrown.push(commodityName);
+      }
+    }
+    if (numericKey != 0) {
+      totalSum += counts[numericKey];
+    }
+  });
+
+  const farmablePct = cropSum / totalSum;
+  const area = totalSum;
+
+  // Generate image URL and legend
   const imageUrl = rasterToImageURL(flattenedData, width, height);
   const uniqueElements = new Set(flattenedData);
   const legend: Record<string, string> = {};
-  
+
   uniqueElements.forEach((value) => {
     const name = valuesToNames[value];
     if (name && name !== 'Cloud') {
@@ -64,16 +103,19 @@ const fetchRasterData = async (url: string) => {
       legend[name] = colors[index];
     }
   });
+
   const bbox = image.getBoundingBox();
 
-  return { imageUrl, legend, bbox };
+  return { imageUrl, legend, bbox, farmablePct, area, majorCommodityCropsGrown };
 };
+
 
 // Function to convert raster data into an image URL
 const rasterToImageURL = (rasterData: any, width: number, height: number) => {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
+  const scaleFactor=10;
   const ctx = canvas.getContext("2d");
 
   if (!ctx) {

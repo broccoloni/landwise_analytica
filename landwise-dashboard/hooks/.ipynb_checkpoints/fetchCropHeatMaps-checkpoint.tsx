@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import chroma from 'chroma-js';
 
 export const fetchCropHeatMaps = (basePath: string) => {
   const [landUsePlanningImages, setLandUsePlanningImages] = useState<{ [key in LandUsePlanningCrop]: string }>({} as any);
   const landUsePlanningCrops: LandUsePlanningCrop[] = ["Flaxseed", "Wheat", "Barley", "Oats", "Canola", "Peas", "Corn", "Soy"];
+  const scaleFactor=10;
 
   useEffect(() => {
     const preloadAndProcessImages = () => {
@@ -58,6 +60,7 @@ export const fetchCropHeatMaps = (basePath: string) => {
 
 // Helper function to apply heat map to the image data
 const applyHeatMapToImageData = (data: TypedArray) => {
+  const heatmapColors = ['black', 'red', 'yellow', 'white'];
   const heatMapScale = chroma.scale(heatmapColors).correctLightness().domain([0, 1]);
   for (let i = 0; i < data.length; i += 4) {
     const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;

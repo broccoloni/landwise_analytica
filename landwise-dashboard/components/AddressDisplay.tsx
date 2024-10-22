@@ -17,7 +17,6 @@ type AddressProps = {
 };
 
 const AddressDisplay = ({ addressComponents, latitude, longitude }: AddressProps) => {
-  console.log("AddressComponents:", addressComponents);
   return (
     <div className="w-full">
       <div className="flex justify-between mb-2">
@@ -33,7 +32,7 @@ const AddressDisplay = ({ addressComponents, latitude, longitude }: AddressProps
         <p>{addressComponents.postal_code}</p>
       </div>
       <div className="flex justify-between mb-2">
-        <p className="mr-4">State:</p>
+        <p className="mr-4">State / Province:</p>
         <p>{addressComponents.administrative_area_level_1}</p>
       </div>
       <div className="flex justify-between mb-2">

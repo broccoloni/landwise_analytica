@@ -26,8 +26,8 @@ const SummaryScore = () => {
 
   return (
     <div className="w-full">
-      <div className={`${merriweather.className} text-lg`}>
-        {`Property Score: ${overallScore}%`}
+      <div className={`${montserrat.className} text-2xl`}>
+        {`Score: ${overallScore}%`}
       </div>
       <div className="" style={{ height: '300px' }}>
         <Plot
@@ -71,8 +71,8 @@ const SummaryScore = () => {
             },
             margin: {
               t: 20,
-              l: 180,
-              r: 110,
+              l: 140,
+              r: 100,
               b: 20,
             },
             showlegend: false,

@@ -4,6 +4,7 @@ import chroma from 'chroma-js';
 export const fetchCropHeatMaps = (basePath: string) => {
   const [landUsePlanningImages, setLandUsePlanningImages] = useState<{ [key in LandUsePlanningCrop]: string }>({} as any);
   const landUsePlanningCrops: LandUsePlanningCrop[] = ["Flaxseed", "Wheat", "Barley", "Oats", "Canola", "Peas", "Corn", "Soy"];
+  const scaleFactor=10;
 
   useEffect(() => {
     const preloadAndProcessImages = () => {
