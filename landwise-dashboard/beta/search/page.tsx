@@ -11,6 +11,7 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import Dropdown from '@/components/Dropdown';
 import { Loader2 } from 'lucide-react';
 import ee from '@google/earthengine';
+import HistoricalLandUse from '@/components/HistoricalLandUse';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -47,6 +48,7 @@ export default function Search() {
   const [crops, setCrops] = useState<string[]>([]);
   const [curCrop, setCurCrop] = useState<string|null>(null);
   const [curData, setCurData] = useState<any>(null);
+  const [historicalLandUse, setHistoricalLandUse] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(true);
     
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
@@ -81,25 +83,16 @@ export default function Search() {
 
       const data = await response.json();
 
-      if (data && data.results) {    
-        setEeData(data.results);
+      if (data && data.cropData && data.historicalLandUse) {    
+        setEeData(data.cropData);
+        setHistoricalLandUse(data.historicalLandUse);
           
-        const data_years = Object.keys(data.results);
+        const data_years = Object.keys(data.cropData);
         setYears(data_years);
- 
-        console.log("Years available:", data_years);
-        
-        // Extract crops (keys of the first year's crops)
+         
         if (data_years.length > 0) {
           const firstYear = data_years[0];
-          const data_crops = Object.keys(data.results[firstYear]);
-
-          console.log("Crops available:", data_crops);
-
-          console.log("first year:", firstYear);
-          console.log("first crop:", data_crops[0]);
-          console.log("r1:", data.results[firstYear]);
-          console.log("r2:", data.results[firstYear][data_crops[0]]);
+          const data_crops = Object.keys(data.cropData[firstYear]);
 
           setCrops(data_crops);
           setCurYear(firstYear);
@@ -125,8 +118,13 @@ export default function Search() {
   }, [landGeometry]);
 
   useEffect(() => {
+    if (historicalLandUse) {
+      console.log("Historical Land Use:", historicalLandUse);
+    }
+  }, [historicalLandUse]);
+
+  useEffect(() => {
     if (eeData && curYear && curCrop){
-      console.log(curYear, curCrop);
       console.log("Cur Data Updated:", eeData[curYear][curCrop]);
 
       setCurData(eeData[curYear][curCrop]);
@@ -283,6 +281,7 @@ export default function Search() {
                       <CropSelector />
                     </div>  
                     <PrintGeometry />
+                    <HistoricalLandUse historicalLandUse = {historicalLandUse} />
                   </div>
                 )}
               </section>

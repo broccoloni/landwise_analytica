@@ -21,8 +21,6 @@ const ChangeView = ({ lat, lng, zoom }: { lat: number; lng: number; zoom: number
 
 const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox=[], imageUrl='' }) => {
   const [isClient, setIsClient] = useState(false);
-
-  console.log(latitude, longitude, zoom, bbox, imageUrl);
     
   useEffect(() => {
     setIsClient(true);
