@@ -11,7 +11,7 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import Dropdown from '@/components/Dropdown';
 import { Loader2 } from 'lucide-react';
 import ee from '@google/earthengine';
-import HistoricalLandUse from '@/components/HistoricalLandUse';
+// import HistoricalLandUse from '@/components/HistoricalLandUse';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -270,7 +270,9 @@ export default function Search() {
                 <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
                   Data
                 </div>
-                {loadingData ? (
+                <PrintGeometry />
+
+                {/* {loadingData ? (
                   <div className="flex justify-center h-full w-full my-20">
                     <Loader2 className="h-20 w-20 animate-spin text-black" />
                   </div>
@@ -283,7 +285,7 @@ export default function Search() {
                     <PrintGeometry />
                     <HistoricalLandUse historicalLandUse = {historicalLandUse} />
                   </div>
-                )}
+                )} */}
               </section>
             </Container>
           </>

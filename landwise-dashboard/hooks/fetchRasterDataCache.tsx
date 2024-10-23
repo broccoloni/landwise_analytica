@@ -63,7 +63,7 @@ const fetchRasterData = async (url: string) => {
     }
   });
 
-  // Initialize counters for total and farmable area
+  // Initialize counters for total area and usable land pct
   let totalSum = 0;
   let cropSum = 0;
   const majorCommodityCropsGrown: string[] = [];
@@ -85,7 +85,7 @@ const fetchRasterData = async (url: string) => {
     }
   });
 
-  const farmablePct = cropSum / totalSum;
+  const usableLandPct = cropSum / totalSum;
   const area = totalSum;
 
   // Generate image URL and legend
@@ -103,7 +103,7 @@ const fetchRasterData = async (url: string) => {
 
   const bbox = image.getBoundingBox();
 
-  return { imageUrl, legend, bbox, farmablePct, area, majorCommodityCropsGrown };
+  return { imageUrl, legend, bbox, usableLandPct, area, majorCommodityCropsGrown };
 };
 
 
