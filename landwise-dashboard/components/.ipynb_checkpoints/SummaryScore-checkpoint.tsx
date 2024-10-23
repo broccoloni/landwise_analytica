@@ -71,8 +71,8 @@ const SummaryScore = () => {
             },
             margin: {
               t: 20,
-              l: 140,
-              r: 100,
+              l: 160,
+              r: 120,
               b: 20,
             },
             showlegend: false,

@@ -1,44 +1,24 @@
 'use client';
 
-import Container from '@/components/Container';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
-import { useRouter } from 'next/navigation';
-import Trends from '@/components/Trends';
-import chroma from 'chroma-js';
-import { fromArrayBuffer } from "geotiff";
-import { useState, useEffect, useRef, Suspense } from 'react';
-import { Slider } from "@mui/material";
-import Dropdown from '@/components/Dropdown';
-import { MoveRight, ArrowRight, Loader2 } from 'lucide-react';
-import NextImage from 'next/image';
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 
+import Container from '@/components/Container';
 import AddressDisplay from '@/components/AddressDisplay';
-
 import SummaryScore from '@/components/SummaryScore';
+
 import EstimatedYield from '@/components/EstimatedYield';
 import Climate from '@/components/Climate';
 import InfrastructureAccessibility from '@/components/InfrastructureAccessibility';
 import Topography from '@/components/Topography';
 import EconomicViability from '@/components/EconomicViability';
 
-import ColorBar from '@/components/ColorBar';
-
 import { fetchRasterDataCache } from '@/hooks/fetchRasterDataCache';
 import { fetchCropHeatMaps } from '@/hooks/fetchCropHeatMaps';
+import { fetchYearlyYields } from '@/hooks/fetchYearlyYields';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
-
-const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
-
-type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Float32Array | Float64Array;
-
-interface ColorBarProps {
-  vmin: number;
-  vmax: number;
-  numIntervals?: number;
-}
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
@@ -57,8 +37,6 @@ const DEMO_ADDRESS = {
 };
 
 export default function Home() {
-  const router = useRouter();
-  const scaleFactor=10;
   const isDemoAddress = true;
   const address = DEMO_ADDRESS.address;
   const lat = DEMO_ADDRESS.lat;
@@ -69,15 +47,55 @@ export default function Home() {
   const renderActiveComponent = () => {
     switch (activeTab) {
       case 'EstimatedYield':
-        return <EstimatedYield />;
+        return (
+          <EstimatedYield
+            lat={lat}
+            lng={lng}
+            rasterDataCache={rasterDataCache}
+            cropHeatMaps={cropHeatMaps}
+            yearlyYields={yearlyYields}
+          />
+        );
       case 'Climate':
-        return <Climate />;
+        return (
+          <Climate
+            lat={lat}
+            lng={lng}
+            rasterDataCache={rasterDataCache}
+            cropHeatMaps={cropHeatMaps}
+            yearlyYields={yearlyYields}
+          />
+        );      
       case 'InfrastructureAccessibility':
-        return <InfrastructureAccessibility />;
+        return (
+          <InfrastructureAccessibility
+            lat={lat}
+            lng={lng}
+            rasterDataCache={rasterDataCache}
+            cropHeatMaps={cropHeatMaps}
+            yearlyYields={yearlyYields}
+          />
+        );
       case 'Topography':
-        return <Topography />;
+        return (
+          <Topography
+            lat={lat}
+            lng={lng}
+            rasterDataCache={rasterDataCache}
+            cropHeatMaps={cropHeatMaps}
+            yearlyYields={yearlyYields}
+          />
+        );
       case 'EconomicViability':
-        return <EconomicViability />;
+        return (
+          <EconomicViability
+            lat={lat}
+            lng={lng}
+            rasterDataCache={rasterDataCache}
+            cropHeatMaps={cropHeatMaps}
+            yearlyYields={yearlyYields}
+          />
+        );
       default:
         return null;
     }
@@ -93,9 +111,7 @@ export default function Home() {
     
   const rasterDataCache = fetchRasterDataCache(basePath);
   const cropHeatMaps = fetchCropHeatMaps(basePath);
-
-  console.log("rasterDataCache", rasterDataCache);
-  console.log("HeatMaps:", cropHeatMaps);
+  const yearlyYields = fetchYearlyYields(basePath);
     
   return (
     <div className={`${roboto.className} bg-accent-light text-black`}>

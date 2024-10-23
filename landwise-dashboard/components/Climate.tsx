@@ -1,7 +1,15 @@
 import React from 'react';
 import { merriweather } from '@/ui/fonts';
 
-const Climate = () => {
+interface ClimateProps {
+  lat: string;
+  lng: string;
+  rasterDataCache: any;
+  cropHeatMaps: any;
+  yearlyYields: any;
+}
+
+const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: ClimateProps) => {
   return (
     <div>
       <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>

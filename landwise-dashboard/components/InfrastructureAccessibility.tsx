@@ -1,7 +1,15 @@
 import React from 'react';
 import { merriweather } from '@/ui/fonts';
 
-const InfrastructureAccessibility = () => {
+interface InfrastructureAccessibilityProps {
+  lat: string;
+  lng: string;
+  rasterDataCache: any;
+  cropHeatMaps: any;
+  yearlyYields: any;
+}
+
+const InfrastructureAccessibility = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: InfrastructureAccessibilityProps) => {
   return (
     <div>
       <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>

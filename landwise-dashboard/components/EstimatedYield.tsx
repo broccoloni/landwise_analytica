@@ -1,7 +1,20 @@
 import React from 'react';
 import { merriweather } from '@/ui/fonts';
+import Dropdown from '@/components/Dropdown';
+import Loading from '@/components/Loading';
+import dynamic from 'next/dynamic';
 
-const EstimatedYield = () => {
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+
+interface EstimatedYieldProps {
+  lat: string;
+  lng: string;
+  rasterDataCache: any;
+  cropHeatMaps: any;
+  yearlyYields: any;
+}
+
+const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: EstimatedYieldProps) => {
   return (
     <div>
       <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
@@ -21,8 +34,11 @@ const EstimatedYield = () => {
       </div>
       <div className="mb-4">
         <div className="text-lg font-semibold">Pest and Disease Resistance</div>
-        <p>Historical impact of pests or diseases on crops. Rating based on the average annual yield loss due to pests compared to regional averages.</p>
+        <p>Historical impact of pests or diseases on crops. Rating based on the average annual yield loss due to pests compared to regional averages.
+        </p>
       </div>
+    
+        
     </div>
   );
 };

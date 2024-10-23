@@ -56,9 +56,6 @@ const fetchRasterData = async (url: string) => {
   // Remove values that are only present less than 2% of the time
   const totalValues = flattenedData.length;
   const threshold = totalValues * 0.02;
-
-  console.log("Counts:", counts);
-  console.log("Threshold:", threshold);
     
   flattenedData.forEach((value, index) => {
     if (counts[value] < threshold) {
