@@ -104,9 +104,66 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: T
         Topography
       </div>
 
+      {/* Size & Layout Section */}
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg`}>Size & Layout</div>
+        {data && data?.bbox && data?.imageUrl && data.legend ? (
+          <div className="flex w-full">
+            <div className="w-[40%] mt-16 p-4">
+              <div className="flex justify-between mb-2">
+                <div className="">Property Area:</div>
+                <div className="flex">
+                  <div className="mr-2">{avgArea?.toFixed(2)} m&sup2;</div>
+                  <div>{(avgArea / sqMetersPerAcre).toFixed(2)} ac</div>
+                </div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">Historical Cropland Area ({(avgUsableLandPct * 100)?.toFixed(2)}%):</div>
+                <div className="flex">
+                  <div className="mr-2">{(avgArea * avgUsableLandPct)?.toFixed(2)} m&sup2;</div>
+                  <div>{(avgArea / sqMetersPerAcre * avgUsableLandPct)?.toFixed(2)} ac</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-[60%] flex-row">
+              <div className="flex w-full">
+                <div className="flex-row w-full">
+                  <div className="flex justify-center items-center h-16">
+                    <div className={`${montserrat.className} mr-8`}>Year:</div>
+                    <div className="w-56">
+                      <Slider
+                        value={landUsageYear ?? landUsageYears[0]}
+                        onChange={(event, newValue) => setLandUsageYear(newValue as number)}
+                        min={Math.min(...landUsageYears)}
+                        max={Math.max(...landUsageYears)}
+                        step={1}
+                        marks={landUsageYears.map((year) => ({
+                          value: year,
+                          label: (year === Math.min(...landUsageYears) || year === Math.max(...landUsageYears) || year === landUsageYear)
+                            ? year.toString()
+                            : ''
+                        }))}
+                        valueLabelDisplay="auto"
+                      />
+                    </div>
+                  </div>
+                  <MapImage latitude={lat} longitude={lng} zoom={15} bbox={data.bbox} imageUrl={data.imageUrl} />
+                </div>
+                <div className="ml-2 mt-16">
+                  <LandUsageLegend legend={data.legend} />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Loading />
+        )}
+      </div>
+        
       {/* Elevation Section */}
-      <div className="mb-4 w-full">
-        <div className={`${montserrat.className} text-lg font-semibold`}>Elevation</div>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg`}>Elevation</div>
         {elevationData && curElevationData ? (
           <div className="flex w-full">
             <div className="w-[40%] p-4 mt-16">
@@ -183,75 +240,18 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: T
       </div>
         
       {/* Water Pooling Potential */}
-      <div className="mb-4 w-full">
-        <div className={`${montserrat.className} text-lg font-semibold`}>Water Pooling Potential</div>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg`}>Water Pooling Potential</div>
         <p>Based on slope/gradient of land. Could also quantify based on the amount of land with different slopes, e.g., 75% of land has less than a 3% slope.</p>
       </div>
 
-      {/* Size & Layout Section */}
-      <div className="mb-4 w-full">
-        <div className={`${montserrat.className} text-lg font-semibold`}>Size & Layout</div>
-        {data && data?.bbox && data?.imageUrl && data.legend ? (
-          <div className="flex w-full">
-            <div className="w-[40%] mt-16 p-4">
-              <div className="flex justify-between mb-2">
-                <div className="">Property Area:</div>
-                <div className="flex">
-                  <div className="mr-2">{avgArea?.toFixed(2)} m&sup2;</div>
-                  <div>{(avgArea / sqMetersPerAcre).toFixed(2)} ac</div>
-                </div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="">Historical Cropland Area ({(avgUsableLandPct * 100)?.toFixed(2)}%):</div>
-                <div className="flex">
-                  <div className="mr-2">{(avgArea * avgUsableLandPct)?.toFixed(2)} m&sup2;</div>
-                  <div>{(avgArea / sqMetersPerAcre * avgUsableLandPct)?.toFixed(2)} ac</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="w-[60%] flex-row">
-              <div className="flex w-full">
-                <div className="flex-row w-full">
-                  <div className="flex justify-center items-center h-16">
-                    <div className={`${montserrat.className} mr-8`}>Year:</div>
-                    <div className="w-56">
-                      <Slider
-                        value={landUsageYear ?? landUsageYears[0]}
-                        onChange={(event, newValue) => setLandUsageYear(newValue as number)}
-                        min={Math.min(...landUsageYears)}
-                        max={Math.max(...landUsageYears)}
-                        step={1}
-                        marks={landUsageYears.map((year) => ({
-                          value: year,
-                          label: (year === Math.min(...landUsageYears) || year === Math.max(...landUsageYears) || year === landUsageYear)
-                            ? year.toString()
-                            : ''
-                        }))}
-                        valueLabelDisplay="auto"
-                      />
-                    </div>
-                  </div>
-                  <MapImage latitude={lat} longitude={lng} zoom={15} bbox={data.bbox} imageUrl={data.imageUrl} />
-                </div>
-                <div className="ml-2 mt-16">
-                  <LandUsageLegend legend={data.legend} />
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <Loading />
-        )}
-      </div>
-
       {/* Additional Sections */}
-      <div className="mb-4 w-full">
+      <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg`}>Wind Exposure</div>
         <p>Impact of wind on crops and soil erosion. Use a local wind map to quantify average wind speeds or directional exposure.</p>
       </div>
 
-      <div className="mb-4 w-full">
+      <div className="py-4">
         <div className={`${montserrat.className} text-lg`}>Drainage Systems</div>
         <p>Presence and effectiveness of natural or man-made drainage systems.</p>
       </div>
