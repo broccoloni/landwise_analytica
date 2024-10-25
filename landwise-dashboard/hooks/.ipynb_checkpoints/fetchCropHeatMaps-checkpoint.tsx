@@ -22,7 +22,7 @@ export const fetchCropHeatMaps = (basePath: string) => {
       const promises = majorCommodityCrops.map((crop) => {
         return new Promise<void>((resolve, reject) => {
           const img = new Image();
-          img.src = `${basePath}/demo/ag_tips/${crop}.png`;
+          img.src = `${basePath}/demo/crop_heat_maps/${crop}.png`;
     
           img.onload = () => {
             const canvas = document.createElement("canvas");

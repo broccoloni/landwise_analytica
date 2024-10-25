@@ -4,35 +4,59 @@ import { valuesToNames } from '@/types/valuesToNames';
 import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 import { fromArrayBuffer } from "geotiff";
 
+const scaleFactor=10;
+const metersPerPixel = 30;
+
 export const fetchRasterDataCache = (basePath: string) => {
   const [rasterDataCache, setRasterDataCache] = useState<Record<number, any>>({});
 
   useEffect(() => {
-    const fetchAllRasterData = async () => {
+    const fetchYearlyRasterData = async () => {
       const years = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021];
       const rasterDataForYears: Record<number, any> = {};
       try {
         for (const yr of years) {
-          const rasterFile = `${basePath}/demo/land_history/prior_inventory/${yr}.tif`;
-          const data = await fetchRasterData(rasterFile);
+          const rasterFile = `${basePath}/demo/raster_data/${yr}.tif`;
+          const { image } = await fetchRasterImage(rasterFile);
+          const data = await fetchYearlyData(image);
           rasterDataForYears[yr] = data;
         }
-        setRasterDataCache(rasterDataForYears);
+        setRasterDataCache(prev => ({
+          ...prev,
+          ...rasterDataForYears
+        }));
       } catch (error) {
         console.error('Error fetching raster data:', error);
       }
     };
-
-    fetchAllRasterData();
+      
+    const fetchElevationRasterData = async () => {
+      try {
+        const rasterFile = `${basePath}/demo/raster_data/elevation.tif`;
+        const { image } = await fetchRasterImage(rasterFile);
+        const data = await fetchElevationData(image);
+          
+        setRasterDataCache(prev => ({
+          ...prev,
+          elevation: data
+        }));
+      } catch (error) {
+        console.error('Error fetching raster data:', error);
+      }
+    };
+  
+      
+    fetchYearlyRasterData();
+    fetchElevationRasterData();
   }, [basePath]);
 
   return rasterDataCache;
 };
 
-  const colors = chroma.scale('Set1').colors(Object.keys(valuesToNames).length);
+const colors = chroma.scale('Set1').colors(Object.keys(valuesToNames).length);
 
 // Function to fetch and process the raster data
-const fetchRasterData = async (url: string) => {
+const fetchRasterImage = async (url: string) => {
   // Fetch and parse the TIFF raster data
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch ${url}`);
@@ -40,11 +64,11 @@ const fetchRasterData = async (url: string) => {
   const arrayBuffer = await response.arrayBuffer();
   const tiff = await fromArrayBuffer(arrayBuffer);
   const image = await tiff.getImage();
-  const data: TypedArray[] = await image.readRasters() as TypedArray[];
-  const width = image.getWidth();
-  const height = image.getHeight();
+  return { image };
+};
 
-  // Flatten the raster data array
+const fetchYearlyData = async (image: any) => {
+  const data: TypedArray[] = await image.readRasters() as TypedArray[];
   const flattenedData = Array.from(data[0]);
 
   // Count occurrences of each value
@@ -89,7 +113,9 @@ const fetchRasterData = async (url: string) => {
   const area = totalSum;
 
   // Generate image URL and legend
-  const imageUrl = rasterToImageURL(flattenedData, width, height);
+  const width = image.getWidth();
+  const height = image.getHeight();
+  const imageUrl = await yearlyDataToImageURL(flattenedData, width, height);
   const uniqueElements = new Set(flattenedData);
   const legend: Record<string, string> = {};
 
@@ -106,13 +132,10 @@ const fetchRasterData = async (url: string) => {
   return { imageUrl, legend, bbox, usableLandPct, area, majorCommodityCropsGrown };
 };
 
-
-// Function to convert raster data into an image URL
-const rasterToImageURL = (rasterData: any, width: number, height: number) => {
+const yearlyDataToImageURL = (rasterData: any, width: number, height: number) => {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const scaleFactor=10;
   const ctx = canvas.getContext("2d");
 
   if (!ctx) {
@@ -146,3 +169,172 @@ const rasterToImageURL = (rasterData: any, width: number, height: number) => {
   scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
   return scaledCanvas.toDataURL();
 };
+
+const fetchElevationData = async (image: any) => {
+  const data: TypedArray[] = await image.readRasters() as TypedArray[];
+  const flattenedData = Array.from(data[0]);
+
+  // Remove nans and zeros from calculations
+  const validData = flattenedData.filter((value) => !isNaN(value) && value !== null && value !== 0);
+
+  const minElevation = Math.min(...validData);
+  const maxElevation = Math.max(...validData);
+  const avg = validData.reduce((acc, val) => acc + val, 0) / validData.length;
+
+  const std = Math.sqrt(
+    validData.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / validData.length
+  );
+
+  const width = image.getWidth();
+  const height = image.getHeight();
+  const elevationUrl = await elevationDataToImageURL(flattenedData, width, height, minElevation, maxElevation, 0);
+
+  const { slope, minSlope, maxSlope } = calculateSlope(flattenedData, width, height);
+  const slopeUrl = await elevationDataToImageURL(slope, width-2, height-2, minSlope, maxSlope, null);
+    
+  const { convexity, minConvexity, maxConvexity } = calculateConvexity(flattenedData, width, height);
+  const convexityUrl = await elevationDataToImageURL(convexity, width-2, height-2, minConvexity, maxConvexity, null);
+    
+    
+  const bbox = image.getBoundingBox();
+  return { bbox, avg, std, elevationUrl, minElevation, maxElevation, slopeUrl, minSlope, maxSlope, convexityUrl, minConvexity, maxConvexity};
+};
+
+const elevationDataToImageURL = (rasterData: any, width: number, height: number, min: number, max: number, transparentVal: number|null) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error("Failed to get canvas 2D context");
+  }
+
+  ctx.imageSmoothingEnabled = false;
+  const imageData = ctx.createImageData(width, height);
+  const colorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([min, max]);
+
+  for (let i = 0; i < rasterData.length; i++) {
+    const value = rasterData[i];
+    
+    if (value === transparentVal) {
+      imageData.data[i * 4 + 3] = 0;
+    } else {
+      const color = colorScale(value);
+      const [r, g, b] = color.rgb();
+      
+      imageData.data[i * 4] = r;
+      imageData.data[i * 4 + 1] = g;
+      imageData.data[i * 4 + 2] = b;
+      imageData.data[i * 4 + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  const scaledCanvas = document.createElement("canvas");
+  scaledCanvas.width = width * scaleFactor;
+  scaledCanvas.height = height * scaleFactor;
+  const scaledCtx = scaledCanvas.getContext("2d");
+
+  if (!scaledCtx) {
+      throw new Error("Failed to get scaled canvas 2D context");
+  }
+
+  scaledCtx.imageSmoothingEnabled = false;
+  scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+  return scaledCanvas.toDataURL();
+};
+
+function calculateSlope(elevationData: number[], width: number, height: number) {
+  const slope: (number | null)[] = [];
+  let minSlope: number | null = null;
+  let maxSlope: number | null = null;
+
+  function getElevation(i: number, j: number) {
+    const index = i * width + j;
+    return elevationData[index] ?? NaN; // Handle any invalid index by returning NaN
+  }
+
+  if (metersPerPixel === 0 || isNaN(metersPerPixel)) {
+    console.error("Invalid metersPerPixel value:", metersPerPixel);
+    return { slope: [], minSlope: null, maxSlope: null };
+  }
+
+  for (let i = 1; i < height - 1; i++) {
+    for (let j = 1; j < width - 1; j++) {
+      const p = getElevation(i, j);
+      const pl = getElevation(i, j - 1);
+      const pr = getElevation(i, j + 1);
+      const pu = getElevation(i - 1, j);
+      const pd = getElevation(i + 1, j);
+
+      // Check if any of the elevations are 0
+      if ([p, pl, pr, pu, pd].some(val => val === 0)) {
+        slope.push(null);
+        continue;
+      }
+
+      const slopeX = (pr - pl) / (2 * metersPerPixel);
+      const slopeY = (pd - pu) / (2 * metersPerPixel);
+      const overallSlope = Math.sqrt(Math.pow(slopeX, 2) + Math.pow(slopeY, 2));
+
+      if (!isNaN(overallSlope)) {
+        if (minSlope === null || overallSlope < minSlope) {
+          minSlope = overallSlope;
+        }
+        if (maxSlope === null || overallSlope > maxSlope) {
+          maxSlope = overallSlope;
+        }
+        slope.push(overallSlope);
+      } else {
+        console.warn("Invalid slope value at", { i, j, overallSlope });
+        slope.push(null);
+      }
+    }
+  }
+
+  return { slope, minSlope, maxSlope };
+}
+
+
+function calculateConvexity(elevationData: number[], width: number, height: number) {
+  const convexity: (number | null)[] = [];
+  let minConvexity: number | null = null;
+  let maxConvexity: number | null = null;
+
+  function getElevation(i: number, j: number) {
+    const index = i * width + j;
+    return elevationData[index] ?? NaN;
+
+  }
+    
+  for (let i = 1; i < height - 1; i++) {
+    for (let j = 1; j < width - 1; j++) {
+      const p = getElevation(i, j);
+      const pl = getElevation(i, j - 1);
+      const pr = getElevation(i, j + 1);
+      const pu = getElevation(i - 1, j);
+      const pd = getElevation(i + 1, j);
+
+      // Check if any of the elevations are 0
+      if ([p, pl, pr, pu, pd].some(val => val === 0)) {
+        convexity.push(null);
+        continue;
+      }
+
+      const secondDerivativeX = (pr - 2 * p + pl) / Math.pow(metersPerPixel, 2);
+      const secondDerivativeY = (pd - 2 * p + pu) / Math.pow(metersPerPixel, 2);
+      const xyconvexity = secondDerivativeX + secondDerivativeY;
+        
+      if (minConvexity === null || xyconvexity < minConvexity) {
+        minConvexity = xyconvexity;
+      }
+      if (maxConvexity === null || xyconvexity > maxConvexity) {
+        maxConvexity = xyconvexity;
+      }
+      convexity.push(xyconvexity);
+    }
+  }
+  return { convexity, minConvexity, maxConvexity };
+}
