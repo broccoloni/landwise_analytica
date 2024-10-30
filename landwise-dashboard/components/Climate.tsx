@@ -1,5 +1,10 @@
-import React from 'react';
-import { montserrat, roboto, merriweather } from '@/ui/fonts';
+import React, { useState, useEffect } from 'react';
+import { montserrat, merriweather } from '@/ui/fonts';
+import Dropdown from '@/components/Dropdown';
+import { Slider } from "@mui/material";
+import dynamic from 'next/dynamic';
+
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface ClimateProps {
   lat: string;
@@ -7,33 +12,303 @@ interface ClimateProps {
   rasterDataCache: any;
   cropHeatMaps: any;
   yearlyYields: any;
+  weatherData: any;
 }
 
-const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: ClimateProps) => {
+type heatUnit = "Corn Heat Units (CHU)" | "Growing Degree Day (GDD)";
+const heatUnits: heatUnit[] = [
+  "Corn Heat Units (CHU)",
+  "Growing Degree Day (GDD)"
+];
+
+const monthNames = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: ClimateProps) => {
+  const [years, setYears] = useState<number|null>(null);
+
+  // For precipitation
+  const [precipYear, setPrecipYear] = useState<number | null>(null);
+
+  // For temperature suitability
+  const [tempYear, setTempYear] = useState<number | null>(null);
+  const [tempData, setTempData] = useState<any>(null);
+
+  // For Growing Season 
+  const [growingSeasonData, setGrowingSeasonData] = useState<{ year: number; length: number; start: string; end: string }[]>([]);
+  const [earliestFirstFrost, setEarliestFirstFrost] = useState<string>('');
+  const [latestFirstFrost, setLatestFirstFrost] = useState<string>('');
+  const [earliestLastFrost, setEarliestLastFrost] = useState<string>('');
+  const [latestLastFrost, setLatestLastFrost] = useState<string>('');
+  const [shortestGrowingSeason, setShortestGrowingSeason] = useState<string>('');
+  const [longestGrowingSeason, setLongestGrowingSeason] = useState<string>('');
+  const growingSeasonNumTicks = 30;
+
+  useEffect(() => {
+    console.log(weatherData);
+    if (weatherData) {
+      const dataYears = Object.keys(weatherData).map(Number);
+      setYears(dataYears);
+        
+      if (precipYear === null) {
+        setPrecipYear(dataYears[0]);
+      }
+      if (tempYear === null) {
+        setTempYear(dataYears[0]);
+      }
+
+      // For Growing Season
+      const getDayOfYear = (date) => {
+        const startOfYear = new Date(date.getFullYear(), 0, 0);
+        const diff = date - startOfYear;
+        return Math.floor(diff / (1000 * 60 * 60 * 24));
+      };
+        
+      const lengthsData = dataYears.map((year) => {
+        const yearlyData = weatherData[year];
+        const startDate = new Date(yearlyData?.lastFrost);
+        const endDate = new Date(yearlyData?.firstFrost);
+        return {
+          year,
+          length: yearlyData?.growingSeasonLength,
+          start: getDayOfYear(startDate),
+          end: getDayOfYear(endDate),
+          lastFrost: yearlyData?.lastFrost,
+          firstFrost: yearlyData?.firstFrost,
+        };
+      });
+
+      // Filter out entries with null growing season lengths
+      const filteredData = lengthsData.filter(data => data.length !== null);
+      setGrowingSeasonData(filteredData);
+
+      const formatDateToMonthName = (dateString) => {
+        const date = new Date(dateString);
+        const month = monthNames[date.getMonth()];
+        const day = date.getDate();
+        return `${month} ${day}`;
+      };
+        
+      // Calculate growing season metrics
+      if (filteredData.length > 0) {
+        // Function to extract month and day as a comparable string
+        const getMonthDayString = (dateString) => {
+          const date = new Date(dateString);
+          return `${date.getMonth() + 1}-${date.getDate()}`; // Format as "MM-DD"
+        };
+
+        // Get month-day representations of first and last frost dates
+        const firstFrostDays = filteredData.map(data => getMonthDayString(data.firstFrost));
+        const lastFrostDays = filteredData.map(data => getMonthDayString(data.lastFrost));
+
+        // Calculate earliest and latest first frost (ignoring year)
+        const earliestFirstFrost = firstFrostDays.reduce((earliest, current) => 
+          earliest < current ? earliest : current
+        );
+        const latestFirstFrost = firstFrostDays.reduce((latest, current) => 
+          latest > current ? latest : current
+        );
+
+        setEarliestFirstFrost(formatDateToMonthName(earliestFirstFrost));
+        setLatestFirstFrost(formatDateToMonthName(latestFirstFrost));
+
+        // Calculate earliest and latest last frost (ignoring year)
+        const earliestLastFrost = lastFrostDays.reduce((earliest, current) => 
+          earliest < current ? earliest : current
+        );
+        const latestLastFrost = lastFrostDays.reduce((latest, current) => 
+          latest > current ? latest : current
+        );
+
+        setEarliestLastFrost(formatDateToMonthName(earliestLastFrost));
+        setLatestLastFrost(formatDateToMonthName(latestLastFrost));
+
+        // Calculate shortest and longest growing season
+        const seasonLengths = filteredData.map(data => data.length);
+        const shortestSeason = Math.min(...seasonLengths);
+        const longestSeason = Math.max(...seasonLengths);
+        setShortestGrowingSeason(`${shortestSeason} days`);
+        setLongestGrowingSeason(`${longestSeason} days`);
+      }
+    }
+  }, [weatherData]);
+
+  const prepareTempDataForPlot = (data, name: string) => {
+    const xValues = Object.keys(data);
+    const yValues = Object.values(data);
+    return {
+      x: xValues,
+      y: yValues,
+      type: 'scatter',
+      mode: 'lines+markers',
+      name: name,
+    };
+  }
+    
+  useEffect(() => {
+    if (weatherData && tempYear) {
+      const data = weatherData[tempYear];
+      setTempData([
+        prepareTempDataForPlot(data.cornHeatUnits,'Corn Heat Units (CHU)'),
+        prepareTempDataForPlot(data.GDD0,'Growing Degree Days (GDD), Base Temp. 0\u00B0C'),
+        prepareTempDataForPlot(data.GDD5,'Growing Degree Days (GDD), Base Temp. 5\u00B0C'),
+        prepareTempDataForPlot(data.GDD10,'Growing Degree Days (GDD), Base Temp. 10\u00B0C'),
+        prepareTempDataForPlot(data.GDD15,'Growing Degree Days (GDD), Base Temp. 15\u00B0C'),
+      ]);
+    }  
+  }, [tempYear, weatherData]);
+
   return (
     <div>
       <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
         Climate
       </div>
-      <div className="mb-4">
-        <div className={`${montserrat.className} text-lg font-semibold`}>Rainfall Patterns</div>
-        <p>Historical and projected rainfall distribution throughout the year. Quantified using an average mm/year compared to regional norms, plus a "rainfall reliability score" based on consistency.</p>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Rainfall Patterns</div>
+        <p>Historical and projected rainfall distribution throughout the year.</p>
+        {/* Your rainfall chart can go here */}
       </div>
-      <div className="mb-4">
-        <div className={`${montserrat.className} text-lg font-semibold`}>Temperature Suitability</div>
-        <p>Alignment of temperature ranges with crop requirements. Could give a score based on how well the property’s temperature range matches the optimal range for crops that exceed regional levels.</p>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Temperature Suitability</div>
+        <div className="flex">
+          <div className="w-[40%]">
+            Something about the temperature
+          </div>
+          <div className="w-[60%]">
+            <div className="flex-row justify-center items-center">
+              <div className="flex justify-center items-center text-center">
+                <div className="mr-8">
+                  Year:
+                </div>
+                {years && (
+                  <div className="w-56">
+                    <Slider
+                      value={tempYear ?? years[0]}
+                      onChange={(event, newValue) => setTempYear(newValue as number)}
+                      min={Math.min(...years)}
+                      max={Math.max(...years)}
+                      step={1}
+                      marks={years.map((year) => ({
+                        value: year,
+                        label: (year === Math.min(...years) || year === Math.max(...years) || year === tempYear)
+                          ? year.toString()
+                          : ''
+                      }))}
+                      valueLabelDisplay="auto"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="">
+                {tempData && (
+                <Plot
+                  data={tempData}
+                  layout={{
+                    xaxis: { title: 'Date' },
+                    yaxis: { title: 'Cumulative Heat Units' },
+                    margin: {
+                      t: 20,
+                      b: 40,
+                      l: 60,
+                      r: 20
+                    },
+                    legend: {
+                      x: 0.02,
+                      y: 0.98,
+                      xanchor: 'left',
+                      yanchor: 'top',
+                      orientation: 'v',
+                      bgcolor: 'rgba(255, 255, 255, 0.5)',
+                    },
+                  }}
+                />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="mb-4">
-        <div className={`${montserrat.className} text-lg font-semibold`}>Growing Season Length</div>
-        <p>Number of frost-free or warm days suitable for growing crops. Quantifiable as the number of frost-free days compared to specific crop needs.</p>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Growing Season Length</div>
+        <div className="flex">
+          <div className="w-[40%]">
+            <div className = "mt-4">
+              <div className="flex justify-between mb-2">
+                <div className="">Earliest First Frost Date:</div>
+                <div>{earliestFirstFrost}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">Latest First Frost Date:</div>
+                <div>{latestFirstFrost}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">Earliest Last Frost Date:</div>
+                <div>{earliestLastFrost}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">Lastest Last Frost Date:</div>
+                <div>{latestLastFrost}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">Shortest Growing Season:</div>
+                <div>{shortestGrowingSeason}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">Longest Growing Season:</div>
+                <div>{longestGrowingSeason}</div>
+              </div>
+            </div>
+          </div>
+          <div className="w-[60%]">
+            <Plot
+              data={[
+                {
+                    x: growingSeasonData.map(data => data.year),
+                    y: growingSeasonData.map(data => data.length),
+                    base: growingSeasonData.map(data => data.start),
+                    type: 'bar',
+                    orientation: 'v',
+                    hoverinfo: 'text',
+                    text: growingSeasonData.map(data => `Year: ${data.year}<br>Growing Season Length: ${data.length} days<br>Last Frost Date: ${data.lastFrost} <br>First Frost Date: ${data.firstFrost}`),
+                    textposition: 'none'
+                },
+              ]}
+              layout={{
+                xaxis: {
+                    title: 'Year',
+                    zeroline: false,
+                    tickvals: growingSeasonData.map(data => data.year),
+                },
+                yaxis: {
+                    title: 'Date',
+                    tickvals: Array.from({ length: 365 }, (_, i) => i * growingSeasonNumTicks), // Y-axis ticks from 0 to 364
+                    ticktext: Array.from({ length: 365 }, (_, i) => {
+                      const date = new Date(2024, 0, 1); // Starting from January 1st
+                      date.setDate(date.getDate() + i * growingSeasonNumTicks);
+                      return date.toISOString().split('T')[0].slice(5); // Format to MM-DD
+                    }),
+                    range: [0, 365],
+                },
+                margin: {
+                  t: 0,
+                  b: 40,
+                  l: 100,
+                  r: 0
+                },
+              }}
+            />
+          </div>
+        </div>
       </div>
-      <div className="mb-4">
-        <div className={`${montserrat.className} text-lg font-semibold`}>Climate Resilience</div>
-        <p>Climate projections (drought/flood risk in future decades) and proximity to mitigation features like nearby water bodies. Consider climate index scores that aggregate multiple risk factors.</p>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Climate Resilience</div>
+        <p>Climate projections and proximity to mitigation features.</p>
       </div>
-      <div className="mb-4">
-        <div className={`${montserrat.className} text-lg font-semibold`}>Flood Risk</div>
-        <p>Vulnerability of the land to seasonal flooding or waterlogging. Consider using floodplain data, proximity to water bodies, and drainage effectiveness to quantify risk as a percentage or a rating.</p>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Flood Risk</div>
+        <p>Vulnerability of the land to seasonal flooding or waterlogging.</p>
       </div>
     </div>
   );

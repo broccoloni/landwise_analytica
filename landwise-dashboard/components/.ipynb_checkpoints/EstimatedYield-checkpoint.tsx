@@ -7,7 +7,16 @@ import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityC
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
-const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: EstimatedYieldProps) => {
+interface EstimatedYieldProps {
+  lat: string;
+  lng: string;
+  rasterDataCache: any;
+  cropHeatMaps: any;
+  yearlyYields: any;
+  weatherData: any;
+}
+
+const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: EstimatedYieldProps) => {
   const [historicFilteredData, setHistoricFilteredData] = useState<any>({});
   const [selectedProjectedCrop, setSelectedProjectedCrop] = useState<majorCommodityCrop>('Flaxseed');
 
@@ -157,7 +166,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields 
             Notes about the projected yield. blah blah blah.
           </div>
           <div className="w-[60%]">
-            <div className="flex-row justify-center items-center">
+            <div className="flex-row justify-center items-center w-full">
               <div className="flex justify-center items-center">
                 <div className={`${montserrat.className} mr-4`}>Estimated Projected Yield for:</div>                    
                 <Dropdown options={majorCommodityCrops} selected={selectedProjectedCrop} onSelect={setSelectedProjectedCrop} />
@@ -198,7 +207,11 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields 
         <div className={`${montserrat.className} text-lg `}>Crop Diversity Potential</div>
         <p>The amount of crops that can be grown and exceed the neighboring/national levels.</p>
       </div>
-      <div className="py-4">
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Yield Consistency Across Property</div>
+        <p>Heatmaps of the crops on the property with data such as mean, std, most consistent crop</p>
+      </div>
+      <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Pest and Disease Resistance</div>
         <p>Historical impact of pests or diseases on crops. Rating based on the average annual yield loss due to pests compared to regional averages.
         </p>

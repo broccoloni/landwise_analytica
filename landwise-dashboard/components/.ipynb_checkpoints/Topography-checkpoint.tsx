@@ -15,9 +15,10 @@ interface TopographyProps {
   rasterDataCache: any;
   cropHeatMaps: any;
   yearlyYields: any;
+  weatherData: any;
 }
 
-const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: TopographyProps) => {
+const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: TopographyProps) => {
   const [landUsageYears, setLandUsageYears] = useState<number[]>([]);
   const [landUsageYear, setLandUsageYear] = useState<number | null>(null);
   const [data, setData] = useState<any>(null);
@@ -251,7 +252,7 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields }: T
         <p>Impact of wind on crops and soil erosion. Use a local wind map to quantify average wind speeds or directional exposure.</p>
       </div>
 
-      <div className="py-4">
+      <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg`}>Drainage Systems</div>
         <p>Presence and effectiveness of natural or man-made drainage systems.</p>
       </div>

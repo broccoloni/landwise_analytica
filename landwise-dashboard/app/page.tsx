@@ -16,6 +16,7 @@ import EconomicViability from '@/components/EconomicViability';
 import { fetchRasterDataCache } from '@/hooks/fetchRasterDataCache';
 import { fetchCropHeatMaps } from '@/hooks/fetchCropHeatMaps';
 import { fetchYearlyYields } from '@/hooks/fetchYearlyYields';
+import { fetchWeatherData } from '@/hooks/fetchWeatherData';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -54,6 +55,7 @@ export default function Home() {
             rasterDataCache={rasterDataCache}
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
+            weatherData={weatherData}
           />
         );
       case 'Climate':
@@ -64,6 +66,7 @@ export default function Home() {
             rasterDataCache={rasterDataCache}
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
+            weatherData={weatherData}
           />
         );      
       case 'InfrastructureAccessibility':
@@ -74,6 +77,7 @@ export default function Home() {
             rasterDataCache={rasterDataCache}
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
+            weatherData={weatherData}
           />
         );
       case 'Topography':
@@ -84,6 +88,7 @@ export default function Home() {
             rasterDataCache={rasterDataCache}
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
+            weatherData={weatherData}
           />
         );
       case 'EconomicViability':
@@ -94,6 +99,7 @@ export default function Home() {
             rasterDataCache={rasterDataCache}
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
+            weatherData={weatherData}
           />
         );
       default:
@@ -112,6 +118,7 @@ export default function Home() {
   const rasterDataCache = fetchRasterDataCache(basePath);
   const cropHeatMaps = fetchCropHeatMaps(basePath);
   const yearlyYields = fetchYearlyYields(basePath);
+  const weatherData = fetchWeatherData(basePath);
     
   return (
     <div className={`${roboto.className} bg-accent-light text-black`}>
