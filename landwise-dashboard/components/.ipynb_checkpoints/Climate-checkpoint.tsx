@@ -26,16 +26,38 @@ const monthNames = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+function avg(values) {
+  const sum = values.reduce((acc, value) => acc + value, 0);
+  return Math.round(sum / values.length);
+}
+
+function std(values) {
+  const mean = avg(values);
+  const variance = values.reduce((acc, value) => acc + Math.pow(value - mean, 2), 0) / values.length;
+  return Math.round(Math.sqrt(variance));
+}
+
 const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: ClimateProps) => {
   const [years, setYears] = useState<number|null>(null);
 
   // For precipitation
   const [precipYear, setPrecipYear] = useState<number | null>(null);
-
+  const [precipData, setPrecipData] = useState<any>(null);
+    
   // For temperature suitability
   const [tempYear, setTempYear] = useState<number | null>(null);
   const [tempData, setTempData] = useState<any>(null);
-
+  const [avgChu, setAvgChu] = useState<number|null>(null);
+  const [stdChu, setStdChu] = useState<number|null>(null);
+  const [avgGdd0, setAvgGdd0] = useState<number|null>(null);
+  const [stdGdd0, setStdGdd0] = useState<number|null>(null);
+  const [avgGdd5, setAvgGdd5] = useState<number|null>(null);
+  const [stdGdd5, setStdGdd5] = useState<number|null>(null);
+  const [avgGdd10, setAvgGdd10] = useState<number|null>(null);
+  const [stdGdd10, setStdGdd10] = useState<number|null>(null);
+  const [avgGdd15, setAvgGdd15] = useState<number|null>(null);
+  const [stdGdd15, setStdGdd15] = useState<number|null>(null);
+    
   // For Growing Season 
   const [growingSeasonData, setGrowingSeasonData] = useState<{ year: number; length: number; start: string; end: string }[]>([]);
   const [earliestFirstFrost, setEarliestFirstFrost] = useState<string>('');
@@ -58,6 +80,40 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
       if (tempYear === null) {
         setTempYear(dataYears[0]);
       }
+
+      // Calculate Temperature metrics
+      var allChu = [];
+      var allGdd0 = [];
+      var allGdd5 = [];
+      var allGdd10 = [];
+      var allGdd15 = [];
+      dataYears.forEach((year) => {
+        const yearlyData = weatherData[year];
+        if (Object.values(yearlyData.cornHeatUnits).length >= 365) {
+          const maxChu = Math.max(...Object.values(yearlyData.cornHeatUnits));
+          const maxGdd0 = Math.max(...Object.values(yearlyData.GDD0));
+          const maxGdd5 = Math.max(...Object.values(yearlyData.GDD5));
+          const maxGdd10 = Math.max(...Object.values(yearlyData.GDD10));
+          const maxGdd15 = Math.max(...Object.values(yearlyData.GDD15));
+
+          allChu.push(maxChu);
+          allGdd0.push(maxGdd0);
+          allGdd5.push(maxGdd5);
+          allGdd10.push(maxGdd10);
+          allGdd15.push(maxGdd15);
+        }
+      });
+
+      setAvgChu(avg(allChu));
+      setStdChu(std(allChu));
+      setAvgGdd0(avg(allGdd0));
+      setStdGdd0(std(allGdd0));
+      setAvgGdd5(avg(allGdd5));
+      setStdGdd5(std(allGdd5));
+      setAvgGdd10(avg(allGdd10));
+      setStdGdd10(std(allGdd10));
+      setAvgGdd15(avg(allGdd15));
+      setStdGdd15(std(allGdd15));
 
       // For Growing Season
       const getDayOfYear = (date) => {
@@ -151,35 +207,101 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
     if (weatherData && tempYear) {
       const data = weatherData[tempYear];
       setTempData([
-        prepareTempDataForPlot(data.cornHeatUnits,'Corn Heat Units (CHU)'),
-        prepareTempDataForPlot(data.GDD0,'Growing Degree Days (GDD), Base Temp. 0\u00B0C'),
-        prepareTempDataForPlot(data.GDD5,'Growing Degree Days (GDD), Base Temp. 5\u00B0C'),
-        prepareTempDataForPlot(data.GDD10,'Growing Degree Days (GDD), Base Temp. 10\u00B0C'),
-        prepareTempDataForPlot(data.GDD15,'Growing Degree Days (GDD), Base Temp. 15\u00B0C'),
+        prepareTempDataForPlot(data.cornHeatUnits,'CHU'),
+        prepareTempDataForPlot(data.GDD0,'GDD - Base Temp. 0\u00B0C'),
+        prepareTempDataForPlot(data.GDD5,'GDD - Base Temp. 5\u00B0C'),
+        prepareTempDataForPlot(data.GDD10,'GDD - Base Temp. 10\u00B0C'),
+        prepareTempDataForPlot(data.GDD15,'GDD - Base Temp. 15\u00B0C'),
       ]);
     }  
   }, [tempYear, weatherData]);
 
+  useEffect(() => {
+    console.log(weatherData);
+    if (weatherData && precipYear) {
+      const yearlyData = weatherData[precipYear].weatherData;
+      setPrecipData({ 
+        dates: yearlyData.map(data => data.datetime), 
+        precip: yearlyData.map(data => data.precip) 
+      });
+    }
+  }, [precipYear, weatherData]);
+    
   return (
     <div>
       <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
         Climate
       </div>
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Rainfall Patterns</div>
-        <p>Historical and projected rainfall distribution throughout the year.</p>
-        {/* Your rainfall chart can go here */}
+        <div className={`${montserrat.className} text-lg `}>Precipitation & Humidity</div>
+        <div className = "flex">
+          <div className = "w-[40%]">
+            Precipitation and humidity stats
+          </div>
+          <div className="w-[60%]">
+            {/* <Plot
+              data={[
+                {
+                  z: weeklyPrecipData,
+                  type: 'heatmap',
+                  colorscale: 'YlGnBu', // Color scale for the heatmap
+                  colorbar: {
+                    title: 'Precipitation (mm)', // Title for the color bar
+                  },
+                },
+              ]}
+              layout={{
+                title: 'Weekly Precipitation Heatmap',
+                xaxis: {
+                  title: 'Days of Week',
+                  tickvals: [0, 1, 2, 3, 4, 5, 6],
+                  ticktext: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                },
+                yaxis: {
+                  title: 'Weeks',
+                  autorange: 'reversed', // Reverse the y-axis to have week 1 at the top
+                },
+                width: 800,
+                height: 600,
+              }}
+            /> */}
+          </div>
+        </div>
       </div>
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Temperature Suitability</div>
         <div className="flex">
           <div className="w-[40%]">
-            Something about the temperature
+            <div className = "mt-16 p-4">
+              <div className={`${montserrat.className} mb-4`}>
+                End of Completed Season Averages
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">Corn Heat Units (CHUs):</div>
+                <div>{`${avgChu} (\u00B1 ${stdChu})`}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">{`Growind Degree Days (GDDs), Base Temp. 0\u00B0C`}:</div>
+                <div>{`${avgGdd0} (\u00B1 ${stdGdd0})`}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">{`Growind Degree Days (GDDs), Base Temp. 5\u00B0C`}:</div>
+                <div>{`${avgGdd5} (\u00B1 ${stdGdd5})`}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">{`Growind Degree Days (GDDs), Base Temp. 10\u00B0C`}:</div>
+                <div>{`${avgGdd10} (\u00B1 ${stdGdd10})`}</div>
+              </div>
+              <div className="flex justify-between mb-2">
+                <div className="">{`Growind Degree Days (GDDs), Base Temp. 15\u00B0C`}:</div>
+                <div>{`${avgGdd15} (\u00B1 ${stdGdd15})`}</div>
+              </div>
+            </div> 
           </div>
           <div className="w-[60%]">
             <div className="flex-row justify-center items-center">
               <div className="flex justify-center items-center text-center">
-                <div className="mr-8">
+                <div className={`${montserrat.className} mr-8`}>
                   Year:
                 </div>
                 {years && (
@@ -234,7 +356,7 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         <div className={`${montserrat.className} text-lg `}>Growing Season Length</div>
         <div className="flex">
           <div className="w-[40%]">
-            <div className = "mt-4">
+            <div className = "mt-16">
               <div className="flex justify-between mb-2">
                 <div className="">Earliest First Frost Date:</div>
                 <div>{earliestFirstFrost}</div>
@@ -262,43 +384,50 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
             </div>
           </div>
           <div className="w-[60%]">
-            <Plot
-              data={[
-                {
-                    x: growingSeasonData.map(data => data.year),
-                    y: growingSeasonData.map(data => data.length),
-                    base: growingSeasonData.map(data => data.start),
-                    type: 'bar',
-                    orientation: 'v',
-                    hoverinfo: 'text',
-                    text: growingSeasonData.map(data => `Year: ${data.year}<br>Growing Season Length: ${data.length} days<br>Last Frost Date: ${data.lastFrost} <br>First Frost Date: ${data.firstFrost}`),
-                    textposition: 'none'
-                },
-              ]}
-              layout={{
-                xaxis: {
-                    title: 'Year',
-                    zeroline: false,
-                    tickvals: growingSeasonData.map(data => data.year),
-                },
-                yaxis: {
-                    title: 'Date',
-                    tickvals: Array.from({ length: 365 }, (_, i) => i * growingSeasonNumTicks), // Y-axis ticks from 0 to 364
-                    ticktext: Array.from({ length: 365 }, (_, i) => {
-                      const date = new Date(2024, 0, 1); // Starting from January 1st
-                      date.setDate(date.getDate() + i * growingSeasonNumTicks);
-                      return date.toISOString().split('T')[0].slice(5); // Format to MM-DD
-                    }),
-                    range: [0, 365],
-                },
-                margin: {
-                  t: 0,
-                  b: 40,
-                  l: 100,
-                  r: 0
-                },
-              }}
-            />
+            <div className="flex-row">
+              <div className={`${montserrat.className} w-full text-center`}>
+                Completed Growing Seasons
+              </div>
+              <div className="">
+                <Plot
+                  data={[
+                    {
+                        x: growingSeasonData.map(data => data.year),
+                        y: growingSeasonData.map(data => data.length),
+                        base: growingSeasonData.map(data => data.start),
+                        type: 'bar',
+                        orientation: 'v',
+                        hoverinfo: 'text',
+                        text: growingSeasonData.map(data => `Year: ${data.year}<br>Growing Season Length: ${data.length} days<br>Last Frost Date: ${data.lastFrost} <br>First Frost Date: ${data.firstFrost}`),
+                        textposition: 'none'
+                    },
+                  ]}
+                  layout={{
+                    xaxis: {
+                        title: 'Year',
+                        zeroline: false,
+                        tickvals: growingSeasonData.map(data => data.year),
+                    },
+                    yaxis: {
+                        title: 'Date',
+                        tickvals: Array.from({ length: 365 }, (_, i) => i * growingSeasonNumTicks), // Y-axis ticks from 0 to 364
+                        ticktext: Array.from({ length: 365 }, (_, i) => {
+                          const date = new Date(2024, 0, 1); // Starting from January 1st
+                          date.setDate(date.getDate() + i * growingSeasonNumTicks);
+                          return date.toISOString().split('T')[0].slice(5); // Format to MM-DD
+                        }),
+                        range: [0, 365],
+                    },
+                    margin: {
+                      t: 0,
+                      b: 40,
+                      l: 100,
+                      r: 0
+                    },
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
