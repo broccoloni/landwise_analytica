@@ -8,6 +8,7 @@ type WeatherData = {
   temp: number;
   precip: number;
   humidity: number;
+  dew: number;
   windgust: number;
   windspeed: number;
   winddir: number;
@@ -50,6 +51,7 @@ export const fetchWeatherData = (basePath: string) => {
           temp: parseFloat(row.temp),
           precip: parseFloat(row.precip),
           humidity: parseFloat(row.humidity),
+          dew: parseFloat(row.dew),
           windgust: parseFloat(row.windgust),
           windspeed: parseFloat(row.windspeed),
           winddir: parseFloat(row.winddir),

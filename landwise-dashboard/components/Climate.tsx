@@ -21,10 +21,29 @@ const heatUnits: heatUnit[] = [
   "Growing Degree Day (GDD)"
 ];
 
+const dayNumToMonthDay = (dayNum) => {
+  const date = new Date(2024, 0, 1);
+  date.setDate(date.getDate() + dayNum);
+  return date.toISOString().split('T')[0].slice(5); // Format to MM-DD
+};
+
 const monthNames = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "Jan.", "Feb.", "Mar.", "Apr.", "May", "June",
+  "July", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."
 ];
+
+const formatDateToMonthName = (dateString) => {
+  const date = new Date(dateString);
+  const month = monthNames[date.getMonth()];
+  const day = date.getDate();
+  return `${month} ${day}`;
+};
+
+const getWeekDateRange = (weekNumber) => {
+  const weekStart = formatDateToMonthName(dayNumToMonthDay((weekNumber - 1) * 7)); 
+  const weekEnd = formatDateToMonthName(dayNumToMonthDay(weekNumber * 7));
+  return `${weekStart} - ${weekEnd}`;
+};
 
 function avg(values) {
   const sum = values.reduce((acc, value) => acc + value, 0);
@@ -43,6 +62,7 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
   // For precipitation
   const [precipYear, setPrecipYear] = useState<number | null>(null);
   const [precipData, setPrecipData] = useState<any>(null);
+  const precipTickFreq = 4;
     
   // For temperature suitability
   const [tempYear, setTempYear] = useState<number | null>(null);
@@ -69,7 +89,6 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
   const growingSeasonNumTicks = 30;
 
   useEffect(() => {
-    console.log(weatherData);
     if (weatherData) {
       const dataYears = Object.keys(weatherData).map(Number);
       setYears(dataYears);
@@ -139,13 +158,6 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
       // Filter out entries with null growing season lengths
       const filteredData = lengthsData.filter(data => data.length !== null);
       setGrowingSeasonData(filteredData);
-
-      const formatDateToMonthName = (dateString) => {
-        const date = new Date(dateString);
-        const month = monthNames[date.getMonth()];
-        const day = date.getDate();
-        return `${month} ${day}`;
-      };
         
       // Calculate growing season metrics
       if (filteredData.length > 0) {
@@ -217,13 +229,33 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
   }, [tempYear, weatherData]);
 
   useEffect(() => {
-    console.log(weatherData);
     if (weatherData && precipYear) {
       const yearlyData = weatherData[precipYear].weatherData;
-      setPrecipData({ 
-        dates: yearlyData.map(data => data.datetime), 
-        precip: yearlyData.map(data => data.precip) 
-      });
+      if (yearlyData.length > 0) {
+        const daysPerWeek = 7;
+        const weeklyAvgs = [Array(52).fill(0), Array(52).fill(0), Array(52).fill(0)];
+        const counts = Array(52).fill(0);
+        const dates = yearlyData.map(data => data.datetime);
+        const precip = yearlyData.map(data => data.precip);
+        const humidity = yearlyData.map(data => data.humidity);
+        const dew = yearlyData.map(data => data.dew);
+          
+        dates.forEach((date, index) => {
+          const weekIndex = Math.min(51,Math.floor(index / daysPerWeek));
+          weeklyAvgs[0][weekIndex] += precip[index];
+          weeklyAvgs[1][weekIndex] += humidity[index];
+          weeklyAvgs[2][weekIndex] += dew[index];
+          counts[weekIndex] += 1;
+        });
+
+        weeklyAvgs.forEach((metricArray, metricIndex) => {
+          weeklyAvgs[metricIndex] = metricArray.map((sum, weekIndex) => 
+            counts[weekIndex] > 0 ? sum / counts[weekIndex] : 0
+          );
+        });
+
+        setPrecipData(weeklyAvgs);
+      }        
     }
   }, [precipYear, weatherData]);
     
@@ -233,38 +265,99 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         Climate
       </div>
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Precipitation & Humidity</div>
+        <div className={`${montserrat.className} text-lg `}>Precipitation, Humidity & Dew</div>
         <div className = "flex">
           <div className = "w-[40%]">
             Precipitation and humidity stats
           </div>
           <div className="w-[60%]">
-            {/* <Plot
-              data={[
-                {
-                  z: weeklyPrecipData,
-                  type: 'heatmap',
-                  colorscale: 'YlGnBu', // Color scale for the heatmap
-                  colorbar: {
-                    title: 'Precipitation (mm)', // Title for the color bar
-                  },
-                },
-              ]}
-              layout={{
-                title: 'Weekly Precipitation Heatmap',
-                xaxis: {
-                  title: 'Days of Week',
-                  tickvals: [0, 1, 2, 3, 4, 5, 6],
-                  ticktext: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-                },
-                yaxis: {
-                  title: 'Weeks',
-                  autorange: 'reversed', // Reverse the y-axis to have week 1 at the top
-                },
-                width: 800,
-                height: 600,
-              }}
-            /> */}
+            <div className="flex-row justify-center items-center">
+              <div className="flex justify-center items-center text-center">
+                <div className={`${montserrat.className} mr-8`}>
+                  Daily Average For Each Week of
+                </div>
+                {years && (
+                  <div className="w-56">
+                    <Slider
+                      value={precipYear ?? years[0]}
+                      onChange={(event, newValue) => setPrecipYear(newValue as number)}
+                      min={Math.min(...years)}
+                      max={Math.max(...years)}
+                      step={1}
+                      marks={years.map((year) => ({
+                        value: year,
+                        label: (year === Math.min(...years) || year === Math.max(...years) || year === precipYear)
+                          ? year.toString()
+                          : ''
+                      }))}
+                      valueLabelDisplay="auto"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="">
+                {precipData && (
+                  <Plot
+                    data={[
+                      {
+                        z: [precipData[0]],
+                        x: Array.from({ length: 52 }, (_, i) => i + 1),
+                        y: [0],
+                        type: 'heatmap',
+                        colorscale: 'Blues',
+                        colorbar: {
+                          len: 0.3,
+                          y: 0.15
+                        },
+                        showscale: true
+                      },
+                      {
+                        z: [precipData[1]],
+                        x: Array.from({ length: 52 }, (_, i) => i + 1),
+                        y: [1],
+                        type: 'heatmap',
+                        colorscale: 'Greens',
+                        colorbar: {
+                          len: 0.3,
+                          y: 0.5
+                        },
+                        showscale: true
+                      },
+                      {
+                        z: [precipData[2]],
+                        x: Array.from({ length: 52 }, (_, i) => i + 1),
+                        y: [2],
+                        type: 'heatmap',
+                        colorscale: 'Purples',
+                        colorbar: {
+                          len: 0.3,
+                          y: 0.85
+                        },
+                        showscale: true
+                      }
+                    ]}
+                    layout={{
+                      xaxis: {
+                        title: 'Week of Year',
+                        tickvals: Array.from({ length: 52 / precipTickFreq }, (_, i) => (i * precipTickFreq) + 1),
+                        ticktext: Array.from({ length: 52 / precipTickFreq }, (_, i) => `${getWeekDateRange((i * precipTickFreq) + 1)}`)
+                      },
+                      yaxis: {
+                        title: '',
+                        tickvals: [0, 1, 2],
+                        ticktext: ['Precipitation (mm)', 'Humidity (%)', 'Dew (\u00B0C)']
+                      },
+                      margin: {
+                        t: 10,
+                        b: 100,
+                        l: 120,
+                        r: 0,
+                      },
+                    }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -410,12 +503,8 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                     },
                     yaxis: {
                         title: 'Date',
-                        tickvals: Array.from({ length: 365 }, (_, i) => i * growingSeasonNumTicks), // Y-axis ticks from 0 to 364
-                        ticktext: Array.from({ length: 365 }, (_, i) => {
-                          const date = new Date(2024, 0, 1); // Starting from January 1st
-                          date.setDate(date.getDate() + i * growingSeasonNumTicks);
-                          return date.toISOString().split('T')[0].slice(5); // Format to MM-DD
-                        }),
+                        tickvals: Array.from({ length: Math.round(365/growingSeasonNumTicks) }, (_, i) => i * growingSeasonNumTicks), // Y-axis ticks from 0 to 364
+                        ticktext: Array.from({ length: Math.round(365/growingSeasonNumTicks) }, (_, i) => dayNumToMonthDay(i * growingSeasonNumTicks)),
                         range: [0, 365],
                     },
                     margin: {
@@ -431,14 +520,14 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
           </div>
         </div>
       </div>
-      <div className="py-4 border-b border-gray-500">
+      {/* <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Climate Resilience</div>
         <p>Climate projections and proximity to mitigation features.</p>
       </div>
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Flood Risk</div>
         <p>Vulnerability of the land to seasonal flooding or waterlogging.</p>
-      </div>
+      </div> */}
     </div>
   );
 };

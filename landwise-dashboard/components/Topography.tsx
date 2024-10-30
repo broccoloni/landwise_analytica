@@ -239,23 +239,21 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
           <Loading />
         )}
       </div>
-        
-      {/* Water Pooling Potential */}
-      <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Water Pooling Potential</div>
-        <p>Based on slope/gradient of land. Could also quantify based on the amount of land with different slopes, e.g., 75% of land has less than a 3% slope.</p>
-      </div>
 
-      {/* Additional Sections */}
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg`}>Wind Exposure</div>
         <p>Impact of wind on crops and soil erosion. Use a local wind map to quantify average wind speeds or directional exposure.</p>
+      </div>
+        
+      {/* <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg`}>Water Pooling Potential</div>
+        <p>Based on slope/gradient of land. Could also quantify based on the amount of land with different slopes, e.g., 75% of land has less than a 3% slope.</p>
       </div>
 
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg`}>Drainage Systems</div>
         <p>Presence and effectiveness of natural or man-made drainage systems.</p>
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
 interface EstimatedYieldProps {
   lat: string;
@@ -17,8 +18,20 @@ interface EstimatedYieldProps {
 }
 
 const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: EstimatedYieldProps) => {
+  // Historic Yield
   const [historicFilteredData, setHistoricFilteredData] = useState<any>({});
+  const [allHistoricCrops, setAllHistoricCrops] = useState<string[]>([]);
+  const [avgPerfVsNeighbourhood, setAvgPerfVsNeighbourhood] = useState<string>('');
+  const [avgPerfVsNational, setAvgPerfVsNational] = useState<string>('');
+
+  // Projected Yield
   const [selectedProjectedCrop, setSelectedProjectedCrop] = useState<majorCommodityCrop>('Flaxseed');
+
+  // Crop Consistency
+  const [selectedHeatMapCrop, setSelectedHeatMapCrop] = useState<majorCommodityCrop>('Flaxseed');
+
+    
+  const [bbox, setBbox] = useState<number[]>([]);
 
   useEffect(() => {
     if (yearlyYields && rasterDataCache) {
@@ -26,11 +39,21 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
         .filter((key) => key !== 'elevation')
         .map(Number);
 
+      if (years.length > 0) {
+        setBbox(rasterDataCache[years[0]].bbox);
+      }
+      
+      const uniqueCrops = new Set<string>();
       const newHistoricFilteredData: any = {};
+      let neighbourhoodRatios: number[] = [];
+      let nationalRatios: number[] = [];
+        
       for (const yr of years) {
         const crop = rasterDataCache[yr]?.majorCommodityCropsGrown?.[0];
         if (!crop) continue;
 
+        uniqueCrops.add(crop);
+          
         const property = yearlyYields.find(
           (item: any) => item.Crop === crop && item.Year === yr && item.levels === 'Property'
         );
@@ -41,6 +64,18 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
           (item: any) => item.Crop === crop && item.Year === yr && item.levels === 'National'
         );
 
+        const propertyYield = property?.Yield || 0;
+        const neighbourhoodYield = neighbourhood?.Yield || 0;
+        const nationalYield = national?.Yield || 0;
+
+        // Calculate yearly performance ratios if yields are available
+        if (neighbourhoodYield > 0) {
+          neighbourhoodRatios.push(propertyYield / neighbourhoodYield);
+        }
+        if (nationalYield > 0) {
+          nationalRatios.push(propertyYield / nationalYield);
+        }
+          
         newHistoricFilteredData[yr] = {
           label: `${yr} - ${crop}`,
           property: property?.Yield || 0,
@@ -48,7 +83,16 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
           national: national?.Yield || 0,
         };
       }
+      // Calculate the average performance ratios
+      const avgNeighbourhoodRatio =
+        neighbourhoodRatios.reduce((sum, ratio) => sum + ratio, 0) / neighbourhoodRatios.length * 100 || 0;
+      const avgNationalRatio =
+        nationalRatios.reduce((sum, ratio) => sum + ratio, 0) / nationalRatios.length * 100 || 0;
+
       setHistoricFilteredData(newHistoricFilteredData);
+      setAllHistoricCrops(Array.from(uniqueCrops));
+      setAvgPerfVsNeighbourhood(`${avgNeighbourhoodRatio.toFixed(2)} %`);
+      setAvgPerfVsNational(`${avgNationalRatio.toFixed(2)} %`);
     }
   }, [yearlyYields, rasterDataCache]);
 
@@ -123,7 +167,12 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
     return acc;
   }, [] as { x: number[]; y: number[]; name: string; mode: string }[]);
 
-                
+  const [heatMapData, setHeatMapData] = useState<any>(null);
+  useEffect(() => {
+    if (cropHeatMaps && selectedHeatMapCrop) {
+      setHeatMapData(cropHeatMaps[selectedHeatMapCrop]);
+    }
+  }, [selectedHeatMapCrop,cropHeatMaps]);
 
   return (
     <div>
@@ -137,8 +186,19 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
           Estimated Historic Yield
         </div>
         <div className="flex">
-          <div className="w-[40%] mt-16">
-            Notes about the historic yield. blah blah blah.
+          <div className="w-[40%] mt-16 p-4">
+            <div className="flex justify-between mb-2">
+              <div className="">Crops Grown:</div>
+              <div>{allHistoricCrops.join(', ')}</div>
+            </div>
+            <div className="flex justify-between mb-2">
+              <div className="">Average Yield vs Neighbourhood:</div>
+              <div>{avgPerfVsNeighbourhood}</div>
+            </div>
+            <div className="flex justify-between mb-2">
+              <div className="">Average Yield vs National:</div>
+              <div>{avgPerfVsNational}</div>
+            </div>
           </div>
           <div className="w-[60%]">
             <div className="flex-row justify-center items-center w-full">
@@ -163,7 +223,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
         </div>
         <div className="flex">
           <div className="w-[40%] mt-16">
-            Notes about the projected yield. blah blah blah.
+            Notes about projected yield blah blah blah
           </div>
           <div className="w-[60%]">
             <div className="flex-row justify-center items-center w-full">
@@ -204,18 +264,35 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
         </div>
       </div>
       <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Yield Consistency Across Property</div>
+        <div className="flex">
+          <div className="w-[40%] mt-16">
+            Stats about crop consistency
+          </div>
+          <div className="w-[60%]">
+            <div className="flex-row justify-center items-center w-full">
+              <div className="flex justify-center items-center mb-4">
+                <div className={`${montserrat.className} mr-4`}>Yield Heatmap for:</div>                    
+                <Dropdown options={majorCommodityCrops} selected={selectedHeatMapCrop} onSelect={setSelectedHeatMapCrop} />
+              </div>
+              <div className="">
+                {bbox && heatMapData && (
+                  <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={heatMapData.imageUrl} />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Crop Diversity Potential</div>
         <p>The amount of crops that can be grown and exceed the neighboring/national levels.</p>
-      </div>
-      <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Yield Consistency Across Property</div>
-        <p>Heatmaps of the crops on the property with data such as mean, std, most consistent crop</p>
-      </div>
-      <div className="py-4 border-b border-gray-500">
+      </div> */}
+      {/* <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Pest and Disease Resistance</div>
         <p>Historical impact of pests or diseases on crops. Rating based on the average annual yield loss due to pests compared to regional averages.
         </p>
-      </div>
+      </div> */}
         
     </div>
   );
