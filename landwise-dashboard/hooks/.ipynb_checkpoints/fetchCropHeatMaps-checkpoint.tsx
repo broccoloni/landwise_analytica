@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import chroma from 'chroma-js';
 import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
+import { getAvg, getStd } from '@/utils/stats';
 
 const majorCommodityThresholds: Record<majorCommodityCrop, { vmin: number; vmax: number }> = {
   Flaxseed: { vmin: 56, vmax: 96 },
@@ -103,10 +104,8 @@ const processData = (data: TypedArray, crop: majorCommodityCrop) => {
   // Calculate stats based on normalized values
   const min = Math.min(...yields);
   const max = Math.max(...yields);
-  const total = yields.reduce((sum, val) => sum + val, 0);
-  const average = total / yields.length;
-  const variance = yields.reduce((sum, val) => sum + (val - average) ** 2, 0) / yields.length;
-  const stdDev = Math.sqrt(variance);
+  const average = getAvg(yields);
+  const stdDev = getStd(yields);
 
   // Ensure no NaNs are returned
   if (isNaN(min) || isNaN(max) || isNaN(average) || isNaN(stdDev)) {

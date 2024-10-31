@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
 import Loading from '@/components/Loading';
+import ColorBar from '@/components/ColorBar';
 import dynamic from 'next/dynamic';
 import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
+import { getAvg, getStd } from '@/utils/stats';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
@@ -19,22 +21,25 @@ interface EstimatedYieldProps {
 
 const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: EstimatedYieldProps) => {
   // Historic Yield
-  const [historicFilteredData, setHistoricFilteredData] = useState<any>({});
-  const [allHistoricCrops, setAllHistoricCrops] = useState<string[]>([]);
-  const [avgPerfVsNeighbourhood, setAvgPerfVsNeighbourhood] = useState<string>('');
-  const [avgPerfVsNational, setAvgPerfVsNational] = useState<string>('');
-
+  const [historicData, setHistoricData] = useState<any>({});
+  const [cropsGrown, setCropsGrown] = useState({});
+  const [histPerf, setHistPerf] = useState<any>({});
+  
   // Projected Yield
   const [selectedProjectedCrop, setSelectedProjectedCrop] = useState<majorCommodityCrop>('Flaxseed');
+  const [futPerf, setFutPerf] = useState<any>({});
+  const [bestProjectedCrop, setBestProjectedCrop] = useState<string>(''); 
+  const minYear = 2014;
+  const maxYear = 2034;
 
   // Crop Consistency
   const [selectedHeatMapCrop, setSelectedHeatMapCrop] = useState<majorCommodityCrop>('Flaxseed');
-
     
   const [bbox, setBbox] = useState<number[]>([]);
 
+  // Process raster data cache
   useEffect(() => {
-    if (yearlyYields && rasterDataCache) {
+    if (rasterDataCache) {
       const years = Object.keys(rasterDataCache)
         .filter((key) => key !== 'elevation')
         .map(Number);
@@ -43,64 +48,120 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
         setBbox(rasterDataCache[years[0]].bbox);
       }
       
-      const uniqueCrops = new Set<string>();
-      const newHistoricFilteredData: any = {};
-      let neighbourhoodRatios: number[] = [];
-      let nationalRatios: number[] = [];
+      const allCropsGrown: any = {};
         
       for (const yr of years) {
         const crop = rasterDataCache[yr]?.majorCommodityCropsGrown?.[0];
         if (!crop) continue;
 
-        uniqueCrops.add(crop);
-          
-        const property = yearlyYields.find(
-          (item: any) => item.Crop === crop && item.Year === yr && item.levels === 'Property'
-        );
-        const neighbourhood = yearlyYields.find(
-          (item: any) => item.Crop === crop && item.Year === yr && item.levels === 'Neighbourhood'
-        );
-        const national = yearlyYields.find(
-          (item: any) => item.Crop === crop && item.Year === yr && item.levels === 'National'
-        );
-
-        const propertyYield = property?.Yield || 0;
-        const neighbourhoodYield = neighbourhood?.Yield || 0;
-        const nationalYield = national?.Yield || 0;
-
-        // Calculate yearly performance ratios if yields are available
-        if (neighbourhoodYield > 0) {
-          neighbourhoodRatios.push(propertyYield / neighbourhoodYield);
-        }
-        if (nationalYield > 0) {
-          nationalRatios.push(propertyYield / nationalYield);
-        }
-          
-        newHistoricFilteredData[yr] = {
-          label: `${yr} - ${crop}`,
-          property: property?.Yield || 0,
-          neighbourhood: neighbourhood?.Yield || 0,
-          national: national?.Yield || 0,
-        };
+        allCropsGrown[yr] = crop;
       }
-      // Calculate the average performance ratios
-      const avgNeighbourhoodRatio =
-        neighbourhoodRatios.reduce((sum, ratio) => sum + ratio, 0) / neighbourhoodRatios.length * 100 || 0;
-      const avgNationalRatio =
-        nationalRatios.reduce((sum, ratio) => sum + ratio, 0) / nationalRatios.length * 100 || 0;
-
-      setHistoricFilteredData(newHistoricFilteredData);
-      setAllHistoricCrops(Array.from(uniqueCrops));
-      setAvgPerfVsNeighbourhood(`${avgNeighbourhoodRatio.toFixed(2)} %`);
-      setAvgPerfVsNational(`${avgNationalRatio.toFixed(2)} %`);
+      setCropsGrown(allCropsGrown);
     }
-  }, [yearlyYields, rasterDataCache]);
+  }, [rasterDataCache]);
+
+  // Process Yearly Yields
+  useEffect(() => {
+    if (yearlyYields && cropsGrown) {
+      const newHistoricData: any = {};
+      const histNeighbourhoodPerfs = [];
+      const histNationalPerfs = []
+      const futNeighbourhoodPerfs = {};
+      const futNationalPerfs = {};
+      
+      const historicYears = Object.keys(cropsGrown).map(Number);    
+      const years = [...new Set(yearlyYields.map((item: any) => Number(item.Year)).filter(year => year >= minYear && year <= maxYear))];
+      for (const yr of years) {
+        for (const crop of majorCommodityCrops) {
+          const property = yearlyYields.find(
+            (item: any) => item.Crop === crop && item.Year === yr && item.levels === 'Property'
+          );
+          const neighbourhood = yearlyYields.find(
+            (item: any) => item.Crop === crop && item.Year === yr && item.levels === 'Neighbourhood'
+          );
+          const national = yearlyYields.find(
+            (item: any) => item.Crop === crop && item.Year === yr && item.levels === 'National'
+          );
+          const propertyYield = property?.Yield || 0;
+          const neighbourhoodYield = neighbourhood?.Yield || 0;
+          const nationalYield = national?.Yield || 0;
+            
+          var neighbourhoodPerf = 0;
+          var nationalPerf = 0;
+
+          if (neighbourhoodYield > 0) {
+            neighbourhoodPerf = propertyYield / neighbourhoodYield;
+          }
+          if (nationalYield > 0) {
+            nationalPerf = propertyYield / nationalYield;
+          }
+            
+          if (historicYears.includes(yr)) {
+            if (crop === cropsGrown[yr]) {
+              histNeighbourhoodPerfs.push(neighbourhoodPerf);
+              histNationalPerfs.push(nationalPerf);
+              newHistoricData[yr] = {
+                label: `${yr} - ${crop}`,
+                property: propertyYield,
+                neighbourhood: neighbourhoodYield,
+                national: nationalYield,
+              };
+            }
+          } else {
+            if (!(crop in futNeighbourhoodPerfs)) {
+              futNeighbourhoodPerfs[crop] = [];
+            }
+            if (!(crop in futNationalPerfs)) {
+              futNationalPerfs[crop] = [];
+            }
+            futNeighbourhoodPerfs[crop].push(neighbourhoodPerf);
+            futNationalPerfs[crop].push(nationalPerf);
+          }
+        }
+      }
+      setHistoricData(newHistoricData);
+
+
+        
+      const histNePerfAvg = (getAvg(histNeighbourhoodPerfs)*100).toFixed(0);
+      const histNePerfStd = (getStd(histNeighbourhoodPerfs)*100).toFixed(0);
+      const histNaPerfAvg = (getAvg(histNationalPerfs)*100).toFixed(0);
+      const histNaPerfStd = (getStd(histNationalPerfs)*100).toFixed(0);
+      const histNeighbourhoodPerf = `${histNePerfAvg} % \u00B1 ${histNePerfStd} %`;
+      const histNationalPerf = `${histNaPerfAvg} % \u00B1 ${histNaPerfStd} %`;
+      setHistPerf({ histNeighbourhoodPerf, histNationalPerf });
+
+      const futStats = {};
+      var bestCrop = '';
+      var bestPerf = 0;
+      majorCommodityCrops.forEach(crop => {
+        const ne = futNeighbourhoodPerfs[crop] || [];
+        const na = futNationalPerfs[crop] || [];
+        const neAvg = (getAvg(ne)*100);
+        const neStd = (getStd(ne)*100);
+        const naAvg = (getAvg(na)*100);
+        const naStd = (getStd(na)*100);
+        const avgPerf = (neAvg + naAvg) / 2;
+        const neighbourhoodPerf = `${neAvg.toFixed(0)} % \u00B1 ${neStd.toFixed(0)} %`;
+        const nationalPerf = `${naAvg.toFixed(0)} % \u00B1 ${naStd.toFixed(0)} %`;
+        futStats[crop] = { neighbourhoodPerf, nationalPerf, avgPerf };
+
+        if (avgPerf > bestPerf) {
+          bestCrop = crop;
+          bestPerf = avgPerf;
+        }
+      });
+        
+      setFutPerf(futStats);
+      setBestProjectedCrop(bestCrop);
+    }
+  }, [yearlyYields, cropsGrown]);
 
   // Prepare data for the bar plot
-  const historicLabels = Object.keys(historicFilteredData).map((yr) => historicFilteredData[yr].label);
-  const historicPropertyYields = Object.keys(historicFilteredData).map((yr) => historicFilteredData[yr].property);
-  const historicNeighbourhoodYields = Object.keys(historicFilteredData).map((yr) => historicFilteredData[yr].neighbourhood);
-  const historicNationalYields = Object.keys(historicFilteredData).map((yr) => historicFilteredData[yr].national);
+  const historicLabels = Object.keys(historicData).map((yr) => historicData[yr].label);
+  const historicPropertyYields = Object.keys(historicData).map((yr) => historicData[yr].property);
+  const historicNeighbourhoodYields = Object.keys(historicData).map((yr) => historicData[yr].neighbourhood);
+  const historicNationalYields = Object.keys(historicData).map((yr) => historicData[yr].national);
 
   const historicPlotData = [
     {
@@ -148,7 +209,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
   };
 
   const projectedFilteredData = yearlyYields
-    .filter((item) => item.Crop === selectedProjectedCrop && item.Year >= 2014 && item.Year <= 2034)
+    .filter((item) => item.Crop === selectedProjectedCrop && item.Year >= minYear && item.Year <= maxYear)
     .filter((item) => ["Property", "Neighbourhood", "National"].includes(item.levels));
 
   const projectedPlotData = projectedFilteredData.reduce((acc, item) => {
@@ -174,6 +235,91 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
     }
   }, [selectedHeatMapCrop,cropHeatMaps]);
 
+  const ProjectionDisplay = () => {
+    if (!futPerf) {
+      return null;
+    }
+      
+    return (
+      <div>
+        <div className={`${montserrat.className} mb-4`}>
+          Average Projected Performance
+        </div>
+        <table className="min-w-full border-collapse mb-4">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 font-normal">Crop</th>
+              <th className="px-4 py-2 text-right font-normal">Neighbourhood</th>
+              <th className="px-4 py-2 text-right font-normal">National</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(futPerf).map((crop) => (
+              <tr key={crop}>
+                <td className="px-4 py-2">{crop}</td>
+                <td className="px-4 py-2 text-right">{futPerf[crop].neighbourhoodPerf}</td>
+                <td className="px-4 py-2 text-right">{futPerf[crop].nationalPerf}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="flex justify-between px-2">
+          <div className="">Highest Performing Projected Crop:</div>
+          <div className="">{bestProjectedCrop}</div>
+        </div>
+      </div>
+    );
+  };
+
+  const CropConsistencyDisplay = () => {
+    if (!cropHeatMaps) {
+      return null;
+    }
+
+    const cropsWithNCV = Object.entries(cropHeatMaps).map(([cropName, cropData]) => {
+      const { average, stdDev } = cropData;
+      const ncv = average !== 0 ? Math.max(0, Math.min(1, stdDev / average)) : 0;
+      return { cropName, ncv, average, stdDev };
+    });
+
+    if (cropsWithNCV.length === 0) {
+      return null;
+    }
+
+    // Sort crops by NCV to find most and least consistent
+    const sortedCrops = cropsWithNCV.sort((a, b) => a.ncv - b.ncv);
+    const mostConsistent = sortedCrops[0];
+    const leastConsistent = sortedCrops[sortedCrops.length - 1];
+
+    return (
+      <div>
+        <div className={`${montserrat.className} mb-4`}>
+          Average Yield Across Property (Bushels/Acre)
+        </div>
+        <div className="mb-4">
+          {cropsWithNCV.map(({ cropName, ncv, average, stdDev }) => (
+            <div key={cropName} className="mb-2">
+              <div className="flex justify-between">
+                <div>{cropName}:</div>
+                <div>{`${average.toFixed(2)} \u00B1 ${stdDev.toFixed(2)}`}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4">
+          <div className="flex justify-between mb-2">
+            <div>Most Consistent Crop:</div>
+            <div>{mostConsistent.cropName}</div>
+          </div>
+          <div className="flex justify-between mb-2">
+            <div>Least Consistent Crop:</div>
+            <div>{leastConsistent.cropName}</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
@@ -187,17 +333,22 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
         </div>
         <div className="flex">
           <div className="w-[40%] mt-16 p-4">
+            <div className={`${montserrat.className} mb-4`}>
+              Performance Comparison
+            </div>
             <div className="flex justify-between mb-2">
               <div className="">Crops Grown:</div>
-              <div>{allHistoricCrops.join(', ')}</div>
+              {cropsGrown && (
+                <div>{[...new Set(Object.values(cropsGrown))].join(', ')}</div>
+              )}
             </div>
             <div className="flex justify-between mb-2">
               <div className="">Average Yield vs Neighbourhood:</div>
-              <div>{avgPerfVsNeighbourhood}</div>
+              <div className="">{histPerf.histNeighbourhoodPerf}</div>
             </div>
             <div className="flex justify-between mb-2">
               <div className="">Average Yield vs National:</div>
-              <div>{avgPerfVsNational}</div>
+              <div className="">{histPerf.histNationalPerf}</div>
             </div>
           </div>
           <div className="w-[60%]">
@@ -222,8 +373,8 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
           Estimated Projected Yield
         </div>
         <div className="flex">
-          <div className="w-[40%] mt-16">
-            Notes about projected yield blah blah blah
+          <div className="w-[40%] mt-16 p-4">
+            <ProjectionDisplay />
           </div>
           <div className="w-[60%]">
             <div className="flex-row justify-center items-center w-full">
@@ -233,6 +384,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
               </div>
               <div className="">
                 <Plot
+                  style={{ width: '100%', height: '100%' }}
                   className="mt-0"
                   data={projectedPlotData}
                   layout={{
@@ -266,34 +418,49 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Yield Consistency Across Property</div>
         <div className="flex">
-          <div className="w-[40%] mt-16">
-            Stats about crop consistency
+          <div className="w-[40%] mt-16 p-4">
+            <CropConsistencyDisplay />
           </div>
           <div className="w-[60%]">
-            <div className="flex-row justify-center items-center w-full">
-              <div className="flex justify-center items-center mb-4">
-                <div className={`${montserrat.className} mr-4`}>Yield Heatmap for:</div>                    
-                <Dropdown options={majorCommodityCrops} selected={selectedHeatMapCrop} onSelect={setSelectedHeatMapCrop} />
-              </div>
-              <div className="">
-                {bbox && heatMapData && (
+            {heatMapData && selectedHeatMapCrop && bbox ? (
+              <div className="flex w-full">
+                <div className="w-full">
+                  <div className="flex justify-center items-center h-16">
+                    <div className={`${montserrat.className} mr-4`}>Yield Heatmap for:</div>                    
+                    <Dropdown options={majorCommodityCrops} selected={selectedHeatMapCrop} onSelect={setSelectedHeatMapCrop} />
+                  </div>
                   <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={heatMapData.imageUrl} />
-                )}
+                </div>
+                <div className="flex-row ml-2 justify-start items-center mt-16">
+                  <div className={`${merriweather.className} text-center`}>
+                      Yield
+                  </div>
+                  <div className="mb-2">(Bushels/Acre)</div>
+                  <div className="flex justify-center">
+                    <ColorBar
+                      vmin={heatMapData.thresholdMin}
+                      vmax={heatMapData.thresholdMax}
+                      numIntervals={5}
+                      heatmapColors={['black', 'red', 'yellow', 'white']}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : ( 
+              <Loading />
+            )}
           </div>
         </div>
       </div>
       {/* <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Crop Diversity Potential</div>
         <p>The amount of crops that can be grown and exceed the neighboring/national levels.</p>
-      </div> */}
-      {/* <div className="py-4 border-b border-gray-500">
+      </div>
+      <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Pest and Disease Resistance</div>
         <p>Historical impact of pests or diseases on crops. Rating based on the average annual yield loss due to pests compared to regional averages.
         </p>
       </div> */}
-        
     </div>
   );
 };

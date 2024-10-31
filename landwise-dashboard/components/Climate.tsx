@@ -3,6 +3,7 @@ import { montserrat, merriweather } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
 import { Slider } from "@mui/material";
 import dynamic from 'next/dynamic';
+import { getAvg, getStd } from '@/utils/stats';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -44,17 +45,6 @@ const getWeekDateRange = (weekNumber) => {
   const weekEnd = formatDateToMonthName(dayNumToMonthDay(weekNumber * 7));
   return `${weekStart} - ${weekEnd}`;
 };
-
-function avg(values) {
-  const sum = values.reduce((acc, value) => acc + value, 0);
-  return Math.round(sum / values.length);
-}
-
-function std(values) {
-  const mean = avg(values);
-  const variance = values.reduce((acc, value) => acc + Math.pow(value - mean, 2), 0) / values.length;
-  return Math.round(Math.sqrt(variance));
-}
 
 const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: ClimateProps) => {
   const [years, setYears] = useState<number|null>(null);
@@ -123,22 +113,22 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         }
       });
 
-      setAvgChu(avg(allChu));
-      setStdChu(std(allChu));
-      setAvgGdd0(avg(allGdd0));
-      setStdGdd0(std(allGdd0));
-      setAvgGdd5(avg(allGdd5));
-      setStdGdd5(std(allGdd5));
-      setAvgGdd10(avg(allGdd10));
-      setStdGdd10(std(allGdd10));
-      setAvgGdd15(avg(allGdd15));
-      setStdGdd15(std(allGdd15));
+      setAvgChu(getAvg(allChu).toFixed(0));
+      setStdChu(getStd(allChu).toFixed(0));
+      setAvgGdd0(getAvg(allGdd0).toFixed(0));
+      setStdGdd0(getStd(allGdd0).toFixed(0));
+      setAvgGdd5(getAvg(allGdd5).toFixed(0));
+      setStdGdd5(getStd(allGdd5).toFixed(0));
+      setAvgGdd10(getAvg(allGdd10).toFixed(0));
+      setStdGdd10(getStd(allGdd10).toFixed(0));
+      setAvgGdd15(getAvg(allGdd15).toFixed(0));
+      setStdGdd15(getStd(allGdd15).toFixed(0));
 
       // For Growing Season
       const getDayOfYear = (date) => {
         const startOfYear = new Date(date.getFullYear(), 0, 0);
         const diff = date - startOfYear;
-        return Math.floor(diff / (1000 * 60 * 60 * 24));
+        return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
       };
         
       const lengthsData = dataYears.map((year) => {
@@ -161,40 +151,20 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         
       // Calculate growing season metrics
       if (filteredData.length > 0) {
-        // Function to extract month and day as a comparable string
-        const getMonthDayString = (dateString) => {
-          const date = new Date(dateString);
-          return `${date.getMonth() + 1}-${date.getDate()}`; // Format as "MM-DD"
-        };
-
-        // Get month-day representations of first and last frost dates
-        const firstFrostDays = filteredData.map(data => getMonthDayString(data.firstFrost));
-        const lastFrostDays = filteredData.map(data => getMonthDayString(data.lastFrost));
-
-        // Calculate earliest and latest first frost (ignoring year)
-        const earliestFirstFrost = firstFrostDays.reduce((earliest, current) => 
-          earliest < current ? earliest : current
-        );
-        const latestFirstFrost = firstFrostDays.reduce((latest, current) => 
-          latest > current ? latest : current
-        );
-
-        setEarliestFirstFrost(formatDateToMonthName(earliestFirstFrost));
-        setLatestFirstFrost(formatDateToMonthName(latestFirstFrost));
-
-        // Calculate earliest and latest last frost (ignoring year)
-        const earliestLastFrost = lastFrostDays.reduce((earliest, current) => 
-          earliest < current ? earliest : current
-        );
-        const latestLastFrost = lastFrostDays.reduce((latest, current) => 
-          latest > current ? latest : current
-        );
-
-        setEarliestLastFrost(formatDateToMonthName(earliestLastFrost));
-        setLatestLastFrost(formatDateToMonthName(latestLastFrost));
-
-        // Calculate shortest and longest growing season
+        const firstFrostDays = filteredData.map(data => data.end);
+        const lastFrostDays = filteredData.map(data => data.start);
         const seasonLengths = filteredData.map(data => data.length);
+          
+        const earliestFirstFrostDay = Math.min(...firstFrostDays);
+        const latestFirstFrostDay = Math.max(...firstFrostDays);
+        setEarliestFirstFrost(formatDateToMonthName(dayNumToMonthDay(earliestFirstFrostDay)));
+        setLatestFirstFrost(formatDateToMonthName(dayNumToMonthDay(latestFirstFrostDay)));
+        
+        const earliestLastFrostDay = Math.min(...lastFrostDays);
+        const latestLastFrostDay = Math.max(...lastFrostDays);
+        setEarliestLastFrost(formatDateToMonthName(dayNumToMonthDay(earliestLastFrostDay)));
+        setLatestLastFrost(formatDateToMonthName(dayNumToMonthDay(latestLastFrostDay)));
+
         const shortestSeason = Math.min(...seasonLengths);
         const longestSeason = Math.max(...seasonLengths);
         setShortestGrowingSeason(`${shortestSeason} days`);
@@ -354,6 +324,7 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                         r: 0,
                       },
                     }}
+                    style={{ width: '100%', height: '100%' }}
                   />
                 )}
               </div>
@@ -371,23 +342,23 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
               </div>
               <div className="flex justify-between mb-2">
                 <div className="">Corn Heat Units (CHUs):</div>
-                <div>{`${avgChu} (\u00B1 ${stdChu})`}</div>
+                <div>{`${avgChu} \u00B1 ${stdChu}`}</div>
               </div>
               <div className="flex justify-between mb-2">
                 <div className="">{`Growind Degree Days (GDDs), Base Temp. 0\u00B0C`}:</div>
-                <div>{`${avgGdd0} (\u00B1 ${stdGdd0})`}</div>
+                <div>{`${avgGdd0} \u00B1 ${stdGdd0}`}</div>
               </div>
               <div className="flex justify-between mb-2">
                 <div className="">{`Growind Degree Days (GDDs), Base Temp. 5\u00B0C`}:</div>
-                <div>{`${avgGdd5} (\u00B1 ${stdGdd5})`}</div>
+                <div>{`${avgGdd5} \u00B1 ${stdGdd5}`}</div>
               </div>
               <div className="flex justify-between mb-2">
                 <div className="">{`Growind Degree Days (GDDs), Base Temp. 10\u00B0C`}:</div>
-                <div>{`${avgGdd10} (\u00B1 ${stdGdd10})`}</div>
+                <div>{`${avgGdd10} \u00B1 ${stdGdd10}`}</div>
               </div>
               <div className="flex justify-between mb-2">
                 <div className="">{`Growind Degree Days (GDDs), Base Temp. 15\u00B0C`}:</div>
-                <div>{`${avgGdd15} (\u00B1 ${stdGdd15})`}</div>
+                <div>{`${avgGdd15} \u00B1 ${stdGdd15}`}</div>
               </div>
             </div> 
           </div>
@@ -438,6 +409,7 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                       bgcolor: 'rgba(255, 255, 255, 0.5)',
                     },
                   }}
+                  style={{ width: '100%', height: '100%' }}
                 />
                 )}
               </div>
@@ -514,6 +486,7 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                       r: 0
                     },
                   }}
+                  style={{ width: '100%', height: '100%' }}
                 />
               </div>
             </div>
