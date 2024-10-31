@@ -41,6 +41,9 @@ const formatDateToMonthName = (dateString) => {
 };
 
 const getWeekDateRange = (weekNumber) => {
+  if (isNaN(Number(weekNumber))) {
+    return weekNumber;
+  }
   const weekStart = formatDateToMonthName(dayNumToMonthDay((weekNumber - 1) * 7)); 
   const weekEnd = formatDateToMonthName(dayNumToMonthDay(weekNumber * 7));
   return `${weekStart} - ${weekEnd}`;
@@ -223,8 +226,16 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
             counts[weekIndex] > 0 ? sum / counts[weekIndex] : 0
           );
         });
-
-        setPrecipData(weeklyAvgs);
+       
+        const xValues = Array.from({ length: 52 }, (_, i) => i + 1);
+        const xNames = xValues.map(x => getWeekDateRange(x));
+        setPrecipData({ 
+          precip: weeklyAvgs[0], 
+          humidity: weeklyAvgs[1], 
+          dew: weeklyAvgs[2], 
+          xValues, 
+          xNames 
+        });
       }        
     }
   }, [precipYear, weatherData]);
@@ -238,7 +249,11 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         <div className={`${montserrat.className} text-lg `}>Precipitation, Humidity & Dew</div>
         <div className = "flex">
           <div className = "w-[40%]">
-            Precipitation and humidity stats
+            <div className = "mt-8 p-4 mx-4">
+              <div className={`${montserrat.className} mb-4`}>
+                Summary
+              </div>
+            </div>
           </div>
           <div className="w-[60%]">
             <div className="flex-row justify-center items-center">
@@ -270,8 +285,8 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                   <Plot
                     data={[
                       {
-                        z: [precipData[0]],
-                        x: Array.from({ length: 52 }, (_, i) => i + 1),
+                        z: [precipData.precip],
+                        x: precipData.xNames,                        
                         y: [0],
                         type: 'heatmap',
                         colorscale: 'Blues',
@@ -279,11 +294,11 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                           len: 0.3,
                           y: 0.15
                         },
-                        showscale: true
+                        showscale: true,
                       },
                       {
-                        z: [precipData[1]],
-                        x: Array.from({ length: 52 }, (_, i) => i + 1),
+                        z: [precipData.humidity],
+                        x: precipData.xNames, 
                         y: [1],
                         type: 'heatmap',
                         colorscale: 'Greens',
@@ -291,11 +306,11 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                           len: 0.3,
                           y: 0.5
                         },
-                        showscale: true
+                        showscale: true,
                       },
                       {
-                        z: [precipData[2]],
-                        x: Array.from({ length: 52 }, (_, i) => i + 1),
+                        z: [precipData.dew],
+                        x: precipData.xNames, 
                         y: [2],
                         type: 'heatmap',
                         colorscale: 'Purples',
@@ -303,14 +318,13 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                           len: 0.3,
                           y: 0.85
                         },
-                        showscale: true
-                      }
+                        showscale: true,
+                      },
                     ]}
                     layout={{
                       xaxis: {
                         title: 'Week of Year',
-                        tickvals: Array.from({ length: 52 / precipTickFreq }, (_, i) => (i * precipTickFreq) + 1),
-                        ticktext: Array.from({ length: 52 / precipTickFreq }, (_, i) => `${getWeekDateRange((i * precipTickFreq) + 1)}`)
+                        tickvals: precipData.xNames.filter((_, index) => index % precipTickFreq === 0),
                       },
                       yaxis: {
                         title: '',
@@ -336,7 +350,7 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         <div className={`${montserrat.className} text-lg `}>Temperature Suitability</div>
         <div className="flex">
           <div className="w-[40%]">
-            <div className = "mt-16 p-4">
+            <div className = "mt-8 p-4 mx-4">
               <div className={`${montserrat.className} mb-4`}>
                 End of Completed Season Averages
               </div>
@@ -345,19 +359,31 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                 <div>{`${avgChu} \u00B1 ${stdChu}`}</div>
               </div>
               <div className="flex justify-between mb-2">
-                <div className="">{`Growind Degree Days (GDDs), Base Temp. 0\u00B0C`}:</div>
+                <div className="flex-row">
+                  <div>{`Growind Degree Days (GDDs)`}</div>
+                  <div>{`Base Temp. 0\u00B0C`}</div>
+                </div>
                 <div>{`${avgGdd0} \u00B1 ${stdGdd0}`}</div>
               </div>
               <div className="flex justify-between mb-2">
-                <div className="">{`Growind Degree Days (GDDs), Base Temp. 5\u00B0C`}:</div>
+                <div className="flex-row">
+                  <div>{`Growind Degree Days (GDDs)`}</div>
+                  <div>{`Base Temp. 5\u00B0C`}</div>
+                </div>
                 <div>{`${avgGdd5} \u00B1 ${stdGdd5}`}</div>
               </div>
               <div className="flex justify-between mb-2">
-                <div className="">{`Growind Degree Days (GDDs), Base Temp. 10\u00B0C`}:</div>
-                <div>{`${avgGdd10} \u00B1 ${stdGdd10}`}</div>
+                <div className="flex-row">
+                  <div>{`Growind Degree Days (GDDs)`}</div>
+                  <div>{`Base Temp. 10\u00B0C`}</div>
+                </div>
+                <div>{`${avgGdd10} \u00B1 ${stdGdd10}`}</div> 
               </div>
               <div className="flex justify-between mb-2">
-                <div className="">{`Growind Degree Days (GDDs), Base Temp. 15\u00B0C`}:</div>
+                <div className="flex-row">
+                  <div>{`Growind Degree Days (GDDs)`}</div>
+                  <div>{`Base Temp. 15\u00B0C`}</div>
+                </div>
                 <div>{`${avgGdd15} \u00B1 ${stdGdd15}`}</div>
               </div>
             </div> 
@@ -421,7 +447,10 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         <div className={`${montserrat.className} text-lg `}>Growing Season Length</div>
         <div className="flex">
           <div className="w-[40%]">
-            <div className = "mt-16">
+            <div className = "mt-8 mx-4">
+              <div className={`${montserrat.className} mb-4`}>
+                Summary
+              </div>
               <div className="flex justify-between mb-2">
                 <div className="">Earliest First Frost Date:</div>
                 <div>{earliestFirstFrost}</div>

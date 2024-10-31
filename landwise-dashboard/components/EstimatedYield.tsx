@@ -3,6 +3,7 @@ import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
 import Loading from '@/components/Loading';
 import ColorBar from '@/components/ColorBar';
+import PlainTable from '@/components/PlainTable';
 import dynamic from 'next/dynamic';
 import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 import { getAvg, getStd } from '@/utils/stats';
@@ -29,6 +30,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
   const [selectedProjectedCrop, setSelectedProjectedCrop] = useState<majorCommodityCrop>('Flaxseed');
   const [futPerf, setFutPerf] = useState<any>({});
   const [bestProjectedCrop, setBestProjectedCrop] = useState<string>(''); 
+  const [worstProjectedCrop, setWorstProjectedCrop] = useState<string>(''); 
   const minYear = 2014;
   const maxYear = 2034;
 
@@ -134,6 +136,8 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
       const futStats = {};
       var bestCrop = '';
       var bestPerf = 0;
+      var worstCrop = ''
+      var worstPerf = 1000000;
       majorCommodityCrops.forEach(crop => {
         const ne = futNeighbourhoodPerfs[crop] || [];
         const na = futNationalPerfs[crop] || [];
@@ -150,10 +154,15 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
           bestCrop = crop;
           bestPerf = avgPerf;
         }
+        if (avgPerf < worstPerf) {
+          worstCrop = crop;
+          worstPerf = avgPerf;
+        }
       });
         
       setFutPerf(futStats);
       setBestProjectedCrop(bestCrop);
+      setWorstProjectedCrop(worstCrop);
     }
   }, [yearlyYields, cropsGrown]);
 
@@ -239,33 +248,37 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
     if (!futPerf) {
       return null;
     }
+
+    const sortedCrops = Object.keys(futPerf).sort((a, b) => {
+      return futPerf[b].avgPerf - futPerf[a].avgPerf; // Sort in descending order
+    });
+
+    const countAbove100 = sortedCrops.filter(crop => futPerf[crop].avgPerf > 100).length;
+    const headers = ['Crop', 'Neighbourhood', 'National'];
+
+    const data = sortedCrops.map(crop => ({
+      crop,
+      neighbourhoodPerf: futPerf[crop].neighbourhoodPerf,
+      nationalPerf: futPerf[crop].nationalPerf,
+    }));
       
     return (
       <div>
-        <div className={`${montserrat.className} mb-4`}>
-          Average Projected Performance
+        <div className={`${montserrat.className} mb-4 ml-4`}>
+          Average Future Yield Comparison
         </div>
-        <table className="min-w-full border-collapse mb-4">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 font-normal">Crop</th>
-              <th className="px-4 py-2 text-right font-normal">Neighbourhood</th>
-              <th className="px-4 py-2 text-right font-normal">National</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(futPerf).map((crop) => (
-              <tr key={crop}>
-                <td className="px-4 py-2">{crop}</td>
-                <td className="px-4 py-2 text-right">{futPerf[crop].neighbourhoodPerf}</td>
-                <td className="px-4 py-2 text-right">{futPerf[crop].nationalPerf}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="flex justify-between px-2">
+        <PlainTable headers={headers} data={data} />
+        <div className="flex justify-between mx-4 mb-2">
           <div className="">Highest Performing Projected Crop:</div>
           <div className="">{bestProjectedCrop}</div>
+        </div>
+        <div className="flex justify-between mx-4 mb-2">
+          <div className="">Lowest Performing Projected Crop:</div>
+          <div className="">{worstProjectedCrop}</div>
+        </div>
+        <div className="flex justify-between mx-4">
+          <div className="">Crops with Average Performance Above 100%:</div>
+          <div className="">{countAbove100}</div>
         </div>
       </div>
     );
@@ -278,7 +291,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
 
     const cropsWithNCV = Object.entries(cropHeatMaps).map(([cropName, cropData]) => {
       const { average, stdDev } = cropData;
-      const ncv = average !== 0 ? Math.max(0, Math.min(1, stdDev / average)) : 0;
+      const ncv = average !== 0 ? Math.max(0, Math.min(1, stdDev / average)) : 1;
       return { cropName, ncv, average, stdDev };
     });
 
@@ -291,22 +304,25 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
     const mostConsistent = sortedCrops[0];
     const leastConsistent = sortedCrops[sortedCrops.length - 1];
 
+    const headers = ['Crop Name', 'Average', 'Coef. of Variation'];
+
+      
     return (
       <div>
-        <div className={`${montserrat.className} mb-4`}>
+        <div className={`${montserrat.className} mb-4 mx-4`}>
           Average Yield Across Property (Bushels/Acre)
         </div>
         <div className="mb-4">
-          {cropsWithNCV.map(({ cropName, ncv, average, stdDev }) => (
-            <div key={cropName} className="mb-2">
-              <div className="flex justify-between">
-                <div>{cropName}:</div>
-                <div>{`${average.toFixed(2)} \u00B1 ${stdDev.toFixed(2)}`}</div>
-              </div>
-            </div>
-          ))}
+          <PlainTable
+            headers={headers}
+            data={cropsWithNCV.map(({ cropName, ncv, average, stdDev }) => ({
+              cropName,
+              average: `${average.toFixed(2)} \u00B1 ${stdDev.toFixed(2)}`,
+              ncv: ncv.toFixed(3),
+            }))}
+          />
         </div>
-        <div className="mt-4">
+        <div className="mt-4 mx-4">
           <div className="flex justify-between mb-2">
             <div>Most Consistent Crop:</div>
             <div>{mostConsistent.cropName}</div>
@@ -332,21 +348,21 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
           Estimated Historic Yield
         </div>
         <div className="flex">
-          <div className="w-[40%] mt-16 p-4">
-            <div className={`${montserrat.className} mb-4`}>
+          <div className="w-[40%] mt-8 p-4">
+            <div className={`${montserrat.className} mb-4 mx-4`}>
               Performance Comparison
             </div>
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between mb-2 mx-4">
               <div className="">Crops Grown:</div>
               {cropsGrown && (
                 <div>{[...new Set(Object.values(cropsGrown))].join(', ')}</div>
               )}
             </div>
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between mb-2 mx-4">
               <div className="">Average Yield vs Neighbourhood:</div>
               <div className="">{histPerf.histNeighbourhoodPerf}</div>
             </div>
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between mb-2 mx-4">
               <div className="">Average Yield vs National:</div>
               <div className="">{histPerf.histNationalPerf}</div>
             </div>
@@ -373,7 +389,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
           Estimated Projected Yield
         </div>
         <div className="flex">
-          <div className="w-[40%] mt-16 p-4">
+          <div className="w-[40%] mt-8 p-4">
             <ProjectionDisplay />
           </div>
           <div className="w-[60%]">
@@ -418,7 +434,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Yield Consistency Across Property</div>
         <div className="flex">
-          <div className="w-[40%] mt-16 p-4">
+          <div className="w-[40%] mt-8 p-4">
             <CropConsistencyDisplay />
           </div>
           <div className="w-[60%]">
