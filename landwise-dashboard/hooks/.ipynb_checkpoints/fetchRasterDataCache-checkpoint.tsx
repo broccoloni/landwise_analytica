@@ -3,6 +3,8 @@ import chroma from 'chroma-js';
 import { valuesToNames } from '@/types/valuesToNames';
 import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 import { fromArrayBuffer } from "geotiff";
+import { getAvg, getStd } from '@/utils/stats';
+import { getHeatMapUrl } from '@/utils/imageUrl';
 
 const scaleFactor=10;
 const metersPerPixel = 30;
@@ -173,81 +175,58 @@ const yearlyDataToImageURL = (rasterData: any, width: number, height: number) =>
 const fetchElevationData = async (image: any) => {
   const data: TypedArray[] = await image.readRasters() as TypedArray[];
   const flattenedData = Array.from(data[0]);
+  const width = image.getWidth();
+  const height = image.getHeight();
 
   // Remove nans and zeros from calculations
   const validData = flattenedData.filter((value) => !isNaN(value) && value !== null && value !== 0);
 
   const minElevation = Math.min(...validData);
   const maxElevation = Math.max(...validData);
-  const avg = validData.reduce((acc, val) => acc + val, 0) / validData.length;
+  const avgElevation = getAvg(validData);
+  const stdElevation = getStd(validData);
+  const elevationColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minElevation, maxElevation]);
+  const elevationUrl = await getHeatMapUrl(flattenedData, 
+                                           width, 
+                                           height, 
+                                           0, 
+                                           elevationColorScale,
+                                           scaleFactor);
 
-  const std = Math.sqrt(
-    validData.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / validData.length
-  );
-
-  const width = image.getWidth();
-  const height = image.getHeight();
-  const elevationUrl = await elevationDataToImageURL(flattenedData, width, height, minElevation, maxElevation, 0);
-
-  const { slope, minSlope, maxSlope } = calculateSlope(flattenedData, width, height);
-  const slopeUrl = await elevationDataToImageURL(slope, width-2, height-2, minSlope, maxSlope, null);
-    
-  const { convexity, minConvexity, maxConvexity } = calculateConvexity(flattenedData, width, height);
-  const convexityUrl = await elevationDataToImageURL(convexity, width-2, height-2, minConvexity, maxConvexity, null);
-    
-    
-  const bbox = image.getBoundingBox();
-  return { bbox, avg, std, elevationUrl, minElevation, maxElevation, slopeUrl, minSlope, maxSlope, convexityUrl, minConvexity, maxConvexity};
-};
-
-const elevationDataToImageURL = (rasterData: any, width: number, height: number, min: number, max: number, transparentVal: number|null) => {
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx) {
-    throw new Error("Failed to get canvas 2D context");
-  }
-
-  ctx.imageSmoothingEnabled = false;
-  const imageData = ctx.createImageData(width, height);
-  const colorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([min, max]);
-
-  for (let i = 0; i < rasterData.length; i++) {
-    const value = rasterData[i];
-    
-    if (value === transparentVal) {
-      imageData.data[i * 4 + 3] = 0;
-    } else {
-      const color = colorScale(value);
-      const [r, g, b] = color.rgb();
+  // console.log(minElevation, maxElevation, avgElevation, stdElevation);
       
-      imageData.data[i * 4] = r;
-      imageData.data[i * 4 + 1] = g;
-      imageData.data[i * 4 + 2] = b;
-      imageData.data[i * 4 + 3] = 255;
-    }
-  }
+  const { slope, minSlope, maxSlope, avgSlope, stdSlope, aspect } = calculateSlope(flattenedData, width, height);
+  const slopeColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minSlope, maxSlope]);
+  const slopeUrl = await getHeatMapUrl(slope, 
+                                       width-2, 
+                                       height-2, 
+                                       null, 
+                                       slopeColorScale,
+                                       scaleFactor);
 
-  ctx.putImageData(imageData, 0, 0);
+    
+  const { convexity, minConvexity, maxConvexity, avgConvexity, stdConvexity } = calculateConvexity(flattenedData, width, height);
+  const convexityColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minConvexity, maxConvexity]);
+  const convexityUrl = await getHeatMapUrl(convexity, 
+                                           width-2, 
+                                           height-2, 
+                                           null, 
+                                           convexityColorScale,
+                                           scaleFactor);
+      
+  const bbox = image.getBoundingBox();
 
-  const scaledCanvas = document.createElement("canvas");
-  scaledCanvas.width = width * scaleFactor;
-  scaledCanvas.height = height * scaleFactor;
-  const scaledCtx = scaledCanvas.getContext("2d");
-
-  if (!scaledCtx) {
-      throw new Error("Failed to get scaled canvas 2D context");
-  }
-
-  scaledCtx.imageSmoothingEnabled = false;
-  scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-  return scaledCanvas.toDataURL();
+  // returning raw slope and aspect data as they are needed with wind speeds and directions to calculated
+  // wind exposure risk
+  return { bbox, slope, aspect,
+           elevationUrl, avgElevation, stdElevation, minElevation, maxElevation, 
+           slopeUrl, avgSlope, stdSlope, minSlope, maxSlope, 
+           convexityUrl, avgConvexity, stdConvexity, minSlope, maxSlope };
 };
 
 function calculateSlope(elevationData: number[], width: number, height: number) {
   const slope: (number | null)[] = [];
+  const aspect: (number | null)[] = [];
   let minSlope: number | null = null;
   let maxSlope: number | null = null;
 
@@ -278,7 +257,9 @@ function calculateSlope(elevationData: number[], width: number, height: number) 
       const slopeX = (pr - pl) / (2 * metersPerPixel);
       const slopeY = (pd - pu) / (2 * metersPerPixel);
       const overallSlope = Math.sqrt(Math.pow(slopeX, 2) + Math.pow(slopeY, 2));
-
+      const slopeAspect = Math.atan2(slopeY, slopeX) * (180 / Math.PI);
+      const normalizedAspect = slopeAspect >= 0 ? slopeAspect : slopeAspect + 360; // 0 - 360 degrees
+        
       if (!isNaN(overallSlope)) {
         if (minSlope === null || overallSlope < minSlope) {
           minSlope = overallSlope;
@@ -287,14 +268,18 @@ function calculateSlope(elevationData: number[], width: number, height: number) 
           maxSlope = overallSlope;
         }
         slope.push(overallSlope);
+        aspect.push(normalizedAspect);
       } else {
         console.warn("Invalid slope value at", { i, j, overallSlope });
         slope.push(null);
+        aspect.push(null);
       }
     }
   }
+  const avgSlope = getAvg(slope);
+  const stdSlope = getStd(slope);
 
-  return { slope, minSlope, maxSlope };
+  return { slope, minSlope, maxSlope, avgSlope, stdSlope, aspect };
 }
 
 
@@ -336,5 +321,9 @@ function calculateConvexity(elevationData: number[], width: number, height: numb
       convexity.push(xyconvexity);
     }
   }
-  return { convexity, minConvexity, maxConvexity };
+
+  const avgConvexity = getAvg(convexity);
+  const stdConvexity = getStd(convexity);
+    
+  return { convexity, minConvexity, maxConvexity, avgConvexity, stdConvexity };
 }
