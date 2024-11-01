@@ -216,9 +216,9 @@ const fetchElevationData = async (image: any) => {
       
   const bbox = image.getBoundingBox();
 
-  // returning raw slope and aspect data as they are needed with wind speeds and directions to calculated
-  // wind exposure risk
-  return { bbox, slope, aspect,
+  // returning raw slope and aspect data, as well as width and heigh as they are needed with wind speeds 
+  // and directions to calculate wind exposure risk, which then gets converted to an image
+  return { bbox, slope, aspect, width, height,
            elevationUrl, avgElevation, stdElevation, minElevation, maxElevation, 
            slopeUrl, avgSlope, stdSlope, minSlope, maxSlope, 
            convexityUrl, avgConvexity, stdConvexity, minSlope, maxSlope };
@@ -251,6 +251,7 @@ function calculateSlope(elevationData: number[], width: number, height: number) 
       // Check if any of the elevations are 0
       if ([p, pl, pr, pu, pd].some(val => val === 0)) {
         slope.push(null);
+        aspect.push(null);
         continue;
       }
 

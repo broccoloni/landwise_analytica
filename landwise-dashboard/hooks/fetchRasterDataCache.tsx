@@ -251,6 +251,7 @@ function calculateSlope(elevationData: number[], width: number, height: number) 
       // Check if any of the elevations are 0
       if ([p, pl, pr, pu, pd].some(val => val === 0)) {
         slope.push(null);
+        aspect.push(null);
         continue;
       }
 
