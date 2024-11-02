@@ -7,20 +7,23 @@ import PlainTable from '@/components/PlainTable';
 import dynamic from 'next/dynamic';
 import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 import { getAvg, getStd } from '@/utils/stats';
+import { CategoryProps } from '@/types/category';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
-interface EstimatedYieldProps {
-  lat: string;
-  lng: string;
-  rasterDataCache: any;
-  cropHeatMaps: any;
-  yearlyYields: any;
-  weatherData: any;
-}
+const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData, score, setScore }: CategoryProps) => {
+  const [scoreComponents, setScoreComponents] = useState<any>({});
+  useEffect(() => {
+    const scoreValues = Object.values(scoreComponents).map(Number);
+    if (scoreValues.length === 3) {
+      const avgScore = getAvg(scoreValues).toFixed(0);
+      console.log("Estimated Yield Score:", avgScore);
+      setScore(avgScore);
+    }
+  }, [scoreComponents]);
 
-const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: EstimatedYieldProps) => {
+    
   // Historic Yield
   const [historicData, setHistoricData] = useState<any>({});
   const [cropsGrown, setCropsGrown] = useState({});
@@ -133,6 +136,16 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
       const histNationalPerf = `${histNaPerfAvg} % \u00B1 ${histNaPerfStd} %`;
       setHistPerf({ histNeighbourhoodPerf, histNationalPerf });
 
+      const scoreComponent = Math.min((histNaPerfAvg + histNePerfAvg) / 2, 100);
+      if (scoreComponent > 0) {
+        setScoreComponents((prev) => {
+          if (!prev.histScore) {
+            return { ...prev, histScore: Math.round(scoreComponent) };
+          }
+          return prev;
+        });
+      }
+        
       const futStats = {};
       var bestCrop = '';
       var bestPerf = 0;
@@ -253,6 +266,17 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
       return futPerf[b].avgPerf - futPerf[a].avgPerf; // Sort in descending order
     });
 
+
+    const scoreComponent = Math.min(futPerf[sortedCrops[0]]?.avgPerf, 100);
+    if (scoreComponent > 0) {
+      setScoreComponents((prev) => {
+        if (!prev.futScore) {
+          return { ...prev, futScore: Math.round(scoreComponent) };
+        }
+        return prev;
+      });
+    }
+      
     const countAbove100 = sortedCrops.filter(crop => futPerf[crop].avgPerf > 100).length;
     const headers = ['Crop', 'Neighbourhood', 'National'];
 
@@ -306,6 +330,15 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
 
     const headers = ['Crop Name', 'Average', 'Coef. of Variation'];
 
+    const scoreComponent = Math.min((1 - sortedCrops[0].ncv) * 100, 100);
+    if (scoreComponent > 0) {
+      setScoreComponents((prev) => {
+        if (!prev.consScore) {
+          return { ...prev, consScore: Math.round(scoreComponent) };
+        }
+        return prev;
+      });
+    }
       
     return (
       <div>
@@ -338,8 +371,11 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields,
 
   return (
     <div>
-      <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-        Estimated Yield
+      <div className={`${merriweather.className} flex text-accent-dark text-2xl pb-2`}>
+        <div className="">Estimated Yield</div>
+        {score && (
+          <div className=""> - {score}%</div>
+        )}
       </div>
 
       {/* Estimated Historic Yield */}

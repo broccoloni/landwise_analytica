@@ -4,5 +4,9 @@ landwise-dashboard/landwise-analytica-service-key.json
 landwise-dashboard/.env
 landwise-dashboard/.next/
 landwise-dashboard/node_modules/
+beta/node_modules/
+beta/.next/
+beta/.env/
+beta/landwise-analytica-service-key.json
 *.gdb/
 *.geojson

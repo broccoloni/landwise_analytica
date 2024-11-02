@@ -11,12 +11,12 @@ const SummaryScore = () => {
   const categories = [
     'Estimated Yield', 
     'Climate', 
-    'Infrastructure & Accessibility', 
+    // 'Infrastructure & Accessibility', 
     'Topography', 
-    'Economic Viability'
+    // 'Economic Viability'
   ];
 
-  const scores = [86, 92, 88, 77, 80];
+  const scores = [96, 92, 86];
   const meanScores = scores.reduce((sum, value) => sum + value, 0) / scores.length;
   const overallScore = Math.round(meanScores);
 

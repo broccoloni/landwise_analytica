@@ -12,7 +12,7 @@ const PlainTable: React.FC<PlainTableProps> = ({ headers, data }) => {
       <thead>
         <tr>
           {headers.map((header, index) => (
-            <th key={index} className={`${merriweather.className} px-4 py-2 font-normal ${index === 0 ? 'text-left' : 'text-right'}`}>
+            <th key={index} className={`${montserrat.className} px-4 py-2 font-normal ${index === 0 ? 'text-left' : 'text-right'}`}>
               {header}
             </th>
           ))}

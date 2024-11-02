@@ -1,5 +1,3 @@
-// utils/stats.ts
-
 /**
  * Calculate the average of an array of numbers.
  * @param numbers Array of numbers to calculate the average.

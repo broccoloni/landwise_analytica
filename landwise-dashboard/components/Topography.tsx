@@ -11,19 +11,11 @@ import PlainTable from '@/components/PlainTable';
 import WindDirectionDisplay from "@/components/WindDirectionDisplay";
 import { getAvg, getStd } from '@/utils/stats';
 import { getHeatMapUrl } from '@/utils/imageUrl';
+import { CategoryProps } from '@/types/category';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
-interface TopographyProps {
-  lat: string;
-  lng: string;
-  rasterDataCache: any;
-  cropHeatMaps: any;
-  yearlyYields: any;
-  weatherData: any;
-}
-
-const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData }: TopographyProps) => {
+const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData, score, setScore }: CategoryProps) => {
   const [landUsageYears, setLandUsageYears] = useState<number[]>([]);
   const [landUsageYear, setLandUsageYear] = useState<number | null>(null);
   const [data, setData] = useState<any>(null);
@@ -260,7 +252,7 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
             <div className="w-[40%] mt-8 p-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
               <PlainTable
-                headers={['Land Section', '% of Land', 'Area (m²)', 'Area (ac.)']}
+                headers={['Land Section', '% of Land', 'Area (m²)', 'Area (ac)']}
                 data={[
                   { 
                     a: 'Total Property',

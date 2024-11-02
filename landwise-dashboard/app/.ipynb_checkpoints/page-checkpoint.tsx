@@ -44,6 +44,10 @@ export default function Home() {
   const lng = DEMO_ADDRESS.lng;
   const addressComponents = DEMO_ADDRESS.components;
 
+  const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
+  const [climateScore, setClimateScore] = useState<number|null>(null);
+  const [topographyScore, setTopographyScore] = useState<number|null>(null);
+
   const [activeTab, setActiveTab] = useState('EstimatedYield');
   const renderActiveComponent = () => {
     switch (activeTab) {
@@ -56,6 +60,8 @@ export default function Home() {
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
             weatherData={weatherData}
+            score={estimatedYieldScore}
+            setScore={setEstimatedYieldScore}
           />
         );
       case 'Climate':
@@ -67,19 +73,21 @@ export default function Home() {
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
             weatherData={weatherData}
+            score={climateScore}
+            setScore={setClimateScore}
           />
         );      
-      case 'InfrastructureAccessibility':
-        return (
-          <InfrastructureAccessibility
-            lat={lat}
-            lng={lng}
-            rasterDataCache={rasterDataCache}
-            cropHeatMaps={cropHeatMaps}
-            yearlyYields={yearlyYields}
-            weatherData={weatherData}
-          />
-        );
+      // case 'InfrastructureAccessibility':
+      //   return (
+      //     <InfrastructureAccessibility
+      //       lat={lat}
+      //       lng={lng}
+      //       rasterDataCache={rasterDataCache}
+      //       cropHeatMaps={cropHeatMaps}
+      //       yearlyYields={yearlyYields}
+      //       weatherData={weatherData}
+      //     />
+      //   );
       case 'Topography':
         return (
           <Topography
@@ -89,19 +97,21 @@ export default function Home() {
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
             weatherData={weatherData}
+            score={topographyScore}
+            setScore={setTopographyScore}
           />
         );
-      case 'EconomicViability':
-        return (
-          <EconomicViability
-            lat={lat}
-            lng={lng}
-            rasterDataCache={rasterDataCache}
-            cropHeatMaps={cropHeatMaps}
-            yearlyYields={yearlyYields}
-            weatherData={weatherData}
-          />
-        );
+      // case 'EconomicViability':
+      //   return (
+      //     <EconomicViability
+      //       lat={lat}
+      //       lng={lng}
+      //       rasterDataCache={rasterDataCache}
+      //       cropHeatMaps={cropHeatMaps}
+      //       yearlyYields={yearlyYields}
+      //       weatherData={weatherData}
+      //     />
+      //   );
       default:
         return null;
     }
@@ -110,9 +120,9 @@ export default function Home() {
   const tabs = [
     'EstimatedYield',
     'Climate',
-    'InfrastructureAccessibility',
+    // 'InfrastructureAccessibility',
     'Topography',
-    'EconomicViability',
+    // 'EconomicViability',
   ];
     
   const rasterDataCache = fetchRasterDataCache(basePath);
@@ -147,12 +157,12 @@ export default function Home() {
               </div>
             </div>
           </section>
-          <div className="flex justify-center space-x-4 border-b border-accent-dark mb-4 mt-10">
+          <div className="flex justify-center space-x-8 border-b border-accent-dark mb-4 mt-10">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-2 px-4 rounded-t-lg ${
+                className={`py-2 px-4 w-48 rounded-t-lg ${
                   activeTab === tab ? 'bg-accent-dark text-white' : 'text-black'
                 } hover:bg-accent-dark hover:opacity-75 hover:text-white`}
               >

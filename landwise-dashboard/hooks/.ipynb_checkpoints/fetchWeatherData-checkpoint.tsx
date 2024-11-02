@@ -1,18 +1,6 @@
 import { useEffect, useState } from 'react';
 import Papa from 'papaparse';
-
-type WeatherData = {
-  datetime: string;
-  tempmin: number;
-  tempmax: number;
-  temp: number;
-  precip: number;
-  humidity: number;
-  dew: number;
-  windgust: number;
-  windspeed: number;
-  winddir: number;
-};
+import { WeatherData, ClimateData } from '@/types/climateData';
 
 type FrostDates = {
   firstFrost: string | null;
@@ -20,19 +8,7 @@ type FrostDates = {
   growingSeasonLength: number | null;
 };
 
-type YearlyClimateData = {
-  weatherData: WeatherData[];
-  firstFrost: string | null;
-  lastFrost: string | null;
-  growingSeasonLength: number | null;
-  cornHeatUnits: number;
-  GDD0: number;
-  GDD5: number;
-  GDD10: number;
-  GDD15: number;
-};
-
-type YearlyClimateSummary = Record<number, YearlyClimateData>;
+type YearlyClimateSummary = Record<number, ClimateData>;
 
 export const fetchWeatherData = (basePath: string) => {
   const [yearlyClimateSummary, setYearlyClimateSummary] = useState<YearlyClimateSummary>({});
