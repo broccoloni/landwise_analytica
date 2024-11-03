@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react';
 import chroma from 'chroma-js';
 import { valuesToNames } from '@/types/valuesToNames';
-import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
+import { MajorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 import { fromArrayBuffer } from "geotiff";
 import { getAvg, getStd } from '@/utils/stats';
 import { getHeatMapUrl } from '@/utils/imageUrl';
+import { RasterData, ElevationData, TypedArray } from '@/types/category'; 
 
 const scaleFactor=10;
 const metersPerPixel = 30;
 
 export const fetchRasterDataCache = (basePath: string) => {
-  const [rasterDataCache, setRasterDataCache] = useState<Record<number, any>>({});
-
+  const [rasterDataCache, setRasterDataCache] = useState<{ [key: number]: RasterData }>({});
+  const [elevationData, setElevationData] = useState<ElevationData | null>(null);
+    
   useEffect(() => {
     const fetchYearlyRasterData = async () => {
       const years = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021];
-      const rasterDataForYears: Record<number, any> = {};
+      const rasterDataForYears: Record<number, RasterData> = {};
       try {
         for (const yr of years) {
           const rasterFile = `${basePath}/demo/raster_data/${yr}.tif`;
@@ -24,8 +26,8 @@ export const fetchRasterDataCache = (basePath: string) => {
           rasterDataForYears[yr] = data;
         }
         setRasterDataCache(prev => ({
-          ...prev,
-          ...rasterDataForYears
+            ...prev,
+            ...rasterDataForYears,
         }));
       } catch (error) {
         console.error('Error fetching raster data:', error);
@@ -37,11 +39,8 @@ export const fetchRasterDataCache = (basePath: string) => {
         const rasterFile = `${basePath}/demo/raster_data/elevation.tif`;
         const { image } = await fetchRasterImage(rasterFile);
         const data = await fetchElevationData(image);
+        setElevationData(data);
           
-        setRasterDataCache(prev => ({
-          ...prev,
-          elevation: data
-        }));
       } catch (error) {
         console.error('Error fetching raster data:', error);
       }
@@ -52,7 +51,7 @@ export const fetchRasterDataCache = (basePath: string) => {
     fetchElevationRasterData();
   }, [basePath]);
 
-  return rasterDataCache;
+  return { rasterDataCache, elevationData };
 };
 
 const colors = chroma.scale('Set1').colors(Object.keys(valuesToNames).length);
@@ -97,13 +96,14 @@ const fetchYearlyData = async (image: any) => {
   // Calculate the total area and the area used for major commodity crops
   Object.keys(counts).forEach((key) => {
     const numericKey = parseInt(key);
-    const commodityName = valuesToNames[numericKey];
+    const commodityName: string = valuesToNames[numericKey];
 
-    if (majorCommodityCrops.includes(commodityName)) {
+    if (majorCommodityCrops.includes(commodityName as MajorCommodityCrop)) {
+      const majorCropName = commodityName as MajorCommodityCrop;
       const cropCount = counts[numericKey];
       cropSum += cropCount; 
-      if (!majorCommodityCropsGrown.includes(commodityName) && cropCount >= threshold) {
-        majorCommodityCropsGrown.push(commodityName);
+      if (!majorCommodityCropsGrown.includes(majorCropName) && cropCount >= threshold) {
+        majorCommodityCropsGrown.push(majorCropName);
       }
     }
     if (numericKey != 0) {
@@ -221,23 +221,18 @@ const fetchElevationData = async (image: any) => {
   return { bbox, slope, aspect, width, height,
            elevationUrl, avgElevation, stdElevation, minElevation, maxElevation, 
            slopeUrl, avgSlope, stdSlope, minSlope, maxSlope, 
-           convexityUrl, avgConvexity, stdConvexity, minSlope, maxSlope };
+           convexityUrl, avgConvexity, stdConvexity, minConvexity, maxConvexity };
 };
 
 function calculateSlope(elevationData: number[], width: number, height: number) {
   const slope: (number | null)[] = [];
   const aspect: (number | null)[] = [];
-  let minSlope: number | null = null;
-  let maxSlope: number | null = null;
+  let minSlope: number = 1000000;
+  let maxSlope: number = 0;
 
   function getElevation(i: number, j: number) {
     const index = i * width + j;
-    return elevationData[index] ?? NaN; // Handle any invalid index by returning NaN
-  }
-
-  if (metersPerPixel === 0 || isNaN(metersPerPixel)) {
-    console.error("Invalid metersPerPixel value:", metersPerPixel);
-    return { slope: [], minSlope: null, maxSlope: null };
+    return elevationData[index] ?? NaN;
   }
 
   for (let i = 1; i < height - 1; i++) {
@@ -262,10 +257,10 @@ function calculateSlope(elevationData: number[], width: number, height: number) 
       const normalizedAspect = slopeAspect >= 0 ? slopeAspect : slopeAspect + 360; // 0 - 360 degrees
         
       if (!isNaN(overallSlope)) {
-        if (minSlope === null || overallSlope < minSlope) {
+        if (overallSlope < minSlope) {
           minSlope = overallSlope;
         }
-        if (maxSlope === null || overallSlope > maxSlope) {
+        if (overallSlope > maxSlope) {
           maxSlope = overallSlope;
         }
         slope.push(overallSlope);
@@ -286,8 +281,8 @@ function calculateSlope(elevationData: number[], width: number, height: number) 
 
 function calculateConvexity(elevationData: number[], width: number, height: number) {
   const convexity: (number | null)[] = [];
-  let minConvexity: number | null = null;
-  let maxConvexity: number | null = null;
+  let minConvexity: number = 1000000;
+  let maxConvexity: number = 0;
 
   function getElevation(i: number, j: number) {
     const index = i * width + j;
@@ -313,10 +308,10 @@ function calculateConvexity(elevationData: number[], width: number, height: numb
       const secondDerivativeY = (pd - 2 * p + pu) / Math.pow(metersPerPixel, 2);
       const xyconvexity = secondDerivativeX + secondDerivativeY;
         
-      if (minConvexity === null || xyconvexity < minConvexity) {
+      if (xyconvexity < minConvexity) {
         minConvexity = xyconvexity;
       }
-      if (maxConvexity === null || xyconvexity > maxConvexity) {
+      if (xyconvexity > maxConvexity) {
         maxConvexity = xyconvexity;
       }
       convexity.push(xyconvexity);

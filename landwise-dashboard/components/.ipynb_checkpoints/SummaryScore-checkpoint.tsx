@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import React from 'react';
-import { montserrat, roboto, merriweather } from '@/ui/fonts';
+import { montserrat, roboto } from '@/ui/fonts';
 
 // Dynamically import Plotly without SSR (server-side rendering)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -11,9 +11,7 @@ const SummaryScore = () => {
   const categories = [
     'Estimated Yield', 
     'Climate', 
-    // 'Infrastructure & Accessibility', 
-    'Topography', 
-    // 'Economic Viability'
+    'Topography',
   ];
 
   const scores = [96, 92, 86];
@@ -79,9 +77,6 @@ const SummaryScore = () => {
             paper_bgcolor: '#fff',
             plot_bgcolor: '#f5f5f5',
             dragmode: false,
-            scrollZoom: false,
-            zoom: false,
-            selectable: false,
           }}
           useResizeHandler={true}
           style={{ width: '100%', height: '100%'}}

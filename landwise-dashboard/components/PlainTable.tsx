@@ -1,9 +1,13 @@
 import React from 'react';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
 
+interface DataItem {
+  [key: string]: string | number;
+}
+
 interface PlainTableProps {
   headers: string[];
-  data: any[];
+  data: DataItem[];
 }
 
 const PlainTable: React.FC<PlainTableProps> = ({ headers, data }) => {

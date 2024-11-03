@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import chroma from 'chroma-js';
-import { majorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
+import { MajorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
+import { CropData, TypedArray } from '@/types/category';
 import { getAvg, getStd } from '@/utils/stats';
 
-const majorCommodityThresholds: Record<majorCommodityCrop, { vmin: number; vmax: number }> = {
+const majorCommodityThresholds: Record<MajorCommodityCrop, { vmin: number; vmax: number }> = {
   Flaxseed: { vmin: 56, vmax: 96 },
   Wheat: { vmin: 77, vmax: 117 },
   Barley: { vmin: 61, vmax: 101 },
@@ -15,7 +16,7 @@ const majorCommodityThresholds: Record<majorCommodityCrop, { vmin: number; vmax:
 };
 
 export const fetchCropHeatMaps = (basePath: string) => {
-  const [cropData, setCropData] = useState<{majorCommodityCrop : string }>({} as any);
+  const [cropData, setCropData] = useState<CropData>({});
   const scaleFactor=10;
 
   useEffect(() => {
@@ -83,7 +84,7 @@ export const fetchCropHeatMaps = (basePath: string) => {
 };
 
 // Helper function to apply heat map to the image data
-const processData = (data: TypedArray, crop: majorCommodityCrop) => {
+const processData = (data: TypedArray, crop: MajorCommodityCrop) => {
   const heatmapColors = ['black', 'red', 'yellow', 'white'];
   const heatMapScale = chroma.scale(heatmapColors).correctLightness().domain([0, 1]);
   const yields: number[] = [];

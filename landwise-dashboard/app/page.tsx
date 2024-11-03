@@ -16,7 +16,10 @@ import EconomicViability from '@/components/EconomicViability';
 import { fetchRasterDataCache } from '@/hooks/fetchRasterDataCache';
 import { fetchCropHeatMaps } from '@/hooks/fetchCropHeatMaps';
 import { fetchYearlyYields } from '@/hooks/fetchYearlyYields';
-import { fetchWeatherData } from '@/hooks/fetchWeatherData';
+import { fetchClimateData } from '@/hooks/fetchClimateData';
+
+import { CropData } from '@/types/category';
+
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -57,9 +60,10 @@ export default function Home() {
             lat={lat}
             lng={lng}
             rasterDataCache={rasterDataCache}
+            elevationData={elevationData}
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
-            weatherData={weatherData}
+            climateData={climateData}
             score={estimatedYieldScore}
             setScore={setEstimatedYieldScore}
           />
@@ -70,48 +74,28 @@ export default function Home() {
             lat={lat}
             lng={lng}
             rasterDataCache={rasterDataCache}
+            elevationData={elevationData}
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
-            weatherData={weatherData}
+            climateData={climateData}
             score={climateScore}
             setScore={setClimateScore}
           />
         );      
-      // case 'InfrastructureAccessibility':
-      //   return (
-      //     <InfrastructureAccessibility
-      //       lat={lat}
-      //       lng={lng}
-      //       rasterDataCache={rasterDataCache}
-      //       cropHeatMaps={cropHeatMaps}
-      //       yearlyYields={yearlyYields}
-      //       weatherData={weatherData}
-      //     />
-      //   );
       case 'Topography':
         return (
           <Topography
             lat={lat}
             lng={lng}
             rasterDataCache={rasterDataCache}
+            elevationData={elevationData}
             cropHeatMaps={cropHeatMaps}
             yearlyYields={yearlyYields}
-            weatherData={weatherData}
+            climateData={climateData}
             score={topographyScore}
             setScore={setTopographyScore}
           />
         );
-      // case 'EconomicViability':
-      //   return (
-      //     <EconomicViability
-      //       lat={lat}
-      //       lng={lng}
-      //       rasterDataCache={rasterDataCache}
-      //       cropHeatMaps={cropHeatMaps}
-      //       yearlyYields={yearlyYields}
-      //       weatherData={weatherData}
-      //     />
-      //   );
       default:
         return null;
     }
@@ -120,15 +104,13 @@ export default function Home() {
   const tabs = [
     'EstimatedYield',
     'Climate',
-    // 'InfrastructureAccessibility',
     'Topography',
-    // 'EconomicViability',
   ];
     
-  const rasterDataCache = fetchRasterDataCache(basePath);
-  const cropHeatMaps = fetchCropHeatMaps(basePath);
+  const { rasterDataCache, elevationData } = fetchRasterDataCache(basePath);
+  const cropHeatMaps: CropData = fetchCropHeatMaps(basePath);
   const yearlyYields = fetchYearlyYields(basePath);
-  const weatherData = fetchWeatherData(basePath);
+  const climateData = fetchClimateData(basePath);
     
   return (
     <div className={`${roboto.className} bg-accent-light text-black`}>

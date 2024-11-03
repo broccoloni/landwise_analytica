@@ -1,6 +1,11 @@
 import { MoveUp } from 'lucide-react';
 
-const WindDirectionDisplay = ({ windDirection, windDirectionStdDev }) => {    
+interface WindDirectionDisplayProps {
+  windDirection: number;
+  windDirectionStdDev: number;
+}
+
+const WindDirectionDisplay: React.FC<WindDirectionDisplayProps> = ({ windDirection, windDirectionStdDev }) => {    
   const roundedWindDirection = Math.round(windDirection);
   const roundedStdDev = Math.round(windDirectionStdDev);
 
