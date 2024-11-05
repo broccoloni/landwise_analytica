@@ -43,6 +43,9 @@ interface PlotData {
   mode: string;
 }
 
+// const heatmapColors = ['#6A0DAD', '#228B22', '#FFD700', '#8B0000'];
+const heatmapColors = ['black', 'red', 'yellow', 'white'];
+
 const EstimatedYield = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearlyYields, climateData, score, setScore }: CategoryProps) => {
   const [scoreComponents, setScoreComponents] = useState<ScoreComponents>({});
   useEffect(() => {
@@ -537,7 +540,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps
                       vmin={heatMapData.thresholdMin}
                       vmax={heatMapData.thresholdMax}
                       numIntervals={5}
-                      heatmapColors={['black', 'red', 'yellow', 'white']}
+                      heatmapColors={heatmapColors}
                     />
                   </div>
                 </div>

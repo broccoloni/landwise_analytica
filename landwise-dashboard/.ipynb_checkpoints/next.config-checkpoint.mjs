@@ -8,5 +8,5 @@ const nextConfig = {
   basePath: '/landwise_analytica',
   assetPrefix: '/landwise_analytica',
 };
-
+/** **/
 export default nextConfig;

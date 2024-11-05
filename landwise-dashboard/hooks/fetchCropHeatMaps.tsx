@@ -85,6 +85,7 @@ export const fetchCropHeatMaps = (basePath: string) => {
 
 // Helper function to apply heat map to the image data
 const processData = (data: TypedArray, crop: MajorCommodityCrop) => {
+  // const heatmapColors = ['#6A0DAD', '#228B22', '#FFD700', '#8B0000'];
   const heatmapColors = ['black', 'red', 'yellow', 'white'];
   const heatMapScale = chroma.scale(heatmapColors).correctLightness().domain([0, 1]);
   const yields: number[] = [];

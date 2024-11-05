@@ -9,6 +9,7 @@ import { RasterData, ElevationData, TypedArray } from '@/types/category';
 
 const scaleFactor=10;
 const metersPerPixel = 30;
+const heatmapColors = ['#6A0DAD', '#228B22', '#FFD700', '#8B0000'];
 
 export const fetchRasterDataCache = (basePath: string) => {
   const [rasterDataCache, setRasterDataCache] = useState<{ [key: number]: RasterData }>({});
@@ -185,7 +186,7 @@ const fetchElevationData = async (image: any) => {
   const maxElevation = Math.max(...validData);
   const avgElevation = getAvg(validData);
   const stdElevation = getStd(validData);
-  const elevationColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minElevation, maxElevation]);
+  const elevationColorScale = chroma.scale(heatmapColors).domain([minElevation, maxElevation]);
   const elevationUrl = await getHeatMapUrl(flattenedData, 
                                            width, 
                                            height, 
@@ -196,7 +197,7 @@ const fetchElevationData = async (image: any) => {
   // console.log(minElevation, maxElevation, avgElevation, stdElevation);
       
   const { slope, minSlope, maxSlope, avgSlope, stdSlope, aspect } = calculateSlope(flattenedData, width, height);
-  const slopeColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minSlope, maxSlope]);
+  const slopeColorScale = chroma.scale(heatmapColors).domain([minSlope, maxSlope]);
   const slopeUrl = await getHeatMapUrl(slope, 
                                        width-2, 
                                        height-2, 
@@ -206,7 +207,7 @@ const fetchElevationData = async (image: any) => {
 
     
   const { convexity, minConvexity, maxConvexity, avgConvexity, stdConvexity } = calculateConvexity(flattenedData, width, height);
-  const convexityColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minConvexity, maxConvexity]);
+  const convexityColorScale = chroma.scale(heatmapColors).domain([minConvexity, maxConvexity]);
   const convexityUrl = await getHeatMapUrl(convexity, 
                                            width-2, 
                                            height-2, 

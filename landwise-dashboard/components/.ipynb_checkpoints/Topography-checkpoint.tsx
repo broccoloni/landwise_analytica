@@ -14,6 +14,7 @@ import { getHeatMapUrl } from '@/utils/imageUrl';
 import { CategoryProps, RasterData, ElevationData } from '@/types/category';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
+const heatmapColors = ['#6A0DAD', '#228B22', '#FFD700', '#8B0000'];
 
 const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearlyYields, climateData, score, setScore }: CategoryProps) => {
   const [landUsageYears, setLandUsageYears] = useState<number[]>([]);
@@ -165,7 +166,7 @@ const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, ye
         const avgWindGust = getAvg(windData.gust);
         const stdWindGust = getStd(windData.gust);
           
-        const speedColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minSpeedExposure, maxSpeedExposure]);
+        const speedColorScale = chroma.scale(heatmapColors).domain([minSpeedExposure, maxSpeedExposure]);
         const windSpeedExposureUrl = await getHeatMapUrl(windSpeedExposure, 
                                                          elevationData.width-2, 
                                                          elevationData.height-2, 
@@ -173,7 +174,7 @@ const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, ye
                                                          speedColorScale,
                                                          15);
  
-        const gustColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minGustExposure, maxGustExposure]);
+        const gustColorScale = chroma.scale(heatmapColors).domain([minGustExposure, maxGustExposure]);
         const windGustExposureUrl = await getHeatMapUrl(windGustExposure, 
                                                         elevationData.width-2, 
                                                         elevationData.height-2, 
@@ -348,7 +349,7 @@ const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, ye
                       vmin={curElevationData.min}
                       vmax={curElevationData.max}
                       numIntervals={5}
-                      heatmapColors={['blue', 'green', 'yellow', 'brown']}
+                      heatmapColors={heatmapColors}
                     />
                   </div>
                 </div>
@@ -414,7 +415,7 @@ const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, ye
                       vmin={curWindExposure.min}
                       vmax={curWindExposure.max}
                       numIntervals={5}
-                      heatmapColors={['blue', 'green', 'yellow', 'brown']}
+                      heatmapColors={heatmapColors}
                     />
                   </div>
                 </div>
