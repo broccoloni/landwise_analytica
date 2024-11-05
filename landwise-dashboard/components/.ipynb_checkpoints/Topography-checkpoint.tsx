@@ -131,7 +131,7 @@ const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, ye
 
         slope.forEach((slopeValue, idx) => {
           const aspectAngle = aspect[idx];
-          if (!slopeValue || !aspectAngle) {
+          if (slopeValue === null || aspectAngle === null) {
             windSpeedExposure.push(null);
             windGustExposure.push(null);
           } 
@@ -205,7 +205,6 @@ const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, ye
   }, [windData, elevationData]);
 
   useEffect(() => {
-    console.log("Wind Exposure:", windExposure);
     if (windExposureType && windExposure) {
       switch (windExposureType) {
         case 'Speed':
