@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { montserrat, merriweather } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
 import { Slider } from "@mui/material";
@@ -6,6 +6,8 @@ import dynamic from 'next/dynamic';
 import { getAvg, getStd } from '@/utils/stats';
 import { WeatherData, ClimateData, CategoryProps } from '@/types/category';
 import { formatDateToMonthName, getWeekDateRange, dayNumToMonthDay } from '@/utils/dates';
+import PlainTable from '@/components/PlainTable';
+import { debounce } from 'lodash';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -30,8 +32,8 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
   // For precipitation
   const [precipYear, setPrecipYear] = useState<number | null>(null);
   const [precipData, setPrecipData] = useState<any>(null);
-  const [seasonRange, setSeasonRange] = useState<number[]>([13,39]);
-  const plotRef = useRef(null);
+  const [seasonRange, setSeasonRange] = useState([13,39]);
+  const [precipAverages, setPrecipAverages] = useState({ precip: '', humidity: '', dew: '' });
   const precipTickFreq = 4;
     
   // For temperature suitability
@@ -227,29 +229,46 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
     }
   }, [precipYear, climateData]);
 
-  // const handleRelayout = (event) => {
-  //   if (event['xaxis.range[0]'] && event['xaxis.range[1]']) {
-  //     const newStartIdx = Math.max(0, precipData.xNames.indexOf(event['xaxis.range[0]']));
-  //     const newEndIdx = Math.min(precipData.xNames.length - 1, precipData.xNames.indexOf(event['xaxis.range[1]']));
-  //     setSeasonRange([newStartIdx, newEndIdx]);
-  //   }
-  // };
-    
-  // useEffect(() => {
-  //   const plotNode = plotRef.current;
-  //   if (plotNode) {
-  //     plotNode.on('plotly_relayout', handleRelayout);
-  //   }
-  //   return () => {
-  //     if (plotNode) {
-  //       plotNode.removeListener('plotly_relayout', handleRelayout);
-  //     }
-  //   };
-  // }, [precipData]);
+  const handleRelayout = useCallback(
+    debounce((event) => {
+      const newRange = event['xaxis.range'];
 
-  // useEffect(() => {
-  //   console.log(seasonRange);
-  // }, [seasonRange]);
+      if (newRange !== undefined) {
+        const newRangeStart = Math.max(0, Math.round(newRange[0]));
+        const newRangeEnd = Math.min(51, Math.round(newRange[1]));
+        setSeasonRange([newRangeStart, newRangeEnd]);
+      }
+    }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    if (seasonRange && precipData) {
+      const [start, end] = seasonRange;
+
+      const avgPrecip = getAvg(precipData.precip.slice(start, end + 1));
+      const avgHumidity = getAvg(precipData.humidity.slice(start, end + 1));
+
+      console.log(avgPrecip, avgHumidity);
+    
+      const avgDew = getAvg(precipData.dew.slice(start, end + 1));
+      const stdPrecip = getStd(precipData.precip.slice(start, end + 1));
+      const stdHumidity = getStd(precipData.humidity.slice(start, end + 1));
+      const stdDew = getStd(precipData.dew.slice(start, end + 1));
+
+      const count = end - start + 1;
+ 
+      if (count > 0) {
+        setPrecipAverages({
+          precip: `${avgPrecip.toFixed(2)} \u00B1 ${stdPrecip.toFixed(2)}`,
+          humidity:  `${avgHumidity.toFixed(2)} \u00B1 ${stdHumidity.toFixed(2)}`,
+          dew:  `${avgDew.toFixed(2)} \u00B1 ${stdDew.toFixed(2)}`,
+        });
+      } else {
+        setPrecipAverages({ precip: '', humidity: '', dew: '' });
+      }
+    }
+  }, [seasonRange, precipData]);
     
   return (
     <div>
@@ -261,9 +280,28 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
         <div className = "flex">
           <div className = "w-[40%]">
             <div className = "mt-8 p-4 mx-4">
-              <div className={`${montserrat.className} mb-4`}>
-                Summary
+              <div className={`${montserrat.className} mb-4 flex justify-between`}>
+                <div>
+                  Summary of Selected Range
+                </div>
+                {precipData && seasonRange && (
+                  <div>
+                    {precipData.xNames[seasonRange[0]].split(' - ')[0]} - {precipData.xNames[seasonRange[1]].split(' - ')[1]}
+                  </div>
+                )}
               </div>
+              {seasonRange && precipAverages && precipData && (
+                <div className="">
+                  <PlainTable
+                    headers={['Climate Variable','Average Over Selected Range']}
+                    data = {[ 
+                      { v: 'Precipitation', a: precipAverages.precip },
+                      { v: 'Humidity', a: precipAverages.humidity },
+                      { v: 'Dew', a: precipAverages.dew },
+                    ]}
+                  />
+                </div>
+              )}
             </div>
           </div>
           <div className="w-[60%]">
@@ -334,43 +372,18 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
                     ]}
                     layout={{
                       xaxis: {
-                        title: 'Week of Year',
+                        title: 'Range Selection',
                         tickvals: precipData.xNames.filter((_: string, index: number) => index % precipTickFreq === 0),
-                        // rangeslider: { visible: true },
+                        rangeslider: {
+                          visible: true,
+                        },
+                        range: seasonRange,
                       },
                       yaxis: {
                         title: '',
                         tickvals: [0, 1, 2],
                         ticktext: ['Precipitation (mm)', 'Humidity (%)', 'Dew (\u00B0C)']
                       },
-                      // shapes: [
-                      //   // Line for the start of the season
-                      //   {
-                      //     type: 'line',
-                      //     x0: precipData.xNames[seasonRange[0]],
-                      //     x1: precipData.xNames[seasonRange[0]],
-                      //     y0: -0.5,
-                      //     y1: 2.5,
-                      //     line: {
-                      //       color: 'red',
-                      //       width: 2,
-                      //       dash: 'dashdot',
-                      //     },
-                      //   },
-                      //   // Line for the end of the season
-                      //   {
-                      //     type: 'line',
-                      //     x0: precipData.xNames[seasonRange[1]],
-                      //     x1: precipData.xNames[seasonRange[1]],
-                      //     y0: -0.5,
-                      //     y1: 2.5,
-                      //     line: {
-                      //       color: 'blue',
-                      //       width: 2,
-                      //       dash: 'dashdot',
-                      //     },
-                      //   },
-                      // ],
                       margin: {
                         t: 10,
                         b: 100,
@@ -379,6 +392,7 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
                       },
                     }}
                     style={{ width: '100%', height: '100%' }}
+                    onRelayout={handleRelayout}
                   />
                 )}
               </div>

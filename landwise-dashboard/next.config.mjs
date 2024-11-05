@@ -5,8 +5,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+};
+
+/**
   basePath: '/landwise_analytica',
   assetPrefix: '/landwise_analytica',
 };
-/** **/
+**/
 export default nextConfig;
