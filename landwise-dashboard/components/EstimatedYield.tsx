@@ -284,9 +284,10 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps
     });
       
     const countAbove100 = sortedCrops.filter(crop => futPerf[crop].avgPerf > 100).length;
-    const headers = ['Crop', 'Neighbourhood', 'National'];
+    const headers = ['Rank','Crop', 'Property Relative to Neighbourhood', 'Property Relative to National'];
 
-    const data = sortedCrops.map(crop => ({
+    const data = sortedCrops.map((crop, index) => ({
+      rank: index+1,
       crop,
       neighbourhoodPerf: futPerf[crop].neighbourhoodPerf,
       nationalPerf: futPerf[crop].nationalPerf,
@@ -295,21 +296,9 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps
     return (
       <div>
         <div className={`${montserrat.className} mb-4 ml-4`}>
-          Average Future Yield Comparison
+          Average Relative Future Property Yield
         </div>
         <PlainTable headers={headers} data={data} />
-        <div className="flex justify-between mx-4 mb-2">
-          <div className="">Highest Performing Projected Crop:</div>
-          <div className="">{bestProjectedCrop}</div>
-        </div>
-        <div className="flex justify-between mx-4 mb-2">
-          <div className="">Lowest Performing Projected Crop:</div>
-          <div className="">{worstProjectedCrop}</div>
-        </div>
-        <div className="flex justify-between mx-4">
-          <div className="">Crops with Average Performance Above 100%:</div>
-          <div className="">{countAbove100}</div>
-        </div>
       </div>
     );
   };
@@ -358,7 +347,7 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps
     const mostConsistent = sortedCrops[0];
     const leastConsistent = sortedCrops[sortedCrops.length - 1];
 
-    const headers = ['Crop Name', 'Average', 'Coef. of Variation'];
+    const headers = ['Rank','Crop', 'Average', 'Variation'];
       
     return (
       <div>
@@ -368,22 +357,13 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps
         <div className="mb-4">
           <PlainTable
             headers={headers}
-            data={cropsWithNCV.map(({ cropName, ncv, average, stdDev }) => ({
+            data={sortedCrops.map(({ cropName, ncv, average, stdDev }, index) => ({
+              rank: index + 1,
               cropName,
               average: `${average.toFixed(2)} \u00B1 ${stdDev.toFixed(2)}`,
               ncv: ncv.toFixed(3),
             }))}
           />
-        </div>
-        <div className="mt-4 mx-4">
-          <div className="flex justify-between mb-2">
-            <div>Most Consistent Crop:</div>
-            <div>{mostConsistent.cropName}</div>
-          </div>
-          <div className="flex justify-between mb-2">
-            <div>Least Consistent Crop:</div>
-            <div>{leastConsistent.cropName}</div>
-          </div>
         </div>
       </div>
     );
@@ -489,10 +469,10 @@ const EstimatedYield = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps
           Estimated Projected Yield
         </div>
         <div className="flex">
-          <div className="w-[40%] mt-8 p-4">
+          <div className="w-[44%] mt-8 p-4">
             <ProjectionDisplay />
           </div>
-          <div className="w-[60%]">
+          <div className="w-[56%]">
             <div className="flex-row justify-center items-center w-full">
               <div className="flex justify-center items-center">
                 <div className={`${montserrat.className} mr-4`}>Estimated Projected Yield for:</div>                    

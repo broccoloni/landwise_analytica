@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { montserrat, merriweather } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
 import { Slider } from "@mui/material";
@@ -30,6 +30,8 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
   // For precipitation
   const [precipYear, setPrecipYear] = useState<number | null>(null);
   const [precipData, setPrecipData] = useState<any>(null);
+  const [seasonRange, setSeasonRange] = useState<number[]>([13,39]);
+  const plotRef = useRef(null);
   const precipTickFreq = 4;
     
   // For temperature suitability
@@ -83,7 +85,6 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
       var allGdd15: number[] = [];
       dataYears.forEach((year) => {
         const yearlyData = climateData[year];
-        console.log(yearlyData);
         if (Object.values(yearlyData.cornHeatUnits).length >= 365) {
           const maxChu = Math.max(...Object.values(yearlyData.cornHeatUnits) as number[]);
           const maxGdd0 = Math.max(...Object.values(yearlyData.GDD0) as number[]);
@@ -225,6 +226,30 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
       }        
     }
   }, [precipYear, climateData]);
+
+  // const handleRelayout = (event) => {
+  //   if (event['xaxis.range[0]'] && event['xaxis.range[1]']) {
+  //     const newStartIdx = Math.max(0, precipData.xNames.indexOf(event['xaxis.range[0]']));
+  //     const newEndIdx = Math.min(precipData.xNames.length - 1, precipData.xNames.indexOf(event['xaxis.range[1]']));
+  //     setSeasonRange([newStartIdx, newEndIdx]);
+  //   }
+  // };
+    
+  // useEffect(() => {
+  //   const plotNode = plotRef.current;
+  //   if (plotNode) {
+  //     plotNode.on('plotly_relayout', handleRelayout);
+  //   }
+  //   return () => {
+  //     if (plotNode) {
+  //       plotNode.removeListener('plotly_relayout', handleRelayout);
+  //     }
+  //   };
+  // }, [precipData]);
+
+  // useEffect(() => {
+  //   console.log(seasonRange);
+  // }, [seasonRange]);
     
   return (
     <div>
@@ -311,12 +336,41 @@ const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearl
                       xaxis: {
                         title: 'Week of Year',
                         tickvals: precipData.xNames.filter((_: string, index: number) => index % precipTickFreq === 0),
+                        // rangeslider: { visible: true },
                       },
                       yaxis: {
                         title: '',
                         tickvals: [0, 1, 2],
                         ticktext: ['Precipitation (mm)', 'Humidity (%)', 'Dew (\u00B0C)']
                       },
+                      // shapes: [
+                      //   // Line for the start of the season
+                      //   {
+                      //     type: 'line',
+                      //     x0: precipData.xNames[seasonRange[0]],
+                      //     x1: precipData.xNames[seasonRange[0]],
+                      //     y0: -0.5,
+                      //     y1: 2.5,
+                      //     line: {
+                      //       color: 'red',
+                      //       width: 2,
+                      //       dash: 'dashdot',
+                      //     },
+                      //   },
+                      //   // Line for the end of the season
+                      //   {
+                      //     type: 'line',
+                      //     x0: precipData.xNames[seasonRange[1]],
+                      //     x1: precipData.xNames[seasonRange[1]],
+                      //     y0: -0.5,
+                      //     y1: 2.5,
+                      //     line: {
+                      //       color: 'blue',
+                      //       width: 2,
+                      //       dash: 'dashdot',
+                      //     },
+                      //   },
+                      // ],
                       margin: {
                         t: 10,
                         b: 100,

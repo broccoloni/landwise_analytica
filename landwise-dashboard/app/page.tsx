@@ -22,7 +22,7 @@ import { CropData } from '@/types/category';
 
 
 const basePath = '/landwise_analytica';
-//const basePath = '';
+// const basePath = '';
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
