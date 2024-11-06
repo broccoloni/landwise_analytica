@@ -11,28 +11,18 @@ import PlainTable from '@/components/PlainTable';
 import WindDirectionDisplay from "@/components/WindDirectionDisplay";
 import { getAvg, getStd } from '@/utils/stats';
 import { getHeatMapUrl } from '@/utils/imageUrl';
+import { CategoryProps, RasterData, ElevationData } from '@/types/category';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
+const heatmapColors = ['#6A0DAD', '#228B22', '#FFD700', '#8B0000'];
 
-interface TopographyProps {
-  lat: string;
-  lng: string;
-  rasterDataCache: any;
-  cropHeatMaps: any;
-  yearlyYields: any;
-  weatherData: any;
-  score: number | null;
-  setScore: React.Dispatch<React.SetStateAction<number | null>>;
-}
-
-const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData, score, setScore }: TopographyProps) => {
+const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearlyYields, climateData, score, setScore }: CategoryProps) => {
   const [landUsageYears, setLandUsageYears] = useState<number[]>([]);
   const [landUsageYear, setLandUsageYear] = useState<number | null>(null);
-  const [data, setData] = useState<any>(null);
-  const [curData, setCurData] = useState<any>(null);
+  const [data, setData] = useState<RasterData | null>(null);
+  const [curData, setCurData] = useState<RasterData | null>(null);
   const [avgArea, setAvgArea] = useState<number | null>(null);
   const [avgUsableLandPct, setAvgUsableLandPct] = useState<number | null>(null);
-  const [elevationData, setElevationData] = useState<any>(null);
   const [elevationView, setElevationView] = useState<'Elevation' | 'Slope' | 'Convexity'>('Elevation');
   const [curElevationData, setCurElevationData] = useState<any>(null);
   const [windData, setWindData] = useState<any>(null);
@@ -44,13 +34,13 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
 
   useEffect(() => {
     if (rasterDataCache) {
-      const years = Object.keys(rasterDataCache).filter(key => key !== 'elevation').map(Number); 
+      const years = Object.keys(rasterDataCache).map(Number); 
       setLandUsageYears(years);
       if (landUsageYear === null) {
         setLandUsageYear(years[0]);
       }
 
-      const numYears = Object.keys(rasterDataCache).filter(key => key !== 'elevation').length;
+      const numYears = Object.keys(rasterDataCache).length;
       const { totalUsableLandPct, totalArea } = Object.values(rasterDataCache).reduce(
         (acc, yearData: any) => {
           if (yearData.usableLandPct) {
@@ -64,9 +54,6 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
 
       setAvgUsableLandPct(totalUsableLandPct / numYears);
       setAvgArea(totalArea / numYears * metersPerPixel * metersPerPixel);
-
-      setElevationData(rasterDataCache.elevation);
-      setElevationView('Elevation');
     }
   }, [rasterDataCache]);
 
@@ -105,11 +92,13 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
 
   // Set wind data for calculating wind risk
   useEffect(() => {
-    if (weatherData) {
-      const sortedYears = Object.keys(weatherData).sort((a, b) => b - a);
-
+    if (climateData) {
+      const sortedYears = Object.keys(climateData)
+            .map(year => Number(year))
+            .sort((a, b) => b - a);
+        
       for (const year of sortedYears) {
-        const yearData = weatherData[year]?.weatherData;
+        const yearData = climateData[year]?.weatherData;
         if (yearData && yearData.length >= 365) {
           setWindData({
             dir: yearData.map(data => data.winddir),
@@ -120,41 +109,42 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
         }
       }
     }
-  }, [weatherData]);
+  }, [climateData]);
     
   useEffect(() => {
     const calculateWindExposure = async () => {
       if (windData && elevationData) {
         const { aspect, slope } = elevationData;
           
-        const calculateExposure = (aspectAngle, slopeAngle, windDirection, windSpeed) => {
+        const calculateExposure = (aspectAngle: number, slopeAngle: number, windDirection: number, windSpeed: number) => {
           const angleDiff = Math.abs(aspectAngle - windDirection);
           const angleFactor = Math.cos(angleDiff * (Math.PI / 180));
           return slopeAngle * angleFactor * windSpeed;
         };
 
-        const windSpeedExposure = [];
-        const windGustExposure = [];
+        const windSpeedExposure: (number|null)[] = [];
+        const windGustExposure: (number|null)[] = [];
         let minSpeedExposure = 0;
         let maxSpeedExposure = 0;
         let minGustExposure = 0;
         let maxGustExposure = 0;
 
         slope.forEach((slopeValue, idx) => {
-          if (!slopeValue) {
+          const aspectAngle = aspect[idx];
+          if (slopeValue === null || aspectAngle === null) {
             windSpeedExposure.push(null);
             windGustExposure.push(null);
-          } else {
+          } 
+          else {
             const slopeAngle = Math.atan(slopeValue) * (180 / Math.PI) / 90;
-            const aspectAngle = aspect[idx];
 
-            const windSpeedExposures = windData.dir.map((windDir, i) =>
+            const windSpeedExposures = windData.dir.map((windDir: number, i: number) =>
               calculateExposure(aspectAngle, slopeAngle, windDir, windData.speed[i])
             );
               
             const avgWindSpeedExposure = getAvg(windSpeedExposures);
 
-            const windGustExposures = windData.dir.map((windDir, i) =>
+            const windGustExposures = windData.dir.map((windDir: number, i: number) =>
               calculateExposure(aspectAngle, slopeAngle, windDir, windData.gust[i])
             );
             const avgWindGustExposure = getAvg(windGustExposures);
@@ -176,7 +166,7 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
         const avgWindGust = getAvg(windData.gust);
         const stdWindGust = getStd(windData.gust);
           
-        const speedColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minSpeedExposure, maxSpeedExposure]);
+        const speedColorScale = chroma.scale(heatmapColors).domain([minSpeedExposure, maxSpeedExposure]);
         const windSpeedExposureUrl = await getHeatMapUrl(windSpeedExposure, 
                                                          elevationData.width-2, 
                                                          elevationData.height-2, 
@@ -184,7 +174,7 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
                                                          speedColorScale,
                                                          15);
  
-        const gustColorScale = chroma.scale(['blue', 'green', 'yellow', 'brown']).domain([minGustExposure, maxGustExposure]);
+        const gustColorScale = chroma.scale(heatmapColors).domain([minGustExposure, maxGustExposure]);
         const windGustExposureUrl = await getHeatMapUrl(windGustExposure, 
                                                         elevationData.width-2, 
                                                         elevationData.height-2, 
@@ -215,7 +205,6 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
   }, [windData, elevationData]);
 
   useEffect(() => {
-    console.log("Wind Exposure:", windExposure);
     if (windExposureType && windExposure) {
       switch (windExposureType) {
         case 'Speed':
@@ -267,20 +256,20 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
                   { 
                     a: 'Total Property',
                     p: '100', 
-                    a1: `${avgArea?.toFixed(2)}`, 
-                    a2: `${(avgArea / sqMetersPerAcre).toFixed(2)}`,
+                    a1: `${avgArea?.toFixed(2) ?? ''}`, 
+                    a2: `${((avgArea ?? 0) / sqMetersPerAcre).toFixed(2)}`,
                   },
                   { 
                     a: 'Historical Cropland',
-                    p: `${(avgUsableLandPct * 100)?.toFixed(2)}`, 
-                    a1: `${(avgArea * avgUsableLandPct)?.toFixed(2)}`, 
-                    a2: `${(avgArea / sqMetersPerAcre * avgUsableLandPct)?.toFixed(2)}`,
+                    p: `${((avgUsableLandPct ?? 0) * 100)?.toFixed(2)}`, 
+                    a1: `${((avgArea ?? 0) * (avgUsableLandPct ?? 0))?.toFixed(2)}`, 
+                    a2: `${((avgArea ?? 0) / sqMetersPerAcre * (avgUsableLandPct ?? 0))?.toFixed(2)}`,
                   },
                   { 
                     a: 'Other',
-                    p: `${((1 - avgUsableLandPct) * 100)?.toFixed(2)}`, 
-                    a1: `${(avgArea * (1 - avgUsableLandPct))?.toFixed(2)}`, 
-                    a2: `${(avgArea / sqMetersPerAcre * (1 - avgUsableLandPct))?.toFixed(2)}`,
+                    p: `${((1 - (avgUsableLandPct ?? 0)) * 100)?.toFixed(2)}`, 
+                    a1: `${((avgArea ?? 0) * (1 - (avgUsableLandPct ?? 0)))?.toFixed(2)}`, 
+                    a2: `${((avgArea ?? 0) / sqMetersPerAcre * (1 - (avgUsableLandPct ?? 0)))?.toFixed(2)}`,
                   },
                 ]}
               />
@@ -359,7 +348,7 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
                       vmin={curElevationData.min}
                       vmax={curElevationData.max}
                       numIntervals={5}
-                      heatmapColors={['blue', 'green', 'yellow', 'brown']}
+                      heatmapColors={heatmapColors}
                     />
                   </div>
                 </div>
@@ -425,7 +414,7 @@ const Topography = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, wea
                       vmin={curWindExposure.min}
                       vmax={curWindExposure.max}
                       numIntervals={5}
-                      heatmapColors={['blue', 'green', 'yellow', 'brown']}
+                      heatmapColors={heatmapColors}
                     />
                   </div>
                 </div>
