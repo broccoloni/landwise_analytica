@@ -16,7 +16,7 @@ import { CategoryProps, RasterData, ElevationData } from '@/types/category';
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 const heatmapColors = ['#6A0DAD', '#228B22', '#FFD700', '#8B0000'];
 
-const Topography = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearlyYields, climateData, score, setScore }: CategoryProps) => {
+const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
   const [landUsageYears, setLandUsageYears] = useState<number[]>([]);
   const [landUsageYear, setLandUsageYear] = useState<number | null>(null);
   const [data, setData] = useState<RasterData | null>(null);

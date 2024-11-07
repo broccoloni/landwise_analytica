@@ -1,22 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { montserrat, merriweather } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
 import { Slider } from "@mui/material";
 import dynamic from 'next/dynamic';
 import { getAvg, getStd } from '@/utils/stats';
+import { WeatherData, ClimateData, CategoryProps } from '@/types/category';
+import { formatDateToMonthName, getWeekDateRange, dayNumToMonthDay } from '@/utils/dates';
+import PlainTable from '@/components/PlainTable';
+import { debounce } from 'lodash';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
-
-interface ClimateProps {
-  lat: string;
-  lng: string;
-  rasterDataCache: any;
-  cropHeatMaps: any;
-  yearlyYields: any;
-  weatherData: any;
-  score: number | null;
-  setScore: React.Dispatch<React.SetStateAction<number | null>>;
-}
 
 type heatUnit = "Corn Heat Units (CHU)" | "Growing Degree Day (GDD)";
 const heatUnits: heatUnit[] = [
@@ -24,39 +17,23 @@ const heatUnits: heatUnit[] = [
   "Growing Degree Day (GDD)"
 ];
 
-const dayNumToMonthDay = (dayNum) => {
-  const date = new Date(2024, 0, 1);
-  date.setDate(date.getDate() + dayNum);
-  return date.toISOString().split('T')[0].slice(5); // Format to MM-DD
-};
-
-const monthNames = [
-  "Jan.", "Feb.", "Mar.", "Apr.", "May", "June",
-  "July", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."
-];
-
-const formatDateToMonthName = (dateString) => {
-  const date = new Date(dateString);
-  const month = monthNames[date.getMonth()];
-  const day = date.getDate();
-  return `${month} ${day}`;
-};
-
-const getWeekDateRange = (weekNumber) => {
-  if (isNaN(Number(weekNumber))) {
-    return weekNumber;
-  }
-  const weekStart = formatDateToMonthName(dayNumToMonthDay((weekNumber - 1) * 7)); 
-  const weekEnd = formatDateToMonthName(dayNumToMonthDay(weekNumber * 7));
-  return `${weekStart} - ${weekEnd}`;
-};
-
-const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weatherData, score, setScore }: ClimateProps) => {
-  const [years, setYears] = useState<number|null>(null);
+const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
+  const [scoreComponents, setScoreComponents] = useState<any>({});
+  useEffect(() => {
+    const scoreValues = Object.values(scoreComponents).map(Number);
+    if (scoreValues.length === 3) {
+      const avgScore = Math.round(getAvg(scoreValues));
+      setScore(avgScore);
+    }
+  }, [scoreComponents]);
+    
+  const [years, setYears] = useState<number[]|null>(null);
 
   // For precipitation
   const [precipYear, setPrecipYear] = useState<number | null>(null);
   const [precipData, setPrecipData] = useState<any>(null);
+  const [seasonRange, setSeasonRange] = useState([13,39]);
+  const [precipAverages, setPrecipAverages] = useState({ precip: '', humidity: '', dew: '' });
   const precipTickFreq = 4;
     
   // For temperature suitability
@@ -74,7 +51,14 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
   const [stdGdd15, setStdGdd15] = useState<number|null>(null);
     
   // For Growing Season 
-  const [growingSeasonData, setGrowingSeasonData] = useState<{ year: number; length: number; start: string; end: string }[]>([]);
+  const [growingSeasonData, setGrowingSeasonData] = useState<{ 
+    year: number; 
+    length: number|null; 
+    start: number; 
+    end: number; 
+    lastFrost: string; 
+    firstFrost: string; 
+  }[]>([]);
   const [earliestFirstFrost, setEarliestFirstFrost] = useState<string>('');
   const [latestFirstFrost, setLatestFirstFrost] = useState<string>('');
   const [earliestLastFrost, setEarliestLastFrost] = useState<string>('');
@@ -84,8 +68,8 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
   const growingSeasonNumTicks = 30;
 
   useEffect(() => {
-    if (weatherData) {
-      const dataYears = Object.keys(weatherData).map(Number);
+    if (climateData) {
+      const dataYears = Object.keys(climateData).map(Number);
       setYears(dataYears);
         
       if (precipYear === null) {
@@ -96,19 +80,19 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
       }
 
       // Calculate Temperature metrics
-      var allChu = [];
-      var allGdd0 = [];
-      var allGdd5 = [];
-      var allGdd10 = [];
-      var allGdd15 = [];
+      var allChu: number[] = [];
+      var allGdd0: number[] = [];
+      var allGdd5: number[] = [];
+      var allGdd10: number[] = [];
+      var allGdd15: number[] = [];
       dataYears.forEach((year) => {
-        const yearlyData = weatherData[year];
+        const yearlyData = climateData[year];
         if (Object.values(yearlyData.cornHeatUnits).length >= 365) {
-          const maxChu = Math.max(...Object.values(yearlyData.cornHeatUnits));
-          const maxGdd0 = Math.max(...Object.values(yearlyData.GDD0));
-          const maxGdd5 = Math.max(...Object.values(yearlyData.GDD5));
-          const maxGdd10 = Math.max(...Object.values(yearlyData.GDD10));
-          const maxGdd15 = Math.max(...Object.values(yearlyData.GDD15));
+          const maxChu = Math.max(...Object.values(yearlyData.cornHeatUnits) as number[]);
+          const maxGdd0 = Math.max(...Object.values(yearlyData.GDD0) as number[]);
+          const maxGdd5 = Math.max(...Object.values(yearlyData.GDD5) as number[]);
+          const maxGdd10 = Math.max(...Object.values(yearlyData.GDD10) as number[]);
+          const maxGdd15 = Math.max(...Object.values(yearlyData.GDD15) as number[]);
 
           allChu.push(maxChu);
           allGdd0.push(maxGdd0);
@@ -118,28 +102,31 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         }
       });
 
-      setAvgChu(getAvg(allChu).toFixed(0));
-      setStdChu(getStd(allChu).toFixed(0));
-      setAvgGdd0(getAvg(allGdd0).toFixed(0));
-      setStdGdd0(getStd(allGdd0).toFixed(0));
-      setAvgGdd5(getAvg(allGdd5).toFixed(0));
-      setStdGdd5(getStd(allGdd5).toFixed(0));
-      setAvgGdd10(getAvg(allGdd10).toFixed(0));
-      setStdGdd10(getStd(allGdd10).toFixed(0));
-      setAvgGdd15(getAvg(allGdd15).toFixed(0));
-      setStdGdd15(getStd(allGdd15).toFixed(0));
+      setAvgChu(Math.round(getAvg(allChu)));
+      setStdChu(Math.round(getStd(allChu)));
+      setAvgGdd0(Math.round(getAvg(allGdd0)));
+      setStdGdd0(Math.round(getStd(allGdd0)));
+      setAvgGdd5(Math.round(getAvg(allGdd5)));
+      setStdGdd5(Math.round(getStd(allGdd5)));
+      setAvgGdd10(Math.round(getAvg(allGdd10)));
+      setStdGdd10(Math.round(getStd(allGdd10)));
+      setAvgGdd15(Math.round(getAvg(allGdd15)));
+      setStdGdd15(Math.round(getStd(allGdd15)));
 
       // For Growing Season
-      const getDayOfYear = (date) => {
+      const getDayOfYear = (date: Date) => {
         const startOfYear = new Date(date.getFullYear(), 0, 0);
-        const diff = date - startOfYear;
+        const diff = (date.getTime() - startOfYear.getTime());
         return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
       };
         
       const lengthsData = dataYears.map((year) => {
-        const yearlyData = weatherData[year];
-        const startDate = new Date(yearlyData?.lastFrost);
-        const endDate = new Date(yearlyData?.firstFrost);
+        const yearlyData = climateData[year];
+  
+        if (!yearlyData?.lastFrost || !yearlyData?.firstFrost) return null;
+
+        const startDate = new Date(yearlyData.lastFrost);
+        const endDate = new Date(yearlyData.firstFrost);
         return {
           year,
           length: yearlyData?.growingSeasonLength,
@@ -151,14 +138,14 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
       });
 
       // Filter out entries with null growing season lengths
-      const filteredData = lengthsData.filter(data => data.length !== null);
+      const filteredData = lengthsData.filter((data): data is NonNullable<typeof data> => data !== null && data.length !== null);
       setGrowingSeasonData(filteredData);
         
       // Calculate growing season metrics
       if (filteredData.length > 0) {
         const firstFrostDays = filteredData.map(data => data.end);
         const lastFrostDays = filteredData.map(data => data.start);
-        const seasonLengths = filteredData.map(data => data.length);
+        const seasonLengths = filteredData.map(data => data.length).filter((length): length is number => length !== null);;
           
         const earliestFirstFrostDay = Math.min(...firstFrostDays);
         const latestFirstFrostDay = Math.max(...firstFrostDays);
@@ -176,9 +163,9 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         setLongestGrowingSeason(`${longestSeason} days`);
       }
     }
-  }, [weatherData]);
+  }, [climateData]);
 
-  const prepareTempDataForPlot = (data, name: string) => {
+  const prepareTempDataForPlot = (data: any, name: string) => {
     const xValues = Object.keys(data);
     const yValues = Object.values(data);
     return {
@@ -191,8 +178,8 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
   }
     
   useEffect(() => {
-    if (weatherData && tempYear) {
-      const data = weatherData[tempYear];
+    if (climateData && tempYear) {
+      const data = climateData[tempYear];
       setTempData([
         prepareTempDataForPlot(data.cornHeatUnits,'CHU'),
         prepareTempDataForPlot(data.GDD0,'GDD - Base Temp. 0\u00B0C'),
@@ -201,21 +188,21 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         prepareTempDataForPlot(data.GDD15,'GDD - Base Temp. 15\u00B0C'),
       ]);
     }  
-  }, [tempYear, weatherData]);
+  }, [tempYear, climateData]);
 
   useEffect(() => {
-    if (weatherData && precipYear) {
-      const yearlyData = weatherData[precipYear].weatherData;
+    if (climateData && precipYear) {
+      const yearlyData = climateData[precipYear].weatherData;
       if (yearlyData.length > 0) {
         const daysPerWeek = 7;
         const weeklyAvgs = [Array(52).fill(0), Array(52).fill(0), Array(52).fill(0)];
         const counts = Array(52).fill(0);
-        const dates = yearlyData.map(data => data.datetime);
-        const precip = yearlyData.map(data => data.precip);
-        const humidity = yearlyData.map(data => data.humidity);
-        const dew = yearlyData.map(data => data.dew);
+        const dates = yearlyData.map((data: WeatherData) => data.datetime);
+        const precip = yearlyData.map((data: WeatherData) => data.precip);
+        const humidity = yearlyData.map((data: WeatherData) => data.humidity);
+        const dew = yearlyData.map((data: WeatherData) => data.dew);
           
-        dates.forEach((date, index) => {
+        dates.forEach((date: string, index: number) => {
           const weekIndex = Math.min(51,Math.floor(index / daysPerWeek));
           weeklyAvgs[0][weekIndex] += precip[index];
           weeklyAvgs[1][weekIndex] += humidity[index];
@@ -240,7 +227,48 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         });
       }        
     }
-  }, [precipYear, weatherData]);
+  }, [precipYear, climateData]);
+
+  const handleRelayout = useCallback(
+    debounce((event) => {
+      const newRange = event['xaxis.range'];
+
+      if (newRange !== undefined) {
+        const newRangeStart = Math.max(0, Math.round(newRange[0]));
+        const newRangeEnd = Math.min(51, Math.round(newRange[1]));
+        setSeasonRange([newRangeStart, newRangeEnd]);
+      }
+    }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    if (seasonRange && precipData) {
+      const [start, end] = seasonRange;
+
+      const avgPrecip = getAvg(precipData.precip.slice(start, end + 1));
+      const avgHumidity = getAvg(precipData.humidity.slice(start, end + 1));
+
+      console.log(avgPrecip, avgHumidity);
+    
+      const avgDew = getAvg(precipData.dew.slice(start, end + 1));
+      const stdPrecip = getStd(precipData.precip.slice(start, end + 1));
+      const stdHumidity = getStd(precipData.humidity.slice(start, end + 1));
+      const stdDew = getStd(precipData.dew.slice(start, end + 1));
+
+      const count = end - start + 1;
+ 
+      if (count > 0) {
+        setPrecipAverages({
+          precip: `${avgPrecip.toFixed(2)} \u00B1 ${stdPrecip.toFixed(2)}`,
+          humidity:  `${avgHumidity.toFixed(2)} \u00B1 ${stdHumidity.toFixed(2)}`,
+          dew:  `${avgDew.toFixed(2)} \u00B1 ${stdDew.toFixed(2)}`,
+        });
+      } else {
+        setPrecipAverages({ precip: '', humidity: '', dew: '' });
+      }
+    }
+  }, [seasonRange, precipData]);
     
   return (
     <div>
@@ -252,9 +280,28 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
         <div className = "flex">
           <div className = "w-[40%]">
             <div className = "mt-8 p-4 mx-4">
-              <div className={`${montserrat.className} mb-4`}>
-                Summary
+              <div className={`${montserrat.className} mb-4 flex justify-between`}>
+                <div>
+                  Summary of Selected Range
+                </div>
+                {precipData && seasonRange && (
+                  <div>
+                    {precipData.xNames[seasonRange[0]].split(' - ')[0]} - {precipData.xNames[seasonRange[1]].split(' - ')[1]}
+                  </div>
+                )}
               </div>
+              {seasonRange && precipAverages && precipData && (
+                <div className="">
+                  <PlainTable
+                    headers={['Climate Variable','Average Over Selected Range']}
+                    data = {[ 
+                      { v: 'Precipitation', a: precipAverages.precip },
+                      { v: 'Humidity', a: precipAverages.humidity },
+                      { v: 'Dew', a: precipAverages.dew },
+                    ]}
+                  />
+                </div>
+              )}
             </div>
           </div>
           <div className="w-[60%]">
@@ -325,8 +372,12 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                     ]}
                     layout={{
                       xaxis: {
-                        title: 'Week of Year',
-                        tickvals: precipData.xNames.filter((_, index) => index % precipTickFreq === 0),
+                        title: 'Range Selection',
+                        tickvals: precipData.xNames.filter((_: string, index: number) => index % precipTickFreq === 0),
+                        rangeslider: {
+                          visible: true,
+                        },
+                        range: seasonRange,
                       },
                       yaxis: {
                         title: '',
@@ -341,6 +392,7 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
                       },
                     }}
                     style={{ width: '100%', height: '100%' }}
+                    onRelayout={handleRelayout}
                   />
                 )}
               </div>
@@ -487,38 +539,58 @@ const Climate = ({ lat, lng, rasterDataCache, cropHeatMaps, yearlyYields, weathe
               <div className="">
                 <Plot
                   data={[
+                    // Invisible base bars
                     {
-                        x: growingSeasonData.map(data => data.year),
-                        y: growingSeasonData.map(data => data.length),
-                        base: growingSeasonData.map(data => data.start),
-                        type: 'bar',
-                        orientation: 'v',
-                        hoverinfo: 'text',
-                        text: growingSeasonData.map(data => `Year: ${data.year}<br>Growing Season Length: ${data.length} days<br>Last Frost Date: ${data.lastFrost} <br>First Frost Date: ${data.firstFrost}`),
-                        textposition: 'none'
+                      x: growingSeasonData.map(data => data.year),
+                      y: growingSeasonData.map(data => data.start),
+                      type: 'bar',
+                      orientation: 'v',
+                      marker: { color: 'rgba(0,0,0,0)' }, // Make the base bars transparent
+                      showlegend: false,
+                      hoverinfo: 'skip',
+                    },
+                    // Visible growing season length bars
+                    {
+                      x: growingSeasonData.map(data => data.year),
+                      y: growingSeasonData.map(data => data.length),
+                      type: 'bar',
+                      orientation: 'v',
+                      hoverinfo: 'text',
+                      text: growingSeasonData.map(
+                        data => `Year: ${data.year}<br>Growing Season Length: ${data.length} days<br>Last Frost Date: ${data.lastFrost}<br>First Frost Date: ${data.firstFrost}`
+                      ),
+                      textposition: 'none',
+                      marker: { color: 'green' },
+                      showlegend: false,
                     },
                   ]}
                   layout={{
+                    barmode: 'stack', // Stack the two series to simulate offset bars
                     xaxis: {
-                        title: 'Year',
-                        zeroline: false,
-                        tickvals: growingSeasonData.map(data => data.year),
+                      title: 'Year',
+                      zeroline: false,
+                      tickvals: growingSeasonData.map(data => data.year),
+                      range: [
+                        Math.min(...growingSeasonData.map(data => data.year)) - 0.8,
+                        Math.max(...growingSeasonData.map(data => data.year)) + 0.8,
+                      ],
                     },
                     yaxis: {
-                        title: 'Date',
-                        tickvals: Array.from({ length: Math.round(365/growingSeasonNumTicks) }, (_, i) => i * growingSeasonNumTicks), // Y-axis ticks from 0 to 364
-                        ticktext: Array.from({ length: Math.round(365/growingSeasonNumTicks) }, (_, i) => dayNumToMonthDay(i * growingSeasonNumTicks)),
-                        range: [0, 365],
+                      title: 'Date',
+                      tickvals: Array.from({ length: Math.round(365 / growingSeasonNumTicks) }, (_, i) => i * growingSeasonNumTicks),
+                      ticktext: Array.from({ length: Math.round(365 / growingSeasonNumTicks) }, (_, i) => dayNumToMonthDay(i * growingSeasonNumTicks)),
+                      range: [0, 365],
                     },
                     margin: {
                       t: 0,
                       b: 40,
                       l: 100,
-                      r: 0
+                      r: 0,
                     },
                   }}
                   style={{ width: '100%', height: '100%' }}
                 />
+
               </div>
             </div>
           </div>

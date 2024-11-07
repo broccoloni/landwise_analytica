@@ -9,9 +9,9 @@ import SummaryScore from '@/components/SummaryScore';
 
 import EstimatedYield from '@/components/EstimatedYield';
 import Climate from '@/components/Climate';
-import InfrastructureAccessibility from '@/components/InfrastructureAccessibility';
+// import InfrastructureAccessibility from '@/components/InfrastructureAccessibility';
 import Topography from '@/components/Topography';
-import EconomicViability from '@/components/EconomicViability';
+// import EconomicViability from '@/components/EconomicViability';
 
 import { fetchRasterDataCache } from '@/hooks/fetchRasterDataCache';
 import { fetchCropHeatMaps } from '@/hooks/fetchCropHeatMaps';

@@ -17,7 +17,7 @@ const heatUnits: heatUnit[] = [
   "Growing Degree Day (GDD)"
 ];
 
-const Climate = ({ lat, lng, rasterDataCache, elevationData, cropHeatMaps, yearlyYields, climateData, score, setScore }: CategoryProps) => {
+const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
   const [scoreComponents, setScoreComponents] = useState<any>({});
   useEffect(() => {
     const scoreValues = Object.values(scoreComponents).map(Number);

@@ -7,6 +7,7 @@ import { fetchLandUseData } from '@/lib/fetchLandUseData';
 import { fetchElevationData } from '@/lib/fetchElevationData';
 import { evaluateImage } from '@/utils/earthEngineUtils';
 import { fetchCropData } from '@/lib/fetchCropData';
+import { fetchClimateData } from '@/lib/fetchClimateData';
 
 // NOTE: Longitude must come first in google earth engine.
 
@@ -60,16 +61,21 @@ export async function POST(req: NextRequest) {
 
     const polygon = ee.Geometry.Polygon(points);      
 
-    // // const historicalLandUse = await fetchLandUseData({ years: dataYears, geometry: polygon, scale: 30 });
+    const climateData = await fetchClimateData(dataYears, polygon);
+    const historicalLandUse = await fetchLandUseData( dataYears, polygon );
     // const cropData = await fetchCropData(polygon, dataYears, crops, cropNames);
-    const cropData = null;
-    const historicalLandUse = null;
     const elevationData = await fetchElevationData(polygon);
+    const cropData = null;
+    // const historicalLandUse = null;
+    // const elevationData = null;
+    // const climateData = null;
       
     return NextResponse.json({ 
       historicalLandUse, 
       cropData,
       elevationData,
+      climateData,
+      bbox: polygon.bounds(),
     }, { status: 200 });
   } catch (error) {
     console.error('Error in POST route:', error);

@@ -11,7 +11,10 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import Dropdown from '@/components/Dropdown';
 import { Loader2 } from 'lucide-react';
 import ee from '@google/earthengine';
-// import HistoricalLandUse from '@/components/HistoricalLandUse';
+
+// import EstimatedYield from '@/components/EstimatedYield';
+import Climate from '@/components/Climate';
+import Topography from '@/components/Topography';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -42,18 +45,20 @@ export default function Search() {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
   const [landGeometry, setLandGeometry] = useState<number[][]>([]);
-  const [eeData, setEeData] = useState(null);
-  const [years, setYears] = useState<number[]>([]);
-  const [curYear, setCurYear] = useState<number|null>(null);
-  const [crops, setCrops] = useState<string[]>([]);
-  const [curCrop, setCurCrop] = useState<string|null>(null);
-  const [curData, setCurData] = useState<any>(null);
-  const [historicalLandUse, setHistoricalLandUse] = useState<any>(null);
-  const [loadingData, setLoadingData] = useState(true);
     
-  const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
-    console.log(components);
-      
+  const [climateData, setClimateData] = useState(null);
+  const [elevationData, setElevationData] = useState(null);
+  const [cropData, setCropData] = useState(null);
+  const [landUseData, setLandUseData] = useState(null);
+    
+  const [loadingData, setLoadingData] = useState(true);
+  const [activeTab, setActiveTab] = useState('Climate');
+  // const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
+  const [climateScore, setClimateScore] = useState<number|null>(null);
+  const [topographyScore, setTopographyScore] = useState<number|null>(null);
+
+    
+  const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {      
     setSelectedAddress(address);
     setLatitude(lat);
     setLongitude(lng);
@@ -82,26 +87,6 @@ export default function Search() {
       }
 
       const data = await response.json();
-
-      if (data && data.cropData && data.historicalLandUse) {    
-        setEeData(data.cropData);
-        setHistoricalLandUse(data.historicalLandUse);
-          
-        const data_years = Object.keys(data.cropData);
-        setYears(data_years);
-         
-        if (data_years.length > 0) {
-          const firstYear = data_years[0];
-          const data_crops = Object.keys(data.cropData[firstYear]);
-
-          setCrops(data_crops);
-          setCurYear(firstYear);
-
-          if (data_crops.length > 0) {
-            setCurCrop(data_crops[0]);
-          }
-        }
-      }        
         
       console.log('Fetched Earth Engine data:', data);
       setLoadingData(false);
@@ -110,26 +95,20 @@ export default function Search() {
       console.error('Error fetching Earth Engine data:', error);
     }
   };
+
+  const processClimateData = (data) => {
+    try {
+
+    } catch (error) {
+      console.error('Error processing climate data:', error);
+    }
+  };
     
   useEffect(() => {
     if (landGeometry.length > 0) {
       fetchEarthEngineData(landGeometry);
     }
   }, [landGeometry]);
-
-  useEffect(() => {
-    if (historicalLandUse) {
-      console.log("Historical Land Use:", historicalLandUse);
-    }
-  }, [historicalLandUse]);
-
-  useEffect(() => {
-    if (eeData && curYear && curCrop){
-      console.log("Cur Data Updated:", eeData[curYear][curCrop]);
-
-      setCurData(eeData[curYear][curCrop]);
-    }
-  }, [eeData,curYear,curCrop]);
     
   const PrintGeometry = () => {
     if (landGeometry.length === 0) {
@@ -147,33 +126,53 @@ export default function Search() {
     );
   };
 
-  const CropSelector = () => {
-    if (crops.length === 0 || !curCrop) {
-      return null;
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      // case 'EstimatedYield':
+      //   return (
+      //     <EstimatedYield
+      //       lat={lat}
+      //       lng={lng}
+      //       rasterDataCache={rasterDataCache}
+      //       elevationData={elevationData}
+      //       cropHeatMaps={cropHeatMaps}
+      //       yearlyYields={yearlyYields}
+      //       climateData={climateData}
+      //       score={estimatedYieldScore}
+      //       setScore={setEstimatedYieldScore}
+      //     />
+      //   );
+      case 'Climate':
+        return (
+          <Climate
+            lat={latitude}
+            lng={longitude}
+            data={data}
+            score={climateScore}
+            setScore={setClimateScore}
+          />
+        );      
+      case 'Topography':
+        return (
+          <Topography
+            lat={lat}
+            lng={lng}
+            data={data}
+            score={topographyScore}
+            setScore={setTopographyScore}
+          />
+        );
+      default:
+        return null;
     }
-    return (
-      <Dropdown 
-        options={crops} 
-        selected={curCrop} 
-        onSelect={setCurCrop} 
-      />
-    );
   };
 
-  const YearSelector = () => {
-    if (years.length === 0 || !curYear) {
-      return null;
-    }
-    return (
-      <Dropdown 
-        options={years} 
-        selected={curYear} 
-        onSelect={setCurYear} 
-        className="mr-2"
-      />
-    );
-  };
-    
+  const tabs = [
+    // 'EstimatedYield',
+    'Climate',
+    'Topography',
+  ];
+
   return (
     <div className={`${roboto.className} bg-accent-light text-black`}>
       <div className="relative m-4">
@@ -266,26 +265,24 @@ export default function Search() {
         {landGeometry.length > 0 && (
           <>
             <Container className="mb-4">
-              <section id='data'>
+              <section id='report'>
                 <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-                  Data
+                  Report
                 </div>
-                <PrintGeometry />
-
-                {/* {loadingData ? (
-                  <div className="flex justify-center h-full w-full my-20">
-                    <Loader2 className="h-20 w-20 animate-spin text-black" />
-                  </div>
-                ) : (
-                  <div className="">
-                    <div className="flex">
-                      <YearSelector />
-                      <CropSelector />
-                    </div>  
-                    <PrintGeometry />
-                    <HistoricalLandUse historicalLandUse = {historicalLandUse} />
-                  </div>
-                )} */}
+                <div className="flex justify-center space-x-8 border-b border-accent-dark mb-4 mt-10">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`py-2 px-4 w-48 rounded-t-lg ${
+                        activeTab === tab ? 'bg-accent-dark text-white' : 'text-black'
+                      } hover:bg-accent-dark hover:opacity-75 hover:text-white`}
+                    >
+                      {tab.replace(/([A-Z])/g, ' $1')}
+                    </button>
+                  ))}
+                </div>
+                <div>{renderActiveComponent()}</div>
               </section>
             </Container>
           </>
