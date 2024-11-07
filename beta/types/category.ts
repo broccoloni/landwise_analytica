@@ -62,7 +62,7 @@ export interface WeatherData {
 }
 
 export interface ClimateData {
-  weatherData: { [key in number]: WeatherData };
+  weatherData: { [key in string]: WeatherData };
   firstFrost?: string | null;
   lastFrost?: string | null;
   growingSeasonLength?: number | null;

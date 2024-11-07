@@ -10,7 +10,8 @@ import AddressSearch from '@/components/AddressSearch';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import Dropdown from '@/components/Dropdown';
 import { Loader2 } from 'lucide-react';
-import ee from '@google/earthengine';
+import { dataToUrl } from '@/utils/image';
+import { processClimateData, processLandUseData } from '@/utils/dataProcessing';
 
 // import EstimatedYield from '@/components/EstimatedYield';
 import Climate from '@/components/Climate';
@@ -48,6 +49,7 @@ export default function Search() {
     
   const [climateData, setClimateData] = useState(null);
   const [elevationData, setElevationData] = useState(null);
+  const [windData, setWindData] = useState(null);
   const [cropData, setCropData] = useState(null);
   const [landUseData, setLandUseData] = useState(null);
     
@@ -87,6 +89,11 @@ export default function Search() {
       }
 
       const data = await response.json();
+
+      setClimateData(processClimateData(data));
+      // processElevationData(data);
+      // processWindData(data);
+      setLandUseData(processLandUseData(data));
         
       console.log('Fetched Earth Engine data:', data);
       setLoadingData(false);
@@ -95,27 +102,20 @@ export default function Search() {
       console.error('Error fetching Earth Engine data:', error);
     }
   };
-
-  const processClimateData = (data) => {
-    try {
-      const newClimateData = {};
-        
-      Object.entries(data.climateData).forEach(([key, values]) => {
-        const weatherData = values;
-        
-
-      yearlyWeatherData.
-        
-    } catch (error) {
-      console.error('Error processing climate data:', error);
-    }
-  };
     
   useEffect(() => {
     if (landGeometry.length > 0) {
       fetchEarthEngineData(landGeometry);
     }
   }, [landGeometry]);
+
+  useEffect(() => {
+    console.log("Land Use:", landUseData);
+  }, [landUseData]);
+
+  useEffect(() => {
+    console.log("Climate data:", climateData);
+  }, [climateData]);
     
   const PrintGeometry = () => {
     if (landGeometry.length === 0) {
@@ -133,46 +133,46 @@ export default function Search() {
     );
   };
 
-  const renderActiveComponent = () => {
-    switch (activeTab) {
-      // case 'EstimatedYield':
-      //   return (
-      //     <EstimatedYield
-      //       lat={lat}
-      //       lng={lng}
-      //       rasterDataCache={rasterDataCache}
-      //       elevationData={elevationData}
-      //       cropHeatMaps={cropHeatMaps}
-      //       yearlyYields={yearlyYields}
-      //       climateData={climateData}
-      //       score={estimatedYieldScore}
-      //       setScore={setEstimatedYieldScore}
-      //     />
-      //   );
-      case 'Climate':
-        return (
-          <Climate
-            lat={latitude}
-            lng={longitude}
-            data={data}
-            score={climateScore}
-            setScore={setClimateScore}
-          />
-        );      
-      case 'Topography':
-        return (
-          <Topography
-            lat={lat}
-            lng={lng}
-            data={data}
-            score={topographyScore}
-            setScore={setTopographyScore}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  // const renderActiveComponent = () => {
+  //   switch (activeTab) {
+  //     // case 'EstimatedYield':
+  //     //   return (
+  //     //     <EstimatedYield
+  //     //       lat={lat}
+  //     //       lng={lng}
+  //     //       rasterDataCache={rasterDataCache}
+  //     //       elevationData={elevationData}
+  //     //       cropHeatMaps={cropHeatMaps}
+  //     //       yearlyYields={yearlyYields}
+  //     //       climateData={climateData}
+  //     //       score={estimatedYieldScore}
+  //     //       setScore={setEstimatedYieldScore}
+  //     //     />
+  //     //   );
+  //     case 'Climate':
+  //       return (
+  //         <Climate
+  //           lat={latitude}
+  //           lng={longitude}
+  //           data={data}
+  //           score={climateScore}
+  //           setScore={setClimateScore}
+  //         />
+  //       );      
+  //     case 'Topography':
+  //       return (
+  //         <Topography
+  //           lat={lat}
+  //           lng={lng}
+  //           data={data}
+  //           score={topographyScore}
+  //           setScore={setTopographyScore}
+  //         />
+  //       );
+  //     default:
+  //       return null;
+  //   }
+  // };
 
   const tabs = [
     // 'EstimatedYield',
@@ -289,7 +289,7 @@ export default function Search() {
                     </button>
                   ))}
                 </div>
-                <div>{renderActiveComponent()}</div>
+                {/* <div>{renderActiveComponent()}</div> */}
               </section>
             </Container>
           </>

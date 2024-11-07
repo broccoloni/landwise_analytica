@@ -1,11 +1,11 @@
 import chroma from 'chroma-js';
 
-export function getHeatMapUrl(
-  data: number[],
+export function dataToUrl(
+  data: (number|null)[],
   width: number,
   height: number,
   transparentVal: number | null,
-  colorScale,
+  colorScale: (value: number) => chroma.Color,
   scaleFactor: number
 ): string {
   // Create base canvas
@@ -18,7 +18,7 @@ export function getHeatMapUrl(
   const imageData = ctx.createImageData(width, height);
 
   data.forEach((value, i) => {
-    if (value === transparentVal) {
+    if (value === transparentVal || value === null) {
       imageData.data[i * 4 + 3] = 0;
     } else {
       const color = colorScale(value).rgb();

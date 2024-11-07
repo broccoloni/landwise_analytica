@@ -1,6 +1,6 @@
 import chroma from 'chroma-js';
 
-export function getHeatMapUrl(
+export function dataToUrl(
   data: (number|null)[],
   width: number,
   height: number,

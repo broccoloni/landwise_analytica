@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     const polygon = ee.Geometry.Polygon(points);      
 
     const climateData = await fetchClimateData(dataYears, polygon);
-    const historicalLandUse = await fetchLandUseData( dataYears, polygon );
+    const landUseData = await fetchLandUseData( dataYears, polygon );
     // const cropData = await fetchCropData(polygon, dataYears, crops, cropNames);
     const elevationData = await fetchElevationData(polygon);
     const cropData = null;
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     // const climateData = null;
       
     return NextResponse.json({ 
-      historicalLandUse, 
+      landUseData, 
       cropData,
       elevationData,
       climateData,
