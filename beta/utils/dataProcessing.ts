@@ -1,7 +1,8 @@
 import { calculateGrowingSeason, calculateCornHeatUnits, calculateGDD } from '@/utils/climateUtils';
 import { MajorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 import { valuesToNames } from '@/types/valuesToNames';
-import { dataToUrl } from '@/utils/image';
+import { dataToStaticColorUrl, dataToColorScaleUrl } from '@/utils/image';
+import chroma from 'chroma-js';
 
 export const processLandUseData = (data) => {
   try {
@@ -69,11 +70,13 @@ export const processLandUseData = (data) => {
 
       // Convert pixel values to index in valuesToNames, and 
       // Convert cropKeysToConvert (pixel values that occur less than 3%) to highest % majorCommodityCrop
-      const convertedLandUse = landUseData.map((val) =>
-        cropKeysToConvert.includes(val)
+      const convertedLandUse = landUseData.map((val) => {
+        const index = cropKeysToConvert.includes(val)
           ? Object.keys(valuesToNames).findIndex((key) => parseInt(key) === highestCommodityKey)
-          : Object.keys(valuesToNames).findIndex((key) => parseInt(key) === val)
-      );
+          : Object.keys(valuesToNames).findIndex((key) => parseInt(key) === val);
+      
+        return index === -1 ? 0 : index;
+      });
         
       // Calculate Land use Pcts
       const usableLandPct = cropSum / totalSum;
@@ -81,7 +84,7 @@ export const processLandUseData = (data) => {
 
       // Generate image URL and legend
       const colors = chroma.scale('Set1').colors(Object.keys(valuesToNames).length);
-      const imageUrl = dataToUrl(convertedLandUse, width, height, 0, colors, 10);
+      const imageUrl = dataToStaticColorUrl(convertedLandUse, width, height, 0, colors, 10);
       const uniqueElements = new Set(convertedLandUse);
       const legend: Record<string, string> = {};
 

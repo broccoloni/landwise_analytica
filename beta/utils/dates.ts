@@ -1,3 +1,10 @@
+export const intsToDayOfYear = (year: number, month: number, day: number): number => {
+  const date = new Date(year, month - 1, day); 
+  const start = new Date(year, 0, 0);
+  const diff = date.getTime() - start.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+};
+
 export const dayNumToMonthDay = (dayNum: number) => {
   const date = new Date(2024, 0, 1);
   date.setDate(date.getDate() + dayNum);

@@ -1,6 +1,7 @@
 import ee from '@google/earthengine';
 import { evaluateImage } from '@/utils/earthEngineUtils';
 import { norm2 } from '@/utils/stats';
+import { intsToDayOfYear } from '@/utils/dates';
 
 export async function fetchClimateData(years, geometry) {
   const results = {};
@@ -66,10 +67,19 @@ export async function fetchClimateData(years, geometry) {
         const gustAngle = 90 - Math.atan2(u_gust, v_gust) * (180 / Math.PI);
         const gustDir = gustAngle < 0 ? gustAngle + 360 : gustAngle;
 
+        const year = parseInt(values.year);
+        const month = parseInt(values.month);
+        const day = parseInt(values.day);
+
+        console.log(year, month, day);
+        console.log(intsToDayOfYear(year,month,day));
+
         climateData[key] = {
-          year: parseInt(values.year),
-          month: parseInt(values.month),
-          day: parseInt(values.day),
+          year,
+          month,
+          day,
+          dayOfYear: intsToDayOfYear(year, month, day),
+          dateStr: `${values.year}-${values.month}-${values.day}`,
           dew: values.dewpoint_temperature_2m - 273.15,
           temp: values.temperature_2m - 273.15,
           tempmin: values.temperature_2m_min - 273.15,
