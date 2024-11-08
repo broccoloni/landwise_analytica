@@ -1,6 +1,6 @@
 'use client';
 
-import { MapContainer, TileLayer, Polygon, CircleMarker, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Polygon, CircleMarker, useMapEvents, useMap, ScaleControl } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from 'react';
 import { MousePointer, Dot, Undo, Redo, RotateCcw } from 'lucide-react';
@@ -247,6 +247,7 @@ export default function MapDrawing({
           style={{ height: "400px", width: "100%", cursor: cursorStyle }}
           doubleClickZoom={false}
       >
+        <ScaleControl position="bottomleft" maxWidth={200} metric={true} imperial={true} />
         <ChangeView lat={lat} lng={lng} zoom={zoom} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

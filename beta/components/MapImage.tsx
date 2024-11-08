@@ -1,6 +1,6 @@
 'use client';
 
-import { MapContainer, TileLayer, ImageOverlay, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, ImageOverlay, useMap, ScaleControl } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from 'react';
 import { printType } from '@/utils/debug';
@@ -16,7 +16,7 @@ interface MapImageProps {
 // This component sets the map's view and zoom level
 const ChangeView = ({ lat, lng, zoom, bbox }: { lat: number; lng: number; zoom: number; bbox: number[number[]] }) => {
   const map = useMap();
-  map.setView([lat, lng], zoom);
+  map.setView([lat, lng]);
   map.fitBounds(bbox);  // maybe remove this - not sure
   return null; // This component doesn't render anything
 };
@@ -55,6 +55,7 @@ const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox=[],
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <ScaleControl position="bottomleft" maxWidth={200} metric={true} imperial={true} />
         {imageUrl && bbox && (
           <>
             <ChangeView lat={lat} lng={lng} zoom={zoom} bbox={bbox} />

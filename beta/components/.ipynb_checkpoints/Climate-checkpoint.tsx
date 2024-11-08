@@ -5,7 +5,7 @@ import { Slider } from "@mui/material";
 import dynamic from 'next/dynamic';
 import { getAvg, getStd } from '@/utils/stats';
 import { WeatherData, ClimateData } from '@/types/category';
-import { formatDateToMonthName, getWeekDateRange, dayNumToMonthDay } from '@/utils/dates';
+import { formatDateToMonthName, getWeekDateRange, dayNumToMonthDay, monthNames } from '@/utils/dates';
 import PlainTable from '@/components/PlainTable';
 import { debounce } from 'lodash';
 import Loading from '@/components/Loading';
@@ -37,9 +37,9 @@ const Climate = (
   // For precipitation
   const [precipYear, setPrecipYear] = useState<number | null>(null);
   const [precipData, setPrecipData] = useState<any>(null);
-  const [seasonRange, setSeasonRange] = useState([13,39]);
+  const [seasonRange, setSeasonRange] = useState([90,243]);
   const [precipAverages, setPrecipAverages] = useState({ precip: '', temp: '', dew: '' });
-  const precipTickFreq = 4;
+  const precipTickFreq = 30;
     
   // For temperature suitability
   const [tempYear, setTempYear] = useState<number | null>(null);
@@ -167,42 +167,54 @@ const Climate = (
     }  
   }, [tempYear, climateData]);
 
-  useEffect(() => {
-    if (climateData && precipYear) {
-      const yearlyData = climateData[precipYear].weatherData;
-      if (Object.keys(yearlyData).length > 0) {
-        const daysPerWeek = 7;
-        const weeklyAvgs = [Array(52).fill(0), Array(52).fill(0), Array(52).fill(0)];
-        const counts = Array(52).fill(0);
-        const dates = Object.values(yearlyData).map((data: WeatherData) => data.dateStr);
-        const precip = Object.values(yearlyData).map((data: WeatherData) => data.precip);
-        const temp = Object.values(yearlyData).map((data: WeatherData) => data.temp);
-        const dew = Object.values(yearlyData).map((data: WeatherData) => data.dew);
+  // useEffect(() => {
+  //   if (climateData && precipYear) {
+  //     const yearlyData = climateData[precipYear].weatherData;
+  //     if (Object.keys(yearlyData).length > 0) {
+  //       const daysPerWeek = 7;
+  //       const weeklyAvgs = [Array(52).fill(0), Array(52).fill(0), Array(52).fill(0)];
+  //       const counts = Array(52).fill(0);
+  //       const dates = Object.values(yearlyData).map((data: WeatherData) => data.dateStr);
+  //       const precip = Object.values(yearlyData).map((data: WeatherData) => data.precip);
+  //       const temp = Object.values(yearlyData).map((data: WeatherData) => data.temp);
+  //       const dew = Object.values(yearlyData).map((data: WeatherData) => data.dew);
           
-        dates.forEach((date: string, index: number) => {
-          const weekIndex = Math.min(51,Math.floor(index / daysPerWeek));
-          weeklyAvgs[0][weekIndex] += precip[index];
-          weeklyAvgs[1][weekIndex] += temp[index];
-          weeklyAvgs[2][weekIndex] += dew[index];
-          counts[weekIndex] += 1;
-        });
+  //       dates.forEach((date: string, index: number) => {
+  //         const weekIndex = Math.min(51,Math.floor(index / daysPerWeek));
+  //         weeklyAvgs[0][weekIndex] += precip[index];
+  //         weeklyAvgs[1][weekIndex] += temp[index];
+  //         weeklyAvgs[2][weekIndex] += dew[index];
+  //         counts[weekIndex] += 1;
+  //       });
 
-        weeklyAvgs.forEach((metricArray, metricIndex) => {
-          weeklyAvgs[metricIndex] = metricArray.map((sum, weekIndex) => 
-            counts[weekIndex] > 0 ? sum / counts[weekIndex] : 0
-          );
-        });
+  //       weeklyAvgs.forEach((metricArray, metricIndex) => {
+  //         weeklyAvgs[metricIndex] = metricArray.map((sum, weekIndex) => 
+  //           counts[weekIndex] > 0 ? sum / counts[weekIndex] : 0
+  //         );
+  //       });
        
-        const xValues = Array.from({ length: 52 }, (_, i) => i + 1);
-        const xNames = xValues.map(x => getWeekDateRange(x));
-        setPrecipData({ 
-          precip: weeklyAvgs[0], 
-          temp: weeklyAvgs[1], 
-          dew: weeklyAvgs[2], 
-          xValues, 
-          xNames 
-        });
-      }        
+  //       const xValues = Array.from({ length: 52 }, (_, i) => i + 1);
+  //       const xNames = xValues.map(x => getWeekDateRange(x));
+  //       setPrecipData({ 
+  //         precip: weeklyAvgs[0], 
+  //         temp: weeklyAvgs[1], 
+  //         dew: weeklyAvgs[2], 
+  //         xValues, 
+  //         xNames 
+  //       });
+  //     }        
+  //   }
+  // }, [precipYear, climateData]);
+  useEffect(() => {
+    if (precipYear && climateData) {
+      const yearlyData = climateData[precipYear].weatherData;
+      setPrecipData({
+        precip: Object.values(yearlyData).map((data: WeatherData) => data.precip),
+        temp: Object.values(yearlyData).map((data: WeatherData) => data.temp),
+        dew: Object.values(yearlyData).map((data: WeatherData) => data.dew),
+        dayOfYear: Object.values(yearlyData).map((data: WeatherData) => data.dayOfYear),
+        x: Object.values(yearlyData).map((data: WeatherData) => `${monthNames[data.month-1]} ${data.day}`),
+      });
     }
   }, [precipYear, climateData]);
 
@@ -212,7 +224,7 @@ const Climate = (
 
       if (newRange !== undefined) {
         const newRangeStart = Math.max(0, Math.round(newRange[0]));
-        const newRangeEnd = Math.min(51, Math.round(newRange[1]));
+        const newRangeEnd = Math.min(365, Math.round(newRange[1]));
         setSeasonRange([newRangeStart, newRangeEnd]);
       }
     }, 1000),
@@ -261,7 +273,7 @@ const Climate = (
                   </div>
                   {precipData && seasonRange && (
                     <div>
-                      {precipData.xNames[seasonRange[0]].split(' - ')[0]} - {precipData.xNames[seasonRange[1]].split(' - ')[1]}
+                      {precipData.x[seasonRange[0]]} - {precipData.x[seasonRange[1]]}
                     </div>
                   )}
                 </div>
@@ -310,10 +322,11 @@ const Climate = (
                       data={[
                         {
                           z: [precipData.precip],
-                          x: precipData.xNames,                        
+                          x: precipData.x,                        
                           y: [0],
                           type: 'heatmap',
                           colorscale: 'Blues',
+                          reversescale: true,
                           colorbar: {
                             len: 0.3,
                             y: 0.15
@@ -322,7 +335,7 @@ const Climate = (
                         },
                         {
                           z: [precipData.temp],
-                          x: precipData.xNames, 
+                          x: precipData.x, 
                           y: [1],
                           type: 'heatmap',
                           colorscale: 'Purples',
@@ -334,7 +347,7 @@ const Climate = (
                         },
                         {
                           z: [precipData.dew],
-                          x: precipData.xNames, 
+                          x: precipData.x, 
                           y: [2],
                           type: 'heatmap',
                           colorscale: 'Greens',
@@ -348,7 +361,8 @@ const Climate = (
                       layout={{
                         xaxis: {
                           title: 'Range Selection',
-                          tickvals: precipData.xNames.filter((_: string, index: number) => index % precipTickFreq === 0),
+                          // tickvals: precipData.dayOfYear.filter((_: string, index: number) => index % precipTickFreq === 0),
+                          tickvals: precipData.x.filter((_: string, index: number) => index % precipTickFreq === 0),
                           rangeslider: {
                             visible: true,
                           },
