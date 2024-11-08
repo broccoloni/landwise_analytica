@@ -9,10 +9,10 @@ import { evaluateImage } from '@/utils/earthEngineUtils';
 import { fetchCropData } from '@/lib/fetchCropData';
 import { fetchClimateData } from '@/lib/fetchClimateData';
 
-// NOTE: Longitude must come first in google earth engine.
+// NOTE: Longitude must come first in google earth engine. Latitude comes first in leaflet
 
 // const dataYears = ['2017', '2018', '2019', '2020', '2021', '2022'];
-const dataYears = ['2022'];
+const dataYears = ['2021','2022'];
 
 const cropNames = [
   'Barley', 'Corn for grain', 'Oats', 'Soybeans', 'Canola', 
@@ -65,17 +65,26 @@ export async function POST(req: NextRequest) {
     const landUseData = await fetchLandUseData( dataYears, polygon );
     // const cropData = await fetchCropData(polygon, dataYears, crops, cropNames);
     const elevationData = await fetchElevationData(polygon);
-    const cropData = null;
+    const bounds = await polygon.bounds().getInfo();
+    const boundCoordinates = bounds.coordinates[0];
+    const centroid = await polygon.centroid().getInfo();
+      
     // const historicalLandUse = null;
     // const elevationData = null;
+    const cropData = null;
     // const climateData = null;
       
+    // Note that were switching from longitude first to latitude first for leaflet use here
     return NextResponse.json({ 
       landUseData, 
       cropData,
       elevationData,
       climateData,
-      bbox: polygon.bounds(),
+      bbox: [
+        [boundCoordinates[0][1], boundCoordinates[0][0]],
+        [boundCoordinates[2][1], boundCoordinates[2][0]]
+      ],
+      centroid: [centroid.coordinates[1], centroid.coordinates[0]],
     }, { status: 200 });
   } catch (error) {
     console.error('Error in POST route:', error);

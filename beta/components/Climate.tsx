@@ -4,10 +4,11 @@ import Dropdown from '@/components/Dropdown';
 import { Slider } from "@mui/material";
 import dynamic from 'next/dynamic';
 import { getAvg, getStd } from '@/utils/stats';
-import { WeatherData, ClimateData, CategoryProps } from '@/types/category';
+import { WeatherData, ClimateData } from '@/types/category';
 import { formatDateToMonthName, getWeekDateRange, dayNumToMonthDay } from '@/utils/dates';
 import PlainTable from '@/components/PlainTable';
 import { debounce } from 'lodash';
+import Loading from '@/components/Loading';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -17,7 +18,11 @@ const heatUnits: heatUnit[] = [
   "Growing Degree Day (GDD)"
 ];
 
-const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
+const Climate = (
+  { lat, lng, climateData, score, setScore }: 
+  { lat: number; lng: number; climateData: Record<number, ClimateData>; score: number | null; 
+    setScore: React.Dispatch<React.SetStateAction<number | null>>; }) => {
+      
   const [scoreComponents, setScoreComponents] = useState<any>({});
   useEffect(() => {
     const scoreValues = Object.values(scoreComponents).map(Number);
@@ -33,7 +38,7 @@ const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
   const [precipYear, setPrecipYear] = useState<number | null>(null);
   const [precipData, setPrecipData] = useState<any>(null);
   const [seasonRange, setSeasonRange] = useState([13,39]);
-  const [precipAverages, setPrecipAverages] = useState({ precip: '', humidity: '', dew: '' });
+  const [precipAverages, setPrecipAverages] = useState({ precip: '', temp: '', dew: '' });
   const precipTickFreq = 4;
     
   // For temperature suitability
@@ -51,21 +56,14 @@ const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
   const [stdGdd15, setStdGdd15] = useState<number|null>(null);
     
   // For Growing Season 
-  const [growingSeasonData, setGrowingSeasonData] = useState<{ 
-    year: number; 
-    length: number|null; 
-    start: number; 
-    end: number; 
-    lastFrost: string; 
-    firstFrost: string; 
-  }[]>([]);
+  const [completedGrowingSeasonData, setCompletedGrowingSeasonData] = useState<Record<number, ClimateData>>([]);
   const [earliestFirstFrost, setEarliestFirstFrost] = useState<string>('');
   const [latestFirstFrost, setLatestFirstFrost] = useState<string>('');
   const [earliestLastFrost, setEarliestLastFrost] = useState<string>('');
   const [latestLastFrost, setLatestLastFrost] = useState<string>('');
   const [shortestGrowingSeason, setShortestGrowingSeason] = useState<string>('');
   const [longestGrowingSeason, setLongestGrowingSeason] = useState<string>('');
-  const growingSeasonNumTicks = 30;
+  const growingSeasonTickFreq = 30;
 
   useEffect(() => {
     if (climateData) {
@@ -114,38 +112,17 @@ const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
       setStdGdd15(Math.round(getStd(allGdd15)));
 
       // For Growing Season
-      const getDayOfYear = (date: Date) => {
-        const startOfYear = new Date(date.getFullYear(), 0, 0);
-        const diff = (date.getTime() - startOfYear.getTime());
-        return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
-      };
-        
-      const lengthsData = dataYears.map((year) => {
-        const yearlyData = climateData[year];
-  
-        if (!yearlyData?.lastFrost || !yearlyData?.firstFrost) return null;
-
-        const startDate = new Date(yearlyData.lastFrost);
-        const endDate = new Date(yearlyData.firstFrost);
-        return {
-          year,
-          length: yearlyData?.growingSeasonLength,
-          start: getDayOfYear(startDate),
-          end: getDayOfYear(endDate),
-          lastFrost: yearlyData?.lastFrost,
-          firstFrost: yearlyData?.firstFrost,
-        };
-      });
 
       // Filter out entries with null growing season lengths
-      const filteredData = lengthsData.filter((data): data is NonNullable<typeof data> => data !== null && data.length !== null);
-      setGrowingSeasonData(filteredData);
+      const completedGrowingSeasons = Object.values(climateData)
+        .filter((data): data is NonNullable<typeof data> => data !== null && data.growingSeasonLength !== null);
+      setCompletedGrowingSeasonData(completedGrowingSeasons);
         
       // Calculate growing season metrics
-      if (filteredData.length > 0) {
-        const firstFrostDays = filteredData.map(data => data.end);
-        const lastFrostDays = filteredData.map(data => data.start);
-        const seasonLengths = filteredData.map(data => data.length).filter((length): length is number => length !== null);;
+      if (completedGrowingSeasons.length > 0) {
+        const firstFrostDays = completedGrowingSeasons.map(data => data.firstFrost);
+        const lastFrostDays = completedGrowingSeasons.map(data => data.lastFrost);
+        const seasonLengths = completedGrowingSeasons.map(data => data.growingSeasonLength);
           
         const earliestFirstFrostDay = Math.min(...firstFrostDays);
         const latestFirstFrostDay = Math.max(...firstFrostDays);
@@ -193,19 +170,19 @@ const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
   useEffect(() => {
     if (climateData && precipYear) {
       const yearlyData = climateData[precipYear].weatherData;
-      if (yearlyData.length > 0) {
+      if (Object.keys(yearlyData).length > 0) {
         const daysPerWeek = 7;
         const weeklyAvgs = [Array(52).fill(0), Array(52).fill(0), Array(52).fill(0)];
         const counts = Array(52).fill(0);
-        const dates = yearlyData.map((data: WeatherData) => data.datetime);
-        const precip = yearlyData.map((data: WeatherData) => data.precip);
-        const humidity = yearlyData.map((data: WeatherData) => data.humidity);
-        const dew = yearlyData.map((data: WeatherData) => data.dew);
+        const dates = Object.values(yearlyData).map((data: WeatherData) => data.dateStr);
+        const precip = Object.values(yearlyData).map((data: WeatherData) => data.precip);
+        const temp = Object.values(yearlyData).map((data: WeatherData) => data.temp);
+        const dew = Object.values(yearlyData).map((data: WeatherData) => data.dew);
           
         dates.forEach((date: string, index: number) => {
           const weekIndex = Math.min(51,Math.floor(index / daysPerWeek));
           weeklyAvgs[0][weekIndex] += precip[index];
-          weeklyAvgs[1][weekIndex] += humidity[index];
+          weeklyAvgs[1][weekIndex] += temp[index];
           weeklyAvgs[2][weekIndex] += dew[index];
           counts[weekIndex] += 1;
         });
@@ -220,7 +197,7 @@ const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
         const xNames = xValues.map(x => getWeekDateRange(x));
         setPrecipData({ 
           precip: weeklyAvgs[0], 
-          humidity: weeklyAvgs[1], 
+          temp: weeklyAvgs[1], 
           dew: weeklyAvgs[2], 
           xValues, 
           xNames 
@@ -247,13 +224,10 @@ const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
       const [start, end] = seasonRange;
 
       const avgPrecip = getAvg(precipData.precip.slice(start, end + 1));
-      const avgHumidity = getAvg(precipData.humidity.slice(start, end + 1));
-
-      console.log(avgPrecip, avgHumidity);
-    
+      const avgTemp = getAvg(precipData.temp.slice(start, end + 1));    
       const avgDew = getAvg(precipData.dew.slice(start, end + 1));
       const stdPrecip = getStd(precipData.precip.slice(start, end + 1));
-      const stdHumidity = getStd(precipData.humidity.slice(start, end + 1));
+      const stdTemp = getStd(precipData.temp.slice(start, end + 1));
       const stdDew = getStd(precipData.dew.slice(start, end + 1));
 
       const count = end - start + 1;
@@ -261,11 +235,11 @@ const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
       if (count > 0) {
         setPrecipAverages({
           precip: `${avgPrecip.toFixed(2)} \u00B1 ${stdPrecip.toFixed(2)}`,
-          humidity:  `${avgHumidity.toFixed(2)} \u00B1 ${stdHumidity.toFixed(2)}`,
+          temp:  `${avgTemp.toFixed(2)} \u00B1 ${stdTemp.toFixed(2)}`,
           dew:  `${avgDew.toFixed(2)} \u00B1 ${stdDew.toFixed(2)}`,
         });
       } else {
-        setPrecipAverages({ precip: '', humidity: '', dew: '' });
+        setPrecipAverages({ precip: '', temp: '', dew: '' });
       }
     }
   }, [seasonRange, precipData]);
@@ -276,325 +250,335 @@ const Climate = ({ lat, lng, data, score, setScore }: CategoryProps) => {
         Climate
       </div>
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Precipitation, Humidity & Dew</div>
-        <div className = "flex">
-          <div className = "w-[40%]">
-            <div className = "mt-8 p-4 mx-4">
-              <div className={`${montserrat.className} mb-4 flex justify-between`}>
-                <div>
-                  Summary of Selected Range
-                </div>
-                {precipData && seasonRange && (
+        <div className={`${montserrat.className} text-lg `}>Precipitation, Temperature & Dew</div>
+        {precipData ? (
+          <div className = "flex">
+            <div className = "w-[40%]">
+              <div className = "mt-8 p-4 mx-4">
+                <div className={`${montserrat.className} mb-4 flex justify-between`}>
                   <div>
-                    {precipData.xNames[seasonRange[0]].split(' - ')[0]} - {precipData.xNames[seasonRange[1]].split(' - ')[1]}
+                    Summary of Selected Range
                   </div>
-                )}
-              </div>
-              {seasonRange && precipAverages && precipData && (
-                <div className="">
-                  <PlainTable
-                    headers={['Climate Variable','Average Over Selected Range']}
-                    data = {[ 
-                      { v: 'Precipitation', a: precipAverages.precip },
-                      { v: 'Humidity', a: precipAverages.humidity },
-                      { v: 'Dew', a: precipAverages.dew },
-                    ]}
-                  />
+                  {precipData && seasonRange && (
+                    <div>
+                      {precipData.xNames[seasonRange[0]].split(' - ')[0]} - {precipData.xNames[seasonRange[1]].split(' - ')[1]}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-          <div className="w-[60%]">
-            <div className="flex-row justify-center items-center">
-              <div className="flex justify-center items-center text-center">
-                <div className={`${montserrat.className} mr-8`}>
-                  Daily Average For Each Week of
-                </div>
-                {years && (
-                  <div className="w-56">
-                    <Slider
-                      value={precipYear ?? years[0]}
-                      onChange={(event, newValue) => setPrecipYear(newValue as number)}
-                      min={Math.min(...years)}
-                      max={Math.max(...years)}
-                      step={1}
-                      marks={years.map((year) => ({
-                        value: year,
-                        label: (year === Math.min(...years) || year === Math.max(...years) || year === precipYear)
-                          ? year.toString()
-                          : ''
-                      }))}
-                      valueLabelDisplay="auto"
+                {seasonRange && precipAverages && precipData && (
+                  <div className="">
+                    <PlainTable
+                      headers={['Climate Variable','Average Over Selected Range']}
+                      data = {[ 
+                        { v: 'Precipitation', a: precipAverages.precip },
+                        { v: 'Temperature', a: precipAverages.temp },
+                        { v: 'Dew', a: precipAverages.dew },
+                      ]}
                     />
                   </div>
                 )}
               </div>
-              <div className="">
-                {precipData && (
+            </div>
+            <div className="w-[60%]">
+              <div className="flex-row justify-center items-center">
+                <div className="flex justify-center items-center text-center">
+                  <div className={`${montserrat.className} mr-8`}>
+                    Daily Average For Each Week of
+                  </div>
+                  {years && (
+                    <div className="w-56">
+                      <Slider
+                        value={precipYear ?? years[0]}
+                        onChange={(event, newValue) => setPrecipYear(newValue as number)}
+                        min={Math.min(...years)}
+                        max={Math.max(...years)}
+                        step={1}
+                        marks={years.map((year) => ({
+                          value: year,
+                          label: (year === Math.min(...years) || year === Math.max(...years) || year === precipYear)
+                            ? year.toString()
+                            : ''
+                        }))}
+                        valueLabelDisplay="auto"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="">
+                  {precipData && (
+                    <Plot
+                      data={[
+                        {
+                          z: [precipData.precip],
+                          x: precipData.xNames,                        
+                          y: [0],
+                          type: 'heatmap',
+                          colorscale: 'Blues',
+                          colorbar: {
+                            len: 0.3,
+                            y: 0.15
+                          },
+                          showscale: true,
+                        },
+                        {
+                          z: [precipData.temp],
+                          x: precipData.xNames, 
+                          y: [1],
+                          type: 'heatmap',
+                          colorscale: 'Purples',
+                          colorbar: {
+                            len: 0.3,
+                            y: 0.5
+                          },
+                          showscale: true,
+                        },
+                        {
+                          z: [precipData.dew],
+                          x: precipData.xNames, 
+                          y: [2],
+                          type: 'heatmap',
+                          colorscale: 'Greens',
+                          colorbar: {
+                            len: 0.3,
+                            y: 0.85
+                          },
+                          showscale: true,
+                        },
+                      ]}
+                      layout={{
+                        xaxis: {
+                          title: 'Range Selection',
+                          tickvals: precipData.xNames.filter((_: string, index: number) => index % precipTickFreq === 0),
+                          rangeslider: {
+                            visible: true,
+                          },
+                          range: seasonRange,
+                        },
+                        yaxis: {
+                          title: '',
+                          tickvals: [0, 1, 2],
+                          ticktext: ['Precipitation (mm)', 'Temperature (\u00B0C)', 'Dew (\u00B0C)']
+                        },
+                        margin: {
+                          t: 10,
+                          b: 100,
+                          l: 120,
+                          r: 0,
+                        },
+                      }}
+                      style={{ width: '100%', height: '100%' }}
+                      onRelayout={handleRelayout}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Loading />
+        )}
+      </div>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Temperature Suitability</div>
+        {tempData && years ? (
+          <div className="flex">
+            <div className="w-[40%]">
+              <div className = "mt-8 p-4 mx-4">
+                <div className={`${montserrat.className} mb-4`}>
+                  End of Completed Season Averages
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="">Corn Heat Units (CHUs):</div>
+                  <div>{`${avgChu} \u00B1 ${stdChu}`}</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="flex-row">
+                    <div>{`Growind Degree Days (GDDs)`}</div>
+                    <div>{`Base Temp. 0\u00B0C`}</div>
+                  </div>
+                  <div>{`${avgGdd0} \u00B1 ${stdGdd0}`}</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="flex-row">
+                    <div>{`Growind Degree Days (GDDs)`}</div>
+                    <div>{`Base Temp. 5\u00B0C`}</div>
+                  </div>
+                  <div>{`${avgGdd5} \u00B1 ${stdGdd5}`}</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="flex-row">
+                    <div>{`Growind Degree Days (GDDs)`}</div>
+                    <div>{`Base Temp. 10\u00B0C`}</div>
+                  </div>
+                  <div>{`${avgGdd10} \u00B1 ${stdGdd10}`}</div> 
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="flex-row">
+                    <div>{`Growind Degree Days (GDDs)`}</div>
+                    <div>{`Base Temp. 15\u00B0C`}</div>
+                  </div>
+                  <div>{`${avgGdd15} \u00B1 ${stdGdd15}`}</div>
+                </div>
+              </div> 
+            </div>
+            <div className="w-[60%]">
+              <div className="flex-row justify-center items-center">
+                <div className="flex justify-center items-center text-center">
+                  <div className={`${montserrat.className} mr-8`}>
+                    Year:
+                  </div>
+                  <div className="w-56">
+                  <Slider
+                    value={tempYear ?? years[0]}
+                    onChange={(event, newValue) => setTempYear(newValue as number)}
+                    min={Math.min(...years)}
+                    max={Math.max(...years)}
+                    step={1}
+                    marks={years.map((year) => ({
+                      value: year,
+                      label: (year === Math.min(...years) || year === Math.max(...years) || year === tempYear)
+                        ? year.toString()
+                          : ''
+                      }))}
+                    valueLabelDisplay="auto"
+                  />
+                  </div>
+                </div>
+                <div className="">
+                  <Plot
+                    data={tempData}
+                    layout={{
+                      xaxis: { title: 'Date' },
+                      yaxis: { title: 'Cumulative Heat Units' },
+                      margin: {
+                        t: 20,
+                        b: 40,
+                        l: 60,
+                        r: 20
+                      },
+                      legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        xanchor: 'left',
+                        yanchor: 'top',
+                        orientation: 'v',
+                        bgcolor: 'rgba(255, 255, 255, 0.5)',
+                      },
+                    }}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Loading />
+        )}
+      </div>
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg `}>Growing Season Length</div>
+        {completedGrowingSeasonData && earliestFirstFrost ? (
+          <div className="flex">
+            <div className="w-[40%]">
+              <div className = "mt-8 mx-4">
+                <div className={`${montserrat.className} mb-4`}>
+                  Summary
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="">Earliest First Frost Date:</div>
+                  <div>{earliestFirstFrost}</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="">Latest First Frost Date:</div>
+                  <div>{latestFirstFrost}</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="">Earliest Last Frost Date:</div>
+                  <div>{earliestLastFrost}</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="">Lastest Last Frost Date:</div>
+                  <div>{latestLastFrost}</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="">Shortest Growing Season:</div>
+                  <div>{shortestGrowingSeason}</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="">Longest Growing Season:</div>
+                  <div>{longestGrowingSeason}</div>
+                </div>
+              </div>
+            </div>
+            <div className="w-[60%]">
+              <div className="flex-row">
+                <div className={`${montserrat.className} w-full text-center`}>
+                  Completed Growing Seasons
+                </div>
+                <div className="">
                   <Plot
                     data={[
+                      // Invisible base bars
                       {
-                        z: [precipData.precip],
-                        x: precipData.xNames,                        
-                        y: [0],
-                        type: 'heatmap',
-                        colorscale: 'Blues',
-                        colorbar: {
-                          len: 0.3,
-                          y: 0.15
-                        },
-                        showscale: true,
+                        x: completedGrowingSeasonData.map(data => Object.values(data.weatherData)[0].year),
+                        y: completedGrowingSeasonData.map(data => data.lastFrost),
+                        type: 'bar',
+                        orientation: 'v',
+                        marker: { color: 'rgba(0,0,0,0)' }, // Make the base bars transparent
+                        showlegend: false,
+                        hoverinfo: 'skip',
                       },
+                      // Visible growing season length bars
                       {
-                        z: [precipData.humidity],
-                        x: precipData.xNames, 
-                        y: [1],
-                        type: 'heatmap',
-                        colorscale: 'Greens',
-                        colorbar: {
-                          len: 0.3,
-                          y: 0.5
-                        },
-                        showscale: true,
-                      },
-                      {
-                        z: [precipData.dew],
-                        x: precipData.xNames, 
-                        y: [2],
-                        type: 'heatmap',
-                        colorscale: 'Purples',
-                        colorbar: {
-                          len: 0.3,
-                          y: 0.85
-                        },
-                        showscale: true,
+                        x: completedGrowingSeasonData.map(data => Object.values(data.weatherData)[0].year),
+                        y: completedGrowingSeasonData.map(data => data.growingSeasonLength),
+                        type: 'bar',
+                        orientation: 'v',
+                        hoverinfo: 'text',
+                        text: completedGrowingSeasonData.map(
+                          data => `Year: ${Object.values(data.weatherData)[0].year}<br>Growing Season Length: ${data.growingSeasonLength} days<br>Last Frost Date: ${Object.keys(data.weatherData)[data.lastFrost-1]}<br>First Frost Date: ${Object.keys(data.weatherData)[data.firstFrost-1]}`
+                        ),
+                        textposition: 'none',
+                        marker: { color: 'green' },
+                        showlegend: false,
                       },
                     ]}
                     layout={{
+                      barmode: 'stack', // Stack the two series to simulate offset bars
                       xaxis: {
-                        title: 'Range Selection',
-                        tickvals: precipData.xNames.filter((_: string, index: number) => index % precipTickFreq === 0),
-                        rangeslider: {
-                          visible: true,
-                        },
-                        range: seasonRange,
+                        title: 'Year',
+                        zeroline: false,
+                        tickvals: completedGrowingSeasonData.map(data => Object.values(data.weatherData)[0].year),
+                        range: [
+                          Math.min(...completedGrowingSeasonData.map(data => Object.values(data.weatherData)[0].year)) - 0.8,
+                          Math.max(...completedGrowingSeasonData.map(data => Object.values(data.weatherData)[0].year)) + 0.8,
+                        ],
                       },
                       yaxis: {
-                        title: '',
-                        tickvals: [0, 1, 2],
-                        ticktext: ['Precipitation (mm)', 'Humidity (%)', 'Dew (\u00B0C)']
+                        title: 'Date',
+                        tickvals: Object.keys(completedGrowingSeasonData[0].weatherData)
+                          .map((_, index) => index)
+                          .filter((_, index) => index % growingSeasonTickFreq === 0),
+                        ticktext: Object.keys(completedGrowingSeasonData[0].weatherData)
+                          .filter((_, index) => index % growingSeasonTickFreq === 0),
+                        range: [0, 365],
                       },
                       margin: {
-                        t: 10,
-                        b: 100,
-                        l: 120,
+                        t: 0,
+                        b: 40,
+                        l: 100,
                         r: 0,
                       },
                     }}
                     style={{ width: '100%', height: '100%' }}
-                    onRelayout={handleRelayout}
                   />
-                )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Temperature Suitability</div>
-        <div className="flex">
-          <div className="w-[40%]">
-            <div className = "mt-8 p-4 mx-4">
-              <div className={`${montserrat.className} mb-4`}>
-                End of Completed Season Averages
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="">Corn Heat Units (CHUs):</div>
-                <div>{`${avgChu} \u00B1 ${stdChu}`}</div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="flex-row">
-                  <div>{`Growind Degree Days (GDDs)`}</div>
-                  <div>{`Base Temp. 0\u00B0C`}</div>
-                </div>
-                <div>{`${avgGdd0} \u00B1 ${stdGdd0}`}</div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="flex-row">
-                  <div>{`Growind Degree Days (GDDs)`}</div>
-                  <div>{`Base Temp. 5\u00B0C`}</div>
-                </div>
-                <div>{`${avgGdd5} \u00B1 ${stdGdd5}`}</div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="flex-row">
-                  <div>{`Growind Degree Days (GDDs)`}</div>
-                  <div>{`Base Temp. 10\u00B0C`}</div>
-                </div>
-                <div>{`${avgGdd10} \u00B1 ${stdGdd10}`}</div> 
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="flex-row">
-                  <div>{`Growind Degree Days (GDDs)`}</div>
-                  <div>{`Base Temp. 15\u00B0C`}</div>
-                </div>
-                <div>{`${avgGdd15} \u00B1 ${stdGdd15}`}</div>
-              </div>
-            </div> 
-          </div>
-          <div className="w-[60%]">
-            <div className="flex-row justify-center items-center">
-              <div className="flex justify-center items-center text-center">
-                <div className={`${montserrat.className} mr-8`}>
-                  Year:
-                </div>
-                {years && (
-                  <div className="w-56">
-                    <Slider
-                      value={tempYear ?? years[0]}
-                      onChange={(event, newValue) => setTempYear(newValue as number)}
-                      min={Math.min(...years)}
-                      max={Math.max(...years)}
-                      step={1}
-                      marks={years.map((year) => ({
-                        value: year,
-                        label: (year === Math.min(...years) || year === Math.max(...years) || year === tempYear)
-                          ? year.toString()
-                          : ''
-                      }))}
-                      valueLabelDisplay="auto"
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="">
-                {tempData && (
-                <Plot
-                  data={tempData}
-                  layout={{
-                    xaxis: { title: 'Date' },
-                    yaxis: { title: 'Cumulative Heat Units' },
-                    margin: {
-                      t: 20,
-                      b: 40,
-                      l: 60,
-                      r: 20
-                    },
-                    legend: {
-                      x: 0.02,
-                      y: 0.98,
-                      xanchor: 'left',
-                      yanchor: 'top',
-                      orientation: 'v',
-                      bgcolor: 'rgba(255, 255, 255, 0.5)',
-                    },
-                  }}
-                  style={{ width: '100%', height: '100%' }}
-                />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Growing Season Length</div>
-        <div className="flex">
-          <div className="w-[40%]">
-            <div className = "mt-8 mx-4">
-              <div className={`${montserrat.className} mb-4`}>
-                Summary
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="">Earliest First Frost Date:</div>
-                <div>{earliestFirstFrost}</div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="">Latest First Frost Date:</div>
-                <div>{latestFirstFrost}</div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="">Earliest Last Frost Date:</div>
-                <div>{earliestLastFrost}</div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="">Lastest Last Frost Date:</div>
-                <div>{latestLastFrost}</div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="">Shortest Growing Season:</div>
-                <div>{shortestGrowingSeason}</div>
-              </div>
-              <div className="flex justify-between mb-2">
-                <div className="">Longest Growing Season:</div>
-                <div>{longestGrowingSeason}</div>
-              </div>
-            </div>
-          </div>
-          <div className="w-[60%]">
-            <div className="flex-row">
-              <div className={`${montserrat.className} w-full text-center`}>
-                Completed Growing Seasons
-              </div>
-              <div className="">
-                <Plot
-                  data={[
-                    // Invisible base bars
-                    {
-                      x: growingSeasonData.map(data => data.year),
-                      y: growingSeasonData.map(data => data.start),
-                      type: 'bar',
-                      orientation: 'v',
-                      marker: { color: 'rgba(0,0,0,0)' }, // Make the base bars transparent
-                      showlegend: false,
-                      hoverinfo: 'skip',
-                    },
-                    // Visible growing season length bars
-                    {
-                      x: growingSeasonData.map(data => data.year),
-                      y: growingSeasonData.map(data => data.length),
-                      type: 'bar',
-                      orientation: 'v',
-                      hoverinfo: 'text',
-                      text: growingSeasonData.map(
-                        data => `Year: ${data.year}<br>Growing Season Length: ${data.length} days<br>Last Frost Date: ${data.lastFrost}<br>First Frost Date: ${data.firstFrost}`
-                      ),
-                      textposition: 'none',
-                      marker: { color: 'green' },
-                      showlegend: false,
-                    },
-                  ]}
-                  layout={{
-                    barmode: 'stack', // Stack the two series to simulate offset bars
-                    xaxis: {
-                      title: 'Year',
-                      zeroline: false,
-                      tickvals: growingSeasonData.map(data => data.year),
-                      range: [
-                        Math.min(...growingSeasonData.map(data => data.year)) - 0.8,
-                        Math.max(...growingSeasonData.map(data => data.year)) + 0.8,
-                      ],
-                    },
-                    yaxis: {
-                      title: 'Date',
-                      tickvals: Array.from({ length: Math.round(365 / growingSeasonNumTicks) }, (_, i) => i * growingSeasonNumTicks),
-                      ticktext: Array.from({ length: Math.round(365 / growingSeasonNumTicks) }, (_, i) => dayNumToMonthDay(i * growingSeasonNumTicks)),
-                      range: [0, 365],
-                    },
-                    margin: {
-                      t: 0,
-                      b: 40,
-                      l: 100,
-                      r: 0,
-                    },
-                  }}
-                  style={{ width: '100%', height: '100%' }}
-                />
-
-              </div>
-            </div>
-          </div>
-        </div>
+      ) : (
+        <Loading />
+      )}
       </div>
       {/* <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg `}>Climate Resilience</div>

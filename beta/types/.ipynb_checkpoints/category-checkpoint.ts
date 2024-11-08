@@ -73,4 +73,21 @@ export interface ClimateData {
   GDD15?: Record<string, number>;
 };
 
+export interface WindData {
+  windExposureUrl: string,
+  minWindExposure: number,
+  maxWindExposure: number,
+  avgWindSpeed: number,
+  stdWindSpeed: number,
+  avgWindDir: number,
+  stdWindDir: number,
+  gustExposureUrl: string,
+  minGustExposure: number,
+  maxGustExposure: number,
+  avgGustSpeed: number,
+  stdGustSpeed: number,
+  avgGustDir: number,
+  stdGustDir: number,
+};
+
 export type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Float32Array | Float64Array;

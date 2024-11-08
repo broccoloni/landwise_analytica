@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, ImageOverlay, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from 'react';
+import { printType } from '@/utils/debug';
 
 interface MapImageProps {
   latitude: string | null; // Latitude can be a string or null
@@ -13,15 +14,16 @@ interface MapImageProps {
 }
 
 // This component sets the map's view and zoom level
-const ChangeView = ({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) => {
+const ChangeView = ({ lat, lng, zoom, bbox }: { lat: number; lng: number; zoom: number; bbox: number[number[]] }) => {
   const map = useMap();
   map.setView([lat, lng], zoom);
+  map.fitBounds(bbox);  // maybe remove this - not sure
   return null; // This component doesn't render anything
 };
 
 const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox=[], imageUrl='' }) => {
   const [isClient, setIsClient] = useState(false);
-    
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -50,15 +52,17 @@ const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox=[],
       <MapContainer
         style={{ height: "400px", width: "100%" }}
       >
-        <ChangeView lat={lat} lng={lng} zoom={zoom} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {imageUrl && bbox && bbox.length === 4 && (
-          <ImageOverlay
-            url={imageUrl}
-            bounds={[[bbox[1], bbox[0]], [bbox[3], bbox[2]]]}
-          />
+        {imageUrl && bbox && (
+          <>
+            <ChangeView lat={lat} lng={lng} zoom={zoom} bbox={bbox} />
+            <ImageOverlay
+              url={imageUrl}
+              bounds={bbox}
+            />
+          </>
         )}
       </MapContainer>
       <style jsx global>{`

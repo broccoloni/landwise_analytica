@@ -11,37 +11,46 @@ import PlainTable from '@/components/PlainTable';
 import WindDirectionDisplay from "@/components/WindDirectionDisplay";
 import { getAvg, getStd } from '@/utils/stats';
 import { getHeatMapUrl } from '@/utils/imageUrl';
-import { CategoryProps, RasterData, ElevationData } from '@/types/category';
+import { RasterData, ElevationData, LandUseData, WindData } from '@/types/category';
+import { rangeColors } from '@/types/colorPalettes';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
-const heatmapColors = ['#6A0DAD', '#228B22', '#FFD700', '#8B0000'];
 
-const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
+const Topography = (
+  { lat, lng, landUseData, elevationData, windData, bbox, score, setScore }: 
+  { lat: number; lng: number; landUseData: { [key: number]: LandUseData } | null; elevationData: ElevationData; windData: WindData;
+    bbox: number[]; score: number | null; setScore: React.Dispatch<React.SetStateAction<number | null>>; }) => {
+
+  // Land Use
   const [landUsageYears, setLandUsageYears] = useState<number[]>([]);
   const [landUsageYear, setLandUsageYear] = useState<number | null>(null);
-  const [data, setData] = useState<RasterData | null>(null);
-  const [curData, setCurData] = useState<RasterData | null>(null);
+  const [curLandUseData, setCurLandUseData] = useState<LandUseData | null>(null);
   const [avgArea, setAvgArea] = useState<number | null>(null);
   const [avgUsableLandPct, setAvgUsableLandPct] = useState<number | null>(null);
+
+  // Elevation
   const [elevationView, setElevationView] = useState<'Elevation' | 'Slope' | 'Convexity'>('Elevation');
   const [curElevationData, setCurElevationData] = useState<any>(null);
-  const [windData, setWindData] = useState<any>(null);
-  const [windExposure, setWindExposure] = useState<any>(null);
-  const [windExposureType, setWindExposureType] = useState<string>('');
+
+  // Wind exposure    
+  const [windExposureType, setWindExposureType] = useState<'Wind' | 'Gust'>('Wind');
   const [curWindExposure, setCurWindExposure] = useState<any>(null);
+  
   const metersPerPixel = 30;
   const sqMetersPerAcre = 4046.8565;
 
   useEffect(() => {
-    if (rasterDataCache) {
-      const years = Object.keys(rasterDataCache).map(Number); 
+    if (landUseData) {
+      const years = Object.keys(landUseData).map(Number); 
       setLandUsageYears(years);
-      if (landUsageYear === null) {
+
+      if (!landUsageYear) {
         setLandUsageYear(years[0]);
       }
 
-      const numYears = Object.keys(rasterDataCache).length;
-      const { totalUsableLandPct, totalArea } = Object.values(rasterDataCache).reduce(
+      // Calculate average useable land % and area throughout historical use
+      const numYears = Object.keys(landUseData).length;
+      const { totalUsableLandPct, totalArea } = Object.values(landUseData).reduce(
         (acc, yearData: any) => {
           if (yearData.usableLandPct) {
             acc.totalUsableLandPct += yearData.usableLandPct;
@@ -55,7 +64,13 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
       setAvgUsableLandPct(totalUsableLandPct / numYears);
       setAvgArea(totalArea / numYears * metersPerPixel * metersPerPixel);
     }
-  }, [rasterDataCache]);
+  }, [landUseData]);
+
+  useEffect(() => {      
+    if (landUseData && landUsageYear) {
+      setCurLandUseData(landUseData[landUsageYear]);
+    }
+  }, [landUseData, landUsageYear]);
 
   useEffect(() => {
     if (elevationData && elevationView) {
@@ -90,136 +105,30 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
     }
   }, [elevationData, elevationView]);
 
-  // Set wind data for calculating wind risk
   useEffect(() => {
-    if (climateData) {
-      const sortedYears = Object.keys(climateData)
-            .map(year => Number(year))
-            .sort((a, b) => b - a);
-        
-      for (const year of sortedYears) {
-        const yearData = climateData[year]?.weatherData;
-        if (yearData && yearData.length >= 365) {
-          setWindData({
-            dir: yearData.map(data => data.winddir),
-            speed: yearData.map(data => data.windspeed),
-            gust: yearData.map(data => data.windgust)
-          });
-          break;
-        }
-      }
-    }
-  }, [climateData]);
-    
-  useEffect(() => {
-    const calculateWindExposure = async () => {
-      if (windData && elevationData) {
-        const { aspect, slope } = elevationData;
-          
-        const calculateExposure = (aspectAngle: number, slopeAngle: number, windDirection: number, windSpeed: number) => {
-          const angleDiff = Math.abs(aspectAngle - windDirection);
-          const angleFactor = Math.cos(angleDiff * (Math.PI / 180));
-          return slopeAngle * angleFactor * windSpeed;
-        };
-
-        const windSpeedExposure: (number|null)[] = [];
-        const windGustExposure: (number|null)[] = [];
-        let minSpeedExposure = 0;
-        let maxSpeedExposure = 0;
-        let minGustExposure = 0;
-        let maxGustExposure = 0;
-
-        slope.forEach((slopeValue, idx) => {
-          const aspectAngle = aspect[idx];
-          if (slopeValue === null || aspectAngle === null) {
-            windSpeedExposure.push(null);
-            windGustExposure.push(null);
-          } 
-          else {
-            const slopeAngle = Math.atan(slopeValue) * (180 / Math.PI) / 90;
-
-            const windSpeedExposures = windData.dir.map((windDir: number, i: number) =>
-              calculateExposure(aspectAngle, slopeAngle, windDir, windData.speed[i])
-            );
-              
-            const avgWindSpeedExposure = getAvg(windSpeedExposures);
-
-            const windGustExposures = windData.dir.map((windDir: number, i: number) =>
-              calculateExposure(aspectAngle, slopeAngle, windDir, windData.gust[i])
-            );
-            const avgWindGustExposure = getAvg(windGustExposures);
-
-            windSpeedExposure.push(avgWindSpeedExposure);
-            windGustExposure.push(avgWindGustExposure);
-              
-            minSpeedExposure = Math.min(minSpeedExposure, avgWindSpeedExposure);
-            maxSpeedExposure = Math.max(maxSpeedExposure, avgWindSpeedExposure);
-            minGustExposure = Math.min(minGustExposure, avgWindGustExposure);
-            maxGustExposure = Math.max(maxGustExposure, avgWindGustExposure);
-          }
-        });
-
-        const avgWindDir = getAvg(windData.dir);
-        const stdWindDir = getStd(windData.dir);
-        const avgWindSpeed = getAvg(windData.speed);
-        const stdWindSpeed = getStd(windData.speed);
-        const avgWindGust = getAvg(windData.gust);
-        const stdWindGust = getStd(windData.gust);
-          
-        const speedColorScale = chroma.scale(heatmapColors).domain([minSpeedExposure, maxSpeedExposure]);
-        const windSpeedExposureUrl = await getHeatMapUrl(windSpeedExposure, 
-                                                         elevationData.width-2, 
-                                                         elevationData.height-2, 
-                                                         null, 
-                                                         speedColorScale,
-                                                         15);
- 
-        const gustColorScale = chroma.scale(heatmapColors).domain([minGustExposure, maxGustExposure]);
-        const windGustExposureUrl = await getHeatMapUrl(windGustExposure, 
-                                                        elevationData.width-2, 
-                                                        elevationData.height-2, 
-                                                        null, 
-                                                        gustColorScale,
-                                                        15);
-          
-        setWindExposure({
-          windSpeedExposureUrl,
-          windGustExposureUrl,
-          avgWindDir,
-          stdWindDir,
-          avgWindSpeed,
-          stdWindSpeed,
-          avgWindGust,
-          stdWindGust,
-          minSpeedExposure,
-          maxSpeedExposure,
-          minGustExposure,
-          maxGustExposure,
-          bbox: elevationData.bbox,
-        });
-        setWindExposureType('Speed');
-      }
-    };
-
-    calculateWindExposure();
-  }, [windData, elevationData]);
-
-  useEffect(() => {
-    if (windExposureType && windExposure) {
+    if (windExposureType && windData) {
       switch (windExposureType) {
-        case 'Speed':
+        case 'Wind':
           setCurWindExposure({
-            imageUrl: windExposure.windSpeedExposureUrl,
-            min: windExposure.minSpeedExposure,
-            max: windExposure.maxSpeedExposure,
+            imageUrl: windData.windExposureUrl,
+            min: windData.minWindExposure,
+            max: windData.maxWindExposure,
+            avg: windData.avgWindExposure,
+            std: windData.stdWindExposure,
+            avgDir: windData.avgWindDir,
+            stdDir: windData.stdWindDir
           });
           break;
     
         case 'Gust':
           setCurWindExposure({
-            imageUrl: windExposure.windGustExposureUrl,
-            min: windExposure.minGustExposure,
-            max: windExposure.maxGustExposure,
+            imageUrl: windData.gustExposureUrl,
+            min: windData.minGustExposure,
+            max: windData.maxGustExposure,
+            avg: windData.avgGustExposure,
+            std: windData.stdGustExposure,
+            avgDir: windData.avgGustDir,
+            stdDir: windData.stdGustDir,
           });
           break;
     
@@ -227,16 +136,8 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
           break;
       }
     }
-  }, [windExposureType, windExposure]);
-    
-    
-  useEffect(() => {
-    if (landUsageYear !== null && rasterDataCache) {
-      const yearData = rasterDataCache[landUsageYear];
-      setData(yearData);
-    }
-  }, [landUsageYear, rasterDataCache]);
-
+  }, [windExposureType, windData]);
+      
   return (
     <div>
       <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
@@ -246,7 +147,7 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
       {/* Size & Layout Section */}
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg`}>Size & Layout</div>
-        {data ? (
+        {landUseData && bbox && curLandUseData? (
           <div className="flex w-full">
             <div className="w-[40%] mt-8 p-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
@@ -296,10 +197,12 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
                       />
                     </div>
                   </div>
-                  <MapImage latitude={lat} longitude={lng} zoom={15} bbox={data.bbox} imageUrl={data.imageUrl} />
+                  {lat && lng && bbox && curLandUseData.imageUrl && (
+                    <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curLandUseData.imageUrl} />
+                  )}
                 </div>
                 <div className="ml-2 mt-8">
-                  <LandUsageLegend legend={data.legend} />
+                  <LandUsageLegend legend={curLandUseData.legend} />
                 </div>
               </div>
             </div>
@@ -312,7 +215,7 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
       {/* Elevation Section */}
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg`}>Elevation</div>
-        {elevationData && curElevationData ? (
+        {elevationData && curElevationData && bbox ? (
           <div className="flex w-full">
             <div className="w-[40%] p-4 mt-8">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
@@ -337,7 +240,9 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
                       onSelect={(selected) => setElevationView(selected)} 
                     />
                   </div>
-                  <MapImage latitude={lat} longitude={lng} zoom={15} bbox={elevationData.bbox} imageUrl={curElevationData.imageUrl} />
+                  {lat && lng && bbox && curElevationData.imageUrl && (
+                    <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curElevationData.imageUrl} />
+                  )}
                 </div>
                 <div className="flex-row ml-2 justify-start items-center mt-16">
                   <div className={`${merriweather.className} mb-2 text-center`}>
@@ -348,7 +253,7 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
                       vmin={curElevationData.min}
                       vmax={curElevationData.max}
                       numIntervals={5}
-                      heatmapColors={heatmapColors}
+                      heatmapColors={rangeColors}
                     />
                   </div>
                 </div>
@@ -362,7 +267,7 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
 
       <div className="py-4 border-b border-gray-500">
         <div className={`${montserrat.className} text-lg`}>Wind Exposure</div>
-        {windExposure && curWindExposure ? (
+        {windData && curWindExposure && bbox ? (
           <div className="flex w-full">
             <div className="w-[40%] p-4 mt-8">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
@@ -371,24 +276,22 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
                 data={[
                   { 
                     type:'Wind Speed', 
-                    avg:`${windExposure.avgWindSpeed.toFixed(2)} \u00B1 ${windExposure.stdWindSpeed.toFixed(2)}`,
+                    avg:`${windData.avgWindSpeed.toFixed(2)} \u00B1 ${windData.stdWindSpeed.toFixed(2)}`,
                   },
                   { 
                     type:'Wind Gust', 
-                    avg:`${windExposure.avgWindGust.toFixed(2)} \u00B1 ${windExposure.stdWindGust.toFixed(2)}`,
+                    avg:`${windData.avgGustSpeed.toFixed(2)} \u00B1 ${windData.stdGustSpeed.toFixed(2)}`,
                   },
                 ]}
               />
               <div className="flex-row justify-center mx-4">
-                <div className="w-full mb-20">Average Wind Direction (and Standard Deviation):</div>
-                {windExposure.avgWindDir && windExposure.stdWindDir && (
-                  <div className="h-20">
-                    <WindDirectionDisplay 
-                      windDirection={windExposure.avgWindDir} 
-                      windDirectionStdDev={windExposure.stdWindDir} 
-                    />
-                  </div>
-                )}
+                <div className="w-full mb-20">{`Average ${windExposureType} Direction (and Standard Deviation):`}</div>
+                <div className="h-20">
+                  <WindDirectionDisplay 
+                    windDirection={curWindExposure.avgDir} 
+                    windDirectionStdDev={curWindExposure.stdDir} 
+                  />
+                </div>
               </div>
             </div>
 
@@ -398,12 +301,14 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
                   <div className="flex justify-center items-center h-16">
                     <div className={`${montserrat.className} mr-4`}>Wind Exposure Type:</div>                    
                     <Dropdown 
-                      options={['Speed','Gust']} 
+                      options={['Wind','Gust']} 
                       selected={windExposureType} 
                       onSelect={(selected) => setWindExposureType(selected)} 
                     />
                   </div>
-                  <MapImage latitude={lat} longitude={lng} zoom={15} bbox={windExposure.bbox} imageUrl={curWindExposure.imageUrl} />
+                  {lat && lng && bbox && curWindExposure.imageUrl && (
+                    <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curWindExposure.imageUrl} />
+                  )}
                 </div>
                 <div className="flex-row ml-2 justify-start items-center mt-16">
                   <div className={`${merriweather.className} mb-2 text-center`}>
@@ -414,7 +319,7 @@ const Topography = ({ lat, lng, data, score, setScore }: CategoryProps) => {
                       vmin={curWindExposure.min}
                       vmax={curWindExposure.max}
                       numIntervals={5}
-                      heatmapColors={heatmapColors}
+                      heatmapColors={rangeColors}
                     />
                   </div>
                 </div>

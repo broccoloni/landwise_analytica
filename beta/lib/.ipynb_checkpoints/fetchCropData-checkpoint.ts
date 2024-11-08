@@ -4,19 +4,20 @@ import ee from '@google/earthengine';
 export async function fetchCropData(geometry, years, crops, cropNames) {
   const results = {};
 
-  for (const year of years) {
+  for (const yr of years) {
     try {
+      const year = parseInt(yr)
       const MOD15A2H = ee.ImageCollection('MODIS/061/MOD15A2H').filterDate(
         `${year}-01-01`,
-        `${year}-12-31`
+        `${year+1}-01-01`
       );
       const MOD13Q1 = ee.ImageCollection('MODIS/061/MOD13Q1').filterDate(
         `${year}-01-01`,
-        `${year}-12-31`
+        `${year+1}-01-01`
       );
       const MCD43A4 = ee.ImageCollection('MODIS/061/MCD43A4').filterDate(
         `${year}-01-01`,
-        `${year}-12-31`
+        `${year+1}-01-01`
       );
 
       const overlappingDates = await getOverlappingDates([MOD15A2H, MOD13Q1, MCD43A4]);
@@ -54,7 +55,7 @@ export async function fetchCropData(geometry, years, crops, cropNames) {
       }).unmask(0);
 
       const AAFCImage = ee.ImageCollection('AAFC/ACI')
-        .filterDate(`${year}-01-01`, `${year}-12-31`)
+        .filterDate(`${year}-01-01`, `${year+1}-01-01`)
         .first();
 
       results[year] = {};
@@ -62,6 +63,7 @@ export async function fetchCropData(geometry, years, crops, cropNames) {
       for (const crop of crops) {
         console.log(`Processing crop ${cropNames[crops.indexOf(crop)]} for year ${year}`);
         vegReflectanceBands = vegReflectanceBands.updateMask(AAFCImage.eq(crop));
+          
         const unprocessedPixels = vegReflectanceBands.reduceRegion(
           reducer: ee.Reducer.toList(),
           geometry: geometry,

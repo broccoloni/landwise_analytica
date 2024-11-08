@@ -18,10 +18,11 @@ export async function fetchClimateData(years, geometry) {
     'v_component_of_wind_10m_max'
   ];
 
-  for (const year of years) {
+  for (const yr of years) {
     try {
+      const year = parseInt(yr);
       const climateImage = ee.ImageCollection('ECMWF/ERA5_LAND/DAILY_AGGR')
-        .filterDate(ee.Date(`${year}-01-01`), ee.Date(`${year}-12-31`));
+        .filterDate(ee.Date(`${year}-01-01`), ee.Date(`${year+1}-01-01`));
         
       if (!climateImage) {
         console.warn(`No climate data found for the year ${year}`);
@@ -71,9 +72,7 @@ export async function fetchClimateData(years, geometry) {
         const month = parseInt(values.month);
         const day = parseInt(values.day);
 
-        console.log(year, month, day);
-        console.log(intsToDayOfYear(year,month,day));
-
+        // Convert temperatures from kelvin to celsius, precip from m to mm
         climateData[key] = {
           year,
           month,
@@ -84,7 +83,7 @@ export async function fetchClimateData(years, geometry) {
           temp: values.temperature_2m - 273.15,
           tempmin: values.temperature_2m_min - 273.15,
           tempmax: values.temperature_2m_max - 273.15,
-          precip: values.total_precipitation_sum,
+          precip: values.total_precipitation_sum * 1000,
           windSpeed,
           windDir,
           gustSpeed,

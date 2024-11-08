@@ -11,7 +11,7 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import Dropdown from '@/components/Dropdown';
 import { Loader2 } from 'lucide-react';
 import { dataToUrl } from '@/utils/image';
-import { processClimateData, processLandUseData } from '@/utils/dataProcessing';
+import { processClimateData, processLandUseData, processElevationData, processWindData } from '@/utils/dataProcessing';
 
 // import EstimatedYield from '@/components/EstimatedYield';
 import Climate from '@/components/Climate';
@@ -41,23 +41,30 @@ const DEMO_ADDRESS = {
 };
 
 export default function Search() {
+  // For property selection and definition
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
   const [landGeometry, setLandGeometry] = useState<number[][]>([]);
-    
+
+  // State variables that stem from fetched ee data
   const [climateData, setClimateData] = useState(null);
   const [elevationData, setElevationData] = useState(null);
   const [windData, setWindData] = useState(null);
   const [cropData, setCropData] = useState(null);
   const [landUseData, setLandUseData] = useState(null);
-    
-  const [loadingData, setLoadingData] = useState(true);
-  const [activeTab, setActiveTab] = useState('Climate');
+  const [bbox, setBbox] = useState<number[] | null>(null);
+
+  // Score trackers
   // const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
   const [climateScore, setClimateScore] = useState<number|null>(null);
   const [topographyScore, setTopographyScore] = useState<number|null>(null);
+
+  // For managing report tabs
+  const [loadingData, setLoadingData] = useState(true);
+  const [activeTab, setActiveTab] = useState('Climate');
+
 
     
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {      
@@ -90,10 +97,13 @@ export default function Search() {
 
       const data = await response.json();
 
+      setLatitude(data.centroid[0]);
+      setLongitude(data.centroid[1]);
+      setBbox(data.bbox);
       setClimateData(processClimateData(data));
-      // processElevationData(data);
-      // processWindData(data);
+      setElevationData(processElevationData(data));
       setLandUseData(processLandUseData(data));
+      setWindData(processWindData(data));
         
       console.log('Fetched Earth Engine data:', data);
       setLoadingData(false);
@@ -108,14 +118,6 @@ export default function Search() {
       fetchEarthEngineData(landGeometry);
     }
   }, [landGeometry]);
-
-  useEffect(() => {
-    console.log("Land Use:", landUseData);
-  }, [landUseData]);
-
-  useEffect(() => {
-    console.log("Climate data:", climateData);
-  }, [climateData]);
     
   const PrintGeometry = () => {
     if (landGeometry.length === 0) {
@@ -133,46 +135,49 @@ export default function Search() {
     );
   };
 
-  // const renderActiveComponent = () => {
-  //   switch (activeTab) {
-  //     // case 'EstimatedYield':
-  //     //   return (
-  //     //     <EstimatedYield
-  //     //       lat={lat}
-  //     //       lng={lng}
-  //     //       rasterDataCache={rasterDataCache}
-  //     //       elevationData={elevationData}
-  //     //       cropHeatMaps={cropHeatMaps}
-  //     //       yearlyYields={yearlyYields}
-  //     //       climateData={climateData}
-  //     //       score={estimatedYieldScore}
-  //     //       setScore={setEstimatedYieldScore}
-  //     //     />
-  //     //   );
-  //     case 'Climate':
-  //       return (
-  //         <Climate
-  //           lat={latitude}
-  //           lng={longitude}
-  //           data={data}
-  //           score={climateScore}
-  //           setScore={setClimateScore}
-  //         />
-  //       );      
-  //     case 'Topography':
-  //       return (
-  //         <Topography
-  //           lat={lat}
-  //           lng={lng}
-  //           data={data}
-  //           score={topographyScore}
-  //           setScore={setTopographyScore}
-  //         />
-  //       );
-  //     default:
-  //       return null;
-  //   }
-  // };
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      // case 'EstimatedYield':
+      //   return (
+      //     <EstimatedYield
+      //       lat={lat}
+      //       lng={lng}
+      //       rasterDataCache={rasterDataCache}
+      //       elevationData={elevationData}
+      //       cropHeatMaps={cropHeatMaps}
+      //       yearlyYields={yearlyYields}
+      //       climateData={climateData}
+      //       score={estimatedYieldScore}
+      //       setScore={setEstimatedYieldScore}
+      //     />
+      //   );
+      case 'Climate':
+        return (
+          <Climate
+            lat={latitude}
+            lng={longitude}
+            climateData={climateData}
+            score={climateScore}
+            setScore={setClimateScore}
+          />
+        );      
+      case 'Topography':
+        return (
+          <Topography
+            lat={latitude}
+            lng={longitude}
+            landUseData = {landUseData}
+            elevationData = {elevationData}
+            windData = {windData}
+            bbox = {bbox}
+            score={topographyScore}
+            setScore={setTopographyScore}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   const tabs = [
     // 'EstimatedYield',
@@ -289,7 +294,7 @@ export default function Search() {
                     </button>
                   ))}
                 </div>
-                {/* <div>{renderActiveComponent()}</div> */}
+                <div>{renderActiveComponent()}</div>
               </section>
             </Container>
           </>

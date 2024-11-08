@@ -8,6 +8,9 @@ export function dataToColorScaleUrl(
   colorScale: (value: number) => chroma.Color,
   scaleFactor: number
 ): string {
+
+  // console.log("SCALE URL PARAMS:", data, width, height, transparentVal, colorScale, scaleFactor);
+    
   // Create base canvas
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -59,6 +62,8 @@ export function dataToStaticColorUrl(
   colors: string[],
   scaleFactor: number
 ): string {
+  // console.log("STATIC URL PARAMS:", data, width, height, transparentVal, colors, scaleFactor);
+
   // Create base canvas
   const canvas = document.createElement("canvas");
   canvas.width = width;

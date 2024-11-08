@@ -7,19 +7,18 @@ type FrostDates = {
 };
 
 export const calculateGrowingSeason = (data: { [key in string]: WeatherData }): FrostDates => {    
-  const frostDays = Object.values(data).map((day) => day.tempmin <= 0);
-
-  const frostDaysBeforeJuly = frostDays.filter((day) => day.month < 7);
-  const frostDaysAfterJuly = frostDays.filter((day) => day.month > 7);
-
+  const frostDays = Object.values(data).filter((day) => day.tempmin <= 0);
+  const frostDaysBeforeJuly = frostDays.filter((day) => day.month < 8);
+  const frostDaysAfterJuly = frostDays.filter((day) => day.month > 8);
+    
   const lastFrost = frostDaysBeforeJuly.length
     ? Math.max(...frostDaysBeforeJuly.map((day) => day.dayOfYear))
     : null;
-
+    
   const firstFrost = frostDaysAfterJuly.length
     ? Math.min(...frostDaysAfterJuly.map((day) => day.dayOfYear))
     : null;
-
+    
   let growingSeasonLength: number | null = null;
   if (firstFrost !== null && lastFrost !== null) {
     growingSeasonLength = firstFrost - lastFrost;
