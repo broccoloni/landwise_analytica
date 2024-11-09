@@ -4,9 +4,12 @@ import { calculateSlopeAspectConvexity } from '@/utils/elevationUtils';
 
 export async function fetchElevationData(geometry: ee.Geometry) {
   try {
-    const { sampleData: elevation, width, height } = await fetchImage('NASA/NASADEM_HGT/001', 'elevation', geometry);
-    const { slope, aspect, convexity } = calculateSlopeAspectConvexity(elevation, width, height);
-    return { elevation, width, height, slope, aspect, convexity };
+    // elevationData: { 'elevation: { sampleData, width, height } }
+    const elevationDict = await fetchImage('NASA/NASADEM_HGT/001', 'elevation', geometry);
+    const elevationData = elevationDict.elevation;
+      
+    const { slope, aspect, convexity } = calculateSlopeAspectConvexity(elevationData);
+    return { elevationData, slope, aspect, convexity };
       
   } catch (error) {
     console.error('Failed to fetch elevation data:', error.message);

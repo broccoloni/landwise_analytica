@@ -1,7 +1,15 @@
 import { calculateGrowingSeason, calculateCornHeatUnits, calculateGDD } from '@/utils/climateUtils';
 import { MajorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 import { cropNames, soilTaxonomyNames, soilTextureNames } from '@/types/valuesToNames';
-import { dataToStaticColorUrl, dataToColorScaleUrl } from '@/utils/image';
+import { 
+  dataToStaticColorUrl, 
+  dataToColorScaleUrl, 
+  getImageAndStats, 
+  getBandImagesAndStats, 
+  getImageLegendUnique, 
+  getBandImagesLegendsUnique 
+} from '@/utils/image';
+
 import { getAvg, getStd, getStats } from '@/utils/stats';
 import chroma from 'chroma-js';
 import { heatColors, rangeColors, colorSet } from '@/types/colorPalettes';
@@ -52,7 +60,7 @@ export const processLandUseData = (data) => {
       const majorCommodityCropsGrown: string[] = [];
       Object.keys(counts).forEach((key) => {
         const numericKey = parseInt(key);
-        const commodityName: string = cropValuesToNames[numericKey];
+        const commodityName: string = cropNames[numericKey];
       
         if (majorCommodityCrops.includes(commodityName as MajorCommodityCrop)) {
           const cropCount = counts[numericKey];
@@ -74,32 +82,16 @@ export const processLandUseData = (data) => {
 
       // Convert pixel values to index in cropNames, and 
       // Convert cropKeysToConvert (pixel values that occur less than 3%) to highest % majorCommodityCrop
-      const convertedLandUse = landUseData.map((val) => {
-        const index = cropKeysToConvert.includes(val)
-          ? Object.keys(cropNames).findIndex((key) => parseInt(key) === highestCommodityKey)
-          : Object.keys(cropNames).findIndex((key) => parseInt(key) === val);
-      
-        return index === -1 ? 0 : index;
-      });
+      const convertedLandUse = landUseData.map((val) => cropKeysToConvert.includes(val) ? highestCommodityKey : val);
         
       // Calculate Land use Pcts
       const usableLandPct = cropSum / totalSum;
       const area = totalSum;
 
-      // Generate image URL and legend
-      const colors = chroma.scale(colorSet).colors(Object.keys(cropNames).length);
+      const landUseImageData = getImageLegendUnique({ sampleData: convertedLandUse, width, height }, cropNames, scale);
+      const { imageUrl, legend, uniqueElements } = landUseImageData;
 
-      const imageUrl = dataToStaticColorUrl(convertedLandUse, width, height, 0, colors, scale);
-      const uniqueElements = new Set(convertedLandUse);
-      const legend: Record<string, string> = {};
-
-      uniqueElements.forEach((value) => {
-        const name = Object.values(cropNames)[value];
-        if (name && name !== 'Cloud') {
-          legend[name] = colors[value];
-        }
-      });
-
+        
       newLandUseData[year] = {
         imageUrl,
         landUseData: convertedLandUse,
@@ -156,31 +148,17 @@ export const processClimateData = (data) => {
 
 export const processElevationData = (data) => {
   try {
-    const width = data.elevationData.width;
-    const height = data.elevationData.height;
-    const elevation = data.elevationData.elevation;
-    const slope = data.elevationData.slope;
-    const convexity = data.elevationData.convexity;
-    const aspect = data.elevationData.aspect;
+    const width = data.elevationData.elevationData.width;
+    const height = data.elevationData.elevationData.height;
+    const elevation = getImageAndStats(data.elevationData.elevationData, scale);
 
-    const { min: minElevation, max: maxElevation, avg: avgElevation, std: stdElevation } = getStats(elevation);
-    const { min: minSlope, max: maxSlope, avg: avgSlope, std: stdSlope } = getStats(slope);
-    const { min: minConvexity, max: maxConvexity, avg: avgConvexity, std: stdConvexity } = getStats(convexity);
+    const slopeData = { sampleData: data.elevationData.slope, width: width-2, height: height-2 };
+    const slope =  getImageAndStats(slopeData, scale);
       
-    const elevationColorScale = chroma.scale(rangeColors).domain([minElevation, maxElevation]);
-    const elevationUrl = dataToColorScaleUrl(elevation, width, height, null, elevationColorScale, scale);
-
-    const slopeColorScale = chroma.scale(rangeColors).domain([minSlope, maxSlope]);
-    const slopeUrl = dataToColorScaleUrl(slope, width-2, height-2, null, slopeColorScale, scale);
-
-    const convexityColorScale = chroma.scale(rangeColors).domain([minConvexity, maxConvexity]);
-    const convexityUrl = dataToColorScaleUrl(convexity, width-2, height-2, null, convexityColorScale, scale);
-
-    return { aspect, width, height,
-             elevation, avgElevation, stdElevation, minElevation, maxElevation, 
-             slope, avgSlope, stdSlope, minSlope, maxSlope, 
-             convexity, avgConvexity, stdConvexity, minConvexity, maxConvexity,
-             elevationUrl, slopeUrl, convexityUrl };
+    const convexityData = { sampleData: data.elevationData.convexity, width: width-2, height: height-2 };
+    const convexity = getImageAndStats(convexityData, scale);
+      
+    return { elevation, slope, convexity };
       
   } catch (error) {
     console.error('Error processing elevation data:', error);
@@ -189,28 +167,42 @@ export const processElevationData = (data) => {
 
 export const processSoilData = (data) => {
   try {
-    const taxonomy = data.soilData.taxonomy;
-    const width = data.soilData.width;
-    const height = data.soilData.height;
+    // Soil Classifications
+    const taxonomy = getImageLegendUnique(data.soilData.taxonomyData.grtgroup, soilTaxonomyNames, scale);
+    const texture = getBandImagesLegendsUnique(data.soilData.textureData, soilTextureNames, scale);
+
+    // Soil Contents
+    const water = getBandImagesAndStats(data.soilData.waterData, scale);
+    const sand = getBandImagesAndStats(data.soilData.sandData, scale);
+    const clay = getBandImagesAndStats(data.soilData.clayData, scale);
+    const carbon = getBandImagesAndStats(data.soilData.carbonData, scale);
+
+    // Soil Attributes
+    const ph = getBandImagesAndStats(data.soilData.phData, scale);
+    const density = getBandImagesAndStats(data.soilData.densityData, scale);
 
     return {
-      imageUrl,
-      legend,
       taxonomy,
-      width,
-      height,
+      texture,
+      water,
+      sand,
+      clay,
+      carbon,
+      ph,
+      density,
     }
       
   } catch (error) {
-    console.error('Error processing elevation data:', error);
+    console.error('Error processing soil data:', error);
   }
 };
 
 export const processWindData = (data) => {
   try {
-    const elevationData = data.elevationData;
-    const { aspect, slope } = elevationData;
-
+    const { aspect, slope } = data.elevationData;
+    const width = data.elevationData.elevationData.width-2;
+    const height = data.elevationData.elevationData.height-2;
+      
     // Get most recent year of wind data
     const sortedYears = Object.keys(data.climateData)
             .map(year => Number(year))
@@ -284,16 +276,16 @@ export const processWindData = (data) => {
 
     const windColorScale = chroma.scale(rangeColors).domain([minWindExposure, maxWindExposure]);
     const windExposureUrl = dataToColorScaleUrl(windExposure, 
-                                                elevationData.width-2, 
-                                                elevationData.height-2, 
+                                                width,
+                                                height,
                                                 null, 
                                                 windColorScale,
                                                 scale);
 
     const gustColorScale = chroma.scale(rangeColors).domain([minGustExposure, maxGustExposure]);
     const gustExposureUrl = dataToColorScaleUrl(gustExposure, 
-                                                elevationData.width-2, 
-                                                elevationData.height-2, 
+                                                width, 
+                                                height,
                                                 null, 
                                                 gustColorScale,
                                                 scale);

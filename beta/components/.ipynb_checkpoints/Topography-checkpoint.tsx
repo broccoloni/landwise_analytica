@@ -73,27 +73,15 @@ const Topography = (
     if (elevationData && elevationView) {
       switch (elevationView) {
         case 'Elevation':
-          setCurElevationData({
-            imageUrl: elevationData.elevationUrl,
-            min: elevationData.minElevation,
-            max: elevationData.maxElevation,
-          });
+          setCurElevationData(elevationData.elevation);
           break;
 
         case 'Slope':
-          setCurElevationData({
-            imageUrl: elevationData.slopeUrl,
-            min: elevationData.minSlope,
-            max: elevationData.maxSlope,
-          });
+          setCurElevationData(elevationData.slope);
           break;
 
         case 'Convexity':
-          setCurElevationData({
-            imageUrl: elevationData.convexityUrl,
-            min: elevationData.minConvexity,
-            max: elevationData.maxConvexity,
-          });
+          setCurElevationData(elevationData.convexity);
           break;
 
         default:
@@ -149,7 +137,7 @@ const Topography = (
             <div className="w-[40%] mt-8 p-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
               <PlainTable
-                headers={['Land Section', '% of Land', 'Area (m²)', 'Area (ac)']}
+                headers={['Land Section', '% of Land', 'Area (m\u00B2)', 'Area (ac)']}
                 data={[
                   { 
                     a: 'Total Property',
@@ -219,9 +207,9 @@ const Topography = (
               <PlainTable             
                 headers={['Elevation View', 'Average']}
                 data={[
-                  { view:'Elevation', avg:`${elevationData.avgElevation.toFixed(2)} \u00B1 ${elevationData.stdElevation.toFixed(2)}` },
-                  { view:'Slope', avg:`${elevationData.avgSlope.toFixed(5)} \u00B1 ${elevationData.stdSlope.toFixed(5)}` },
-                  { view:'Convexity', avg: `${elevationData.avgConvexity.toFixed(5)} \u00B1 ${elevationData.stdConvexity.toFixed(5)}` },
+                  { view:'Elevation', avg:`${elevationData.elevation.avg.toFixed(2)} \u00B1 ${elevationData.elevation.std.toFixed(2)}` },
+                  { view:'Slope', avg:`${elevationData.slope.avg.toFixed(5)} \u00B1 ${elevationData.slope.std.toFixed(5)}` },
+                  { view:'Convexity', avg: `${elevationData.convexity.avg.toFixed(5)} \u00B1 ${elevationData.convexity.std.toFixed(5)}` },
                 ]}
               />
             </div>

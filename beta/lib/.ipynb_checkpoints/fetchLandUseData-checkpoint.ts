@@ -35,7 +35,7 @@ export async function fetchLandUseData( years: number[], geometry: ee.Geometry) 
       const landUseDataArray = landUseDataObj.properties.landcover;
       const height = landUseDataArray.length;
       const width = landUseDataArray[0] ? landUseDataArray[0].length : 0;
-      const landUseData = landUseDataArray.flat();
+      const landUseData = landUseDataArray.flat().map((val: number) => val === 0 ? null : val);
 
       // Could also potentially include:
       // .properties.landcover_class_names, .properties.landcover_class_palette, .properties.landcover_class_values, 

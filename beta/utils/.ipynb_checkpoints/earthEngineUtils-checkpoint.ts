@@ -1,18 +1,29 @@
 import ee from '@google/earthengine';
 
-export async function fetchImage( imageName: string, bandName: string, geometry: ee.Geometry ) {
+export async function fetchImage(
+  imageName: string,
+  bandName: string | string[],
+  geometry: ee.Geometry
+) {
   try {
-    // Retrieve the historical land use data for the given year
-    var image = ee.Image(imageName).select(bandName);
-
+    const image = ee.Image(imageName).select(bandName);
     const sampleObj = await sampleImage(image, geometry);
-    const sampleDataArray = sampleObj.properties[bandName];
-      
-    const height = sampleDataArray.length;
-    const width = sampleDataArray[0] ? sampleDataArray[0].length : 0;
-    const sampleData = sampleDataArray.flat().map((data) => data === 0 ? null : data);
 
-    return { sampleData, height, width };
+    const bandNames = Array.isArray(bandName) ? bandName : [bandName];
+    const bands: Record<string, any[]> = {};
+
+    bandNames.forEach((band) => {
+      const bandDataArray = sampleObj.properties[band];
+      const height = bandDataArray.length;
+      const width = bandDataArray[0] ? bandDataArray[0].length : 0;
+      bands[band] = { 
+        sampleData: bandDataArray.flat().map((data) => (data === 0 ? null : data)),
+        height,
+        width,
+      };
+    });
+
+    return bands;
   } catch (error) {
     console.error(`Failed to fetch image:`, error.message);
   }

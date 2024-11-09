@@ -17,29 +17,281 @@ const Soil = (
   { lat: number; lng: number; soilData: any,
     bbox: number[]; score: number | null; setScore: React.Dispatch<React.SetStateAction<number | null>>; }) => {
 
+  // For classification
+  const [classificationView, setClassificationView] = useState<string>('Taxonomy');
+  const [classificationDepth, setClassificationDepth] = useState<string>('Surface');
+  const [curClassificationData, setCurClassificationData] = useState(null);
+
+  // For Contents
+  const [contentView, setContentView] = useState<string>('Water (Field Capacity / 33kPa)');
+  const [contentDepth, setContentDepth] = useState<string>('Surface');
+  const [curContentData, setCurContentData] = useState(null);
+
+  // For Attributes
+  const [attributeView, setAttributeView] = useState<string>('Water pH');
+  const [attributeDepth, setAttributeDepth] = useState<string>('Surface');
+  const [curAttributeData, setCurAttributeData] = useState(null);
+
+  useEffect(() => {
+    console.log("Soil Data:", soilData);
+  }, [soilData]);
+      
+  useEffect(() => {
+    if (classificationView && classificationDepth && soilData) {
+      if (classificationView === 'Taxonomy') {
+        setCurClassificationData(soilData.taxonomy);
+      }
+      else {
+        const bands = soilData.texture;
+        switch (classificationDepth) {
+          case 'Surface':
+            setCurClassificationData(bands['b0']);
+            break;
+          case '10cm':
+            setCurClassificationData(bands['b10']);
+            break;
+          case '30cm':
+            setCurClassificationData(bands['b30']);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  }, [classificationView, classificationDepth, soilData]);
+
+  useEffect(() => {
+    if (contentView && contentDepth && soilData) {
+      let bands = null;
+      switch (contentView) {
+        case 'Water (Field Capacity / 33kPa)':
+          bands = soilData.water;
+          break;
+        case 'Sand':
+          bands = soilData.sand;
+          break;
+        case 'Clay':
+          bands = soilData.clay;
+          break;
+        case 'Organic Carbon':
+          bands = soilData.carbon;
+          break;
+        default:
+          break;
+      }
+
+      let depth = null;
+      switch (contentDepth) {
+        case 'Surface':
+          depth = 'b0';
+          break;
+        case '10cm':
+          depth = 'b10';
+          break;
+        case '30cm':
+          depth = 'b30';
+          break;
+        default:
+          break;
+      }
+
+      if (bands && depth) {
+        setCurContentData(bands[depth]);
+      }
+    }
+  }, [contentView, contentDepth, soilData]);
+
+  useEffect(() => {
+    if (attributeView && attributeDepth && soilData) {
+      let bands = null;
+      switch (attributeView) {
+        case 'Water pH':
+          bands = soilData.ph;
+          break;
+        case 'Bulk Density':
+          bands = soilData.density;
+          break;
+        default:
+          break;
+      }
+
+      let depth = null;
+      switch (attributeDepth) {
+        case 'Surface':
+          depth = 'b0';
+          break;
+        case '10cm':
+          depth = 'b10';
+          break;
+        case '30cm':
+          depth = 'b30';
+          break;
+        default:
+          break;
+      }
+
+      if (bands && depth) {
+        setCurAttributeData(bands[depth]);
+      }
+    }
+  }, [attributeView, attributeDepth, soilData]);
+      
   return (
     <div>
       <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
         Soil
       </div>
 
-      {/* Size & Layout Section */}
+      {/* Soil Classifications */}
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Classifications</div>
-        {soilData ? (
+        <div className={`${montserrat.className} text-lg`}>Soil Classifications</div>
+        {curClassificationData ? (
           <div className="flex w-full">
             <div className="w-[40%] mt-8 p-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
             </div>
             <div className="w-[60%] flex-row">
               <div className="flex w-full">
-                <div className="flex-row w-full">
-                  {lat && lng && bbox && soilData && (
-                    <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={soilData.imageUrl} />
+                <div className="w-full">
+                  <div className="flex justify-center items-center h-16">
+                    <div className={`${montserrat.className} mr-4`}>Classification Type:</div>                    
+                    <Dropdown 
+                      options={['Taxonomy','Texture']} 
+                      selected={classificationView} 
+                      onSelect={(selected) => setClassificationView(selected)} 
+                    />
+                    {classificationView === 'Texture' && (
+                      <> 
+                        <div className={`${montserrat.className} mx-4`}> at </div>
+                        <Dropdown 
+                          options={['Surface','10cm','30cm']} 
+                          selected={classificationDepth} 
+                          onSelect={(selected) => setClassificationDepth(selected)} 
+                        />  
+                      </>
+                    )}
+                  </div>
+                  {lat && lng && bbox && curClassificationData.imageUrl && (
+                    <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curClassificationData.imageUrl} />
                   )}
                 </div>
-                <div className="ml-2 mt-2">
-                  <Legend legend={soilData.legend} />
+                <div className="flex-row ml-2 justify-start items-center mt-16">
+                  <Legend legend={curClassificationData.legend} />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Loading />
+        )}
+      </div>
+
+      {/* Soil Content */}
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg`}>Soil Content</div>
+        {curContentData ? (
+          <div className="flex w-full">
+            <div className="w-[40%] mt-8 p-4">
+              <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
+            </div>
+            <div className="w-[60%] flex-row">
+              <div className="flex w-full">
+                <div className="w-full">
+                  <div className="flex justify-center items-center h-16">
+                    <div className={`${montserrat.className} mr-4`}>Content Type:</div>                    
+                    <Dropdown 
+                      options={['Water (Field Capacity / 33kPa)','Sand', 'Clay', 'Organic Carbon']} 
+                      selected={contentView} 
+                      onSelect={(selected) => setContentView(selected)} 
+                    />
+                    <div className={`${montserrat.className} mx-4`}> at </div>
+                    <Dropdown 
+                      options={['Surface','10cm','30cm']} 
+                      selected={contentDepth} 
+                      onSelect={(selected) => setContentDepth(selected)} 
+                    />  
+                  </div>
+                  {lat && lng && bbox && curContentData.imageUrl && (
+                    <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curContentData.imageUrl} />
+                  )}
+                </div>
+                <div className="flex-row ml-2 justify-start items-center mt-16">
+                  <div className={`${merriweather.className} mb-2 text-center flex-row justify-center items-center text-center`}>
+                    <div>Soil Content</div>
+                    <div>
+                      {contentView === 'Water (Field Capacity / 33kPa)' ? (
+                        "(%)"
+                      ) : contentView === 'Organic Carbon' ? (
+                        "(g/kg)"
+                      ) : (
+                        "%  (kg/kg)"
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-center">
+                    <ColorBar
+                      vmin={curContentData.min}
+                      vmax={curContentData.max}
+                      numIntervals={5}
+                      heatmapColors={rangeColors}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Loading />
+        )}
+      </div>
+
+      {/* Soil Attributes */}
+      <div className="py-4 border-b border-gray-500">
+        <div className={`${montserrat.className} text-lg`}>Soil Attributes</div>
+        {curAttributeData ? (
+          <div className="flex w-full">
+            <div className="w-[40%] mt-8 p-4">
+              <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
+            </div>
+            <div className="w-[60%] flex-row">
+              <div className="flex w-full">
+                <div className="w-full">
+                  <div className="flex justify-center items-center h-16">
+                    <div className={`${montserrat.className} mr-4`}>Attribute Type:</div>                    
+                    <Dropdown 
+                      options={['Water pH','Bulk Density']} 
+                      selected={attributeView} 
+                      onSelect={(selected) => setAttributeView(selected)} 
+                    />
+                    <div className={`${montserrat.className} mx-4`}> at </div>
+                    <Dropdown 
+                      options={['Surface','10cm','30cm']} 
+                      selected={attributeDepth} 
+                      onSelect={(selected) => setAttributeDepth(selected)} 
+                    />  
+                  </div>
+                  {lat && lng && bbox && curAttributeData.imageUrl && (
+                    <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curAttributeData.imageUrl} />
+                  )}
+                </div>
+                <div className="flex-row ml-2 justify-start items-center mt-16">
+                  <div className={`${merriweather.className} mb-2 text-center flex-row justify-center items-center text-center`}>
+                    <div>
+                      {attributeView === 'Water pH' ? (
+                        "pH (\u00D710)"
+                      ) : (
+                        '10 kg / m\u00B3'
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-center">
+                    <ColorBar
+                      vmin={curAttributeData.min}
+                      vmax={curAttributeData.max}
+                      numIntervals={5}
+                      heatmapColors={rangeColors}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

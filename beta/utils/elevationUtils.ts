@@ -1,13 +1,16 @@
 const metersPerPixel = 30;
 
-export function calculateSlopeAspectConvexity(elevationData: (number|null)[], width: number, height: number) {
+export function calculateSlopeAspectConvexity(
+  { sampleData, width, height}: 
+  { sampleData: (number|null)[]; width: number; height: number; }) 
+{
   const slope: (number | null)[] = [];
   const convexity: (number | null)[] = [];
   const aspect: (number | null)[] = [];
 
   function getElevation(i: number, j: number) {
     const index = i * width + j;
-    return elevationData[index] ?? NaN;
+    return sampleData[index] ?? NaN;
   }
 
   for (let i = 1; i < height - 1; i++) {
