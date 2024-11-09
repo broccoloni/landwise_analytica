@@ -1,14 +1,13 @@
 import { merriweather } from '@/ui/fonts';
 
-interface LandUsageLegendProps {
+interface LegendProps {
   legend: Record<string, string>;
 }
 
-export default function LandUsageLegend({ legend }: LandUsageLegendProps) {
+export default function Legend({ legend }: LegendProps) {
   return (
     <div className="">
       <div className={`${merriweather.className} text-center mb-2 font-medium`}>Legend</div>
-      {/* Use the legend prop */}
       {Object.keys(legend).map((key) => (
         <div key={key} className="legend-item flex items-center mb-1">
           <span

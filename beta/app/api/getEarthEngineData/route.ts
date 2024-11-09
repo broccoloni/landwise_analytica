@@ -5,9 +5,9 @@ import path from 'path';
 import { initializeEarthEngine } from '@/lib/initEarthEngine';
 import { fetchLandUseData } from '@/lib/fetchLandUseData';
 import { fetchElevationData } from '@/lib/fetchElevationData';
-import { evaluateImage } from '@/utils/earthEngineUtils';
 import { fetchCropData } from '@/lib/fetchCropData';
 import { fetchClimateData } from '@/lib/fetchClimateData';
+import { fetchSoilData } from '@/lib/fetchSoilData';
 
 // NOTE: Longitude must come first in google earth engine. Latitude comes first in leaflet
 
@@ -62,9 +62,11 @@ export async function POST(req: NextRequest) {
     const polygon = ee.Geometry.Polygon(points);      
 
     const climateData = await fetchClimateData(dataYears, polygon);
-    const landUseData = await fetchLandUseData( dataYears, polygon );
+    const landUseData = await fetchLandUseData(dataYears, polygon);
     // const cropData = await fetchCropData(polygon, dataYears, crops, cropNames);
     const elevationData = await fetchElevationData(polygon);
+    const soilData = await fetchSoilData(polygon);
+      
     const bounds = await polygon.bounds().getInfo();
     const boundCoordinates = bounds.coordinates[0];
     const centroid = await polygon.centroid().getInfo();
@@ -73,6 +75,7 @@ export async function POST(req: NextRequest) {
     // const elevationData = null;
     const cropData = null;
     // const climateData = null;
+    // const soilData = null;
       
     // Note that were switching from longitude first to latitude first for leaflet use here
     return NextResponse.json({ 
@@ -80,6 +83,7 @@ export async function POST(req: NextRequest) {
       cropData,
       elevationData,
       climateData,
+      soilData,
       bbox: [
         [boundCoordinates[0][1], boundCoordinates[0][0]],
         [boundCoordinates[2][1], boundCoordinates[2][0]]

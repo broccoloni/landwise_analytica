@@ -1,8 +1,8 @@
 import { calculateGrowingSeason, calculateCornHeatUnits, calculateGDD } from '@/utils/climateUtils';
 import { MajorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
-import { valuesToNames } from '@/types/valuesToNames';
+import { cropNames, soilTaxonomyNames, soilTextureNames } from '@/types/valuesToNames';
 import { dataToStaticColorUrl, dataToColorScaleUrl } from '@/utils/image';
-import { getAvg, getStd } from '@/utils/stats';
+import { getAvg, getStd, getStats } from '@/utils/stats';
 import chroma from 'chroma-js';
 import { heatColors, rangeColors, colorSet } from '@/types/colorPalettes';
 
@@ -31,7 +31,7 @@ export const processLandUseData = (data) => {
       let highestCommodityKey: number | null = null;
       Object.keys(counts).forEach((key) => {
         const numericKey = parseInt(key);
-        const commodityName: string = valuesToNames[numericKey];
+        const commodityName: string = cropNames[numericKey];
       
         if (majorCommodityCrops.includes(commodityName as MajorCommodityCrop)) {
           const cropCount = counts[numericKey];
@@ -52,7 +52,7 @@ export const processLandUseData = (data) => {
       const majorCommodityCropsGrown: string[] = [];
       Object.keys(counts).forEach((key) => {
         const numericKey = parseInt(key);
-        const commodityName: string = valuesToNames[numericKey];
+        const commodityName: string = cropValuesToNames[numericKey];
       
         if (majorCommodityCrops.includes(commodityName as MajorCommodityCrop)) {
           const cropCount = counts[numericKey];
@@ -72,12 +72,12 @@ export const processLandUseData = (data) => {
         }
       });
 
-      // Convert pixel values to index in valuesToNames, and 
+      // Convert pixel values to index in cropNames, and 
       // Convert cropKeysToConvert (pixel values that occur less than 3%) to highest % majorCommodityCrop
       const convertedLandUse = landUseData.map((val) => {
         const index = cropKeysToConvert.includes(val)
-          ? Object.keys(valuesToNames).findIndex((key) => parseInt(key) === highestCommodityKey)
-          : Object.keys(valuesToNames).findIndex((key) => parseInt(key) === val);
+          ? Object.keys(cropNames).findIndex((key) => parseInt(key) === highestCommodityKey)
+          : Object.keys(cropNames).findIndex((key) => parseInt(key) === val);
       
         return index === -1 ? 0 : index;
       });
@@ -87,14 +87,14 @@ export const processLandUseData = (data) => {
       const area = totalSum;
 
       // Generate image URL and legend
-      const colors = chroma.scale(colorSet).colors(Object.keys(valuesToNames).length);
+      const colors = chroma.scale(colorSet).colors(Object.keys(cropNames).length);
 
       const imageUrl = dataToStaticColorUrl(convertedLandUse, width, height, 0, colors, scale);
       const uniqueElements = new Set(convertedLandUse);
       const legend: Record<string, string> = {};
 
       uniqueElements.forEach((value) => {
-        const name = Object.values(valuesToNames)[value];
+        const name = Object.values(cropNames)[value];
         if (name && name !== 'Cloud') {
           legend[name] = colors[value];
         }
@@ -156,20 +156,50 @@ export const processClimateData = (data) => {
 
 export const processElevationData = (data) => {
   try {
-    const elevationData = data.elevationData;
-    const width = elevationData.width;
-    const height = elevationData.height;
+    const width = data.elevationData.width;
+    const height = data.elevationData.height;
+    const elevation = data.elevationData.elevation;
+    const slope = data.elevationData.slope;
+    const convexity = data.elevationData.convexity;
+    const aspect = data.elevationData.aspect;
 
-    const elevationColorScale = chroma.scale(rangeColors).domain([elevationData.minElevation, elevationData.maxElevation]);
-    const elevationUrl = dataToColorScaleUrl(elevationData.elevation, width, height, null, elevationColorScale, scale);
+    const { min: minElevation, max: maxElevation, avg: avgElevation, std: stdElevation } = getStats(elevation);
+    const { min: minSlope, max: maxSlope, avg: avgSlope, std: stdSlope } = getStats(slope);
+    const { min: minConvexity, max: maxConvexity, avg: avgConvexity, std: stdConvexity } = getStats(convexity);
+      
+    const elevationColorScale = chroma.scale(rangeColors).domain([minElevation, maxElevation]);
+    const elevationUrl = dataToColorScaleUrl(elevation, width, height, null, elevationColorScale, scale);
 
-    const slopeColorScale = chroma.scale(rangeColors).domain([elevationData.minSlope, elevationData.maxSlope]);
-    const slopeUrl = dataToColorScaleUrl(elevationData.slope, width-2, height-2, null, slopeColorScale, scale);
+    const slopeColorScale = chroma.scale(rangeColors).domain([minSlope, maxSlope]);
+    const slopeUrl = dataToColorScaleUrl(slope, width-2, height-2, null, slopeColorScale, scale);
 
-    const convexityColorScale = chroma.scale(rangeColors).domain([elevationData.minConvexity, elevationData.maxConvexity]);
-    const convexityUrl = dataToColorScaleUrl(elevationData.convexity, width-2, height-2, null, convexityColorScale, scale);
+    const convexityColorScale = chroma.scale(rangeColors).domain([minConvexity, maxConvexity]);
+    const convexityUrl = dataToColorScaleUrl(convexity, width-2, height-2, null, convexityColorScale, scale);
 
-    return { ...elevationData, elevationUrl, slopeUrl, convexityUrl };
+    return { aspect, width, height,
+             elevation, avgElevation, stdElevation, minElevation, maxElevation, 
+             slope, avgSlope, stdSlope, minSlope, maxSlope, 
+             convexity, avgConvexity, stdConvexity, minConvexity, maxConvexity,
+             elevationUrl, slopeUrl, convexityUrl };
+      
+  } catch (error) {
+    console.error('Error processing elevation data:', error);
+  }
+};
+
+export const processSoilData = (data) => {
+  try {
+    const taxonomy = data.soilData.taxonomy;
+    const width = data.soilData.width;
+    const height = data.soilData.height;
+
+    return {
+      imageUrl,
+      legend,
+      taxonomy,
+      width,
+      height,
+    }
       
   } catch (error) {
     console.error('Error processing elevation data:', error);

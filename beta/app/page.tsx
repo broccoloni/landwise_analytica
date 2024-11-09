@@ -2,20 +2,15 @@
 
 import Container from '@/components/Container';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
-import { MapContainer, TileLayer } from 'react-leaflet';
-import Dropdown from '@/components/Dropdown';
-import { Loader2 } from 'lucide-react';
-import { dataToUrl } from '@/utils/image';
-import { processClimateData, processLandUseData, processElevationData, processWindData } from '@/utils/dataProcessing';
+import { processClimateData, processLandUseData, processElevationData, processWindData, processSoilData } from '@/utils/dataProcessing';
 
 // import EstimatedYield from '@/components/EstimatedYield';
 import Climate from '@/components/Climate';
 import Topography from '@/components/Topography';
+import Soil from '@/components/Soil';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -54,18 +49,18 @@ export default function Search() {
   const [windData, setWindData] = useState(null);
   const [cropData, setCropData] = useState(null);
   const [landUseData, setLandUseData] = useState(null);
+  const [soilData, setSoilData] = useState(null);
   const [bbox, setBbox] = useState<number[] | null>(null);
 
   // Score trackers
   // const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
   const [climateScore, setClimateScore] = useState<number|null>(null);
   const [topographyScore, setTopographyScore] = useState<number|null>(null);
+  const [soilScore, setSoilScore] = useState<number|null>(null);
 
   // For managing report tabs
   const [loadingData, setLoadingData] = useState(true);
   const [activeTab, setActiveTab] = useState('Climate');
-
-
     
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {      
     setSelectedAddress(address);
@@ -96,7 +91,7 @@ export default function Search() {
       }
 
       const data = await response.json();
-
+    
       setLatitude(data.centroid[0]);
       setLongitude(data.centroid[1]);
       setBbox(data.bbox);
@@ -104,6 +99,7 @@ export default function Search() {
       setElevationData(processElevationData(data));
       setLandUseData(processLandUseData(data));
       setWindData(processWindData(data));
+      setSoilData(processSoilData(data));
         
       console.log('Fetched Earth Engine data:', data);
       setLoadingData(false);
@@ -174,6 +170,17 @@ export default function Search() {
             setScore={setTopographyScore}
           />
         );
+      case 'Soil':
+        return (
+          <Soil
+            lat={latitude}
+            lng={longitude}
+            soilData={soilData}
+            bbox = {bbox}
+            score={soilScore}
+            setScore={setSoilScore}
+          />
+        );
       default:
         return null;
     }
@@ -183,6 +190,7 @@ export default function Search() {
     // 'EstimatedYield',
     'Climate',
     'Topography',
+    'Soil',
   ];
 
   return (

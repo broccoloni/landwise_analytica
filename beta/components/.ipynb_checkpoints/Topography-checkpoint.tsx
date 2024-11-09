@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import dynamic from 'next/dynamic';
-import chroma from 'chroma-js';
 import Loading from '@/components/Loading';
 import Dropdown from '@/components/Dropdown';
-import LandUsageLegend from '@/components/LandUsageLegend';
+import Legend from '@/components/Legend';
 import ColorBar from '@/components/ColorBar';
 import { Slider } from "@mui/material";
 import PlainTable from '@/components/PlainTable';
 import WindDirectionDisplay from "@/components/WindDirectionDisplay";
-import { getAvg, getStd } from '@/utils/stats';
-import { getHeatMapUrl } from '@/utils/imageUrl';
 import { RasterData, ElevationData, LandUseData, WindData } from '@/types/category';
 import { rangeColors } from '@/types/colorPalettes';
 
@@ -202,7 +199,7 @@ const Topography = (
                   )}
                 </div>
                 <div className="ml-2 mt-8">
-                  <LandUsageLegend legend={curLandUseData.legend} />
+                  <Legend legend={curLandUseData.legend} />
                 </div>
               </div>
             </div>
