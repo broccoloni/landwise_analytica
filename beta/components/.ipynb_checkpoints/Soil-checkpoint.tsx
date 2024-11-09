@@ -149,6 +149,27 @@ const Soil = (
           <div className="flex w-full">
             <div className="w-[40%] mt-8 p-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
+              <PlainTable             
+                headers={['Variable', 'Classifications Found']}
+                data={[
+                  { 
+                    v:'Taxonomy', 
+                    c: Object.keys(soilData.taxonomy.legend).join(', '),
+                  },
+                  { 
+                    v:'Texture at Surface', 
+                    c: Object.keys(soilData.texture['b0'].legend).join(', '),
+                  },
+                  { 
+                    v:'Texture at 10cm', 
+                    c: Object.keys(soilData.texture['b10'].legend).join(', '),
+                  },
+                  { 
+                    v:'Texture at 30cm', 
+                    c: Object.keys(soilData.texture['b30'].legend).join(', '),
+                  },
+                ]}
+              />
             </div>
             <div className="w-[60%] flex-row">
               <div className="flex w-full">
@@ -193,6 +214,35 @@ const Soil = (
           <div className="flex w-full">
             <div className="w-[40%] mt-8 p-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
+              <PlainTable             
+                headers={['Variable', 'Average at Surface','Average at 10cm','Average at 30cm']}
+                data={[
+                  { 
+                    v:'Water Content at 33kPa, Field Capacity (%)', 
+                    a1: `${soilData.water['b0'].avg.toFixed(2)} \u00B1 ${soilData.water['b0'].std.toFixed(2)}`,
+                    a2:`${soilData.water['b10'].avg.toFixed(2)} \u00B1 ${soilData.water['b10'].std.toFixed(2)}`,
+                    a3:`${soilData.water['b30'].avg.toFixed(2)} \u00B1 ${soilData.water['b30'].std.toFixed(2)}`,
+                  },
+                  { 
+                    v:'Sand Content (% kg/kg)', 
+                    a1: `${soilData.sand['b0'].avg.toFixed(2)} \u00B1 ${soilData.sand['b0'].std.toFixed(2)}`,
+                    a2:`${soilData.sand['b10'].avg.toFixed(2)} \u00B1 ${soilData.sand['b10'].std.toFixed(2)}`,
+                    a3:`${soilData.sand['b30'].avg.toFixed(2)} \u00B1 ${soilData.sand['b30'].std.toFixed(2)}`,
+                  },
+                  { 
+                    v:'Clay Content (% kg/kg)', 
+                    a1: `${soilData.clay['b0'].avg.toFixed(2)} \u00B1 ${soilData.clay['b0'].std.toFixed(2)}`,
+                    a2:`${soilData.clay['b10'].avg.toFixed(2)} \u00B1 ${soilData.clay['b10'].std.toFixed(2)}`,
+                    a3:`${soilData.clay['b30'].avg.toFixed(2)} \u00B1 ${soilData.clay['b30'].std.toFixed(2)}`,
+                  },
+                  { 
+                    v:'Organic Carbon Content (5g/kg)', 
+                    a1: `${soilData.carbon['b0'].avg.toFixed(2)} \u00B1 ${soilData.carbon['b0'].std.toFixed(2)}`,
+                    a2:`${soilData.carbon['b10'].avg.toFixed(2)} \u00B1 ${soilData.carbon['b10'].std.toFixed(2)}`,
+                    a3:`${soilData.carbon['b30'].avg.toFixed(2)} \u00B1 ${soilData.carbon['b30'].std.toFixed(2)}`,
+                  }
+                ]}
+              />
             </div>
             <div className="w-[60%] flex-row">
               <div className="flex w-full">
@@ -222,7 +272,7 @@ const Soil = (
                       {contentView === 'Water (Field Capacity / 33kPa)' ? (
                         "(%)"
                       ) : contentView === 'Organic Carbon' ? (
-                        "(g/kg)"
+                        "(5g/kg)"
                       ) : (
                         "%  (kg/kg)"
                       )}
@@ -252,6 +302,23 @@ const Soil = (
           <div className="flex w-full">
             <div className="w-[40%] mt-8 p-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
+              <PlainTable             
+                headers={['Variable', 'Average at Surface','Average at 10cm','Average at 30cm']}
+                data={[
+                  { 
+                    v:'Soil Water pH (\u00D710)', 
+                    a1: `${soilData.ph['b0'].avg.toFixed(2)} \u00B1 ${soilData.ph['b0'].std.toFixed(2)}`,
+                    a2:`${soilData.ph['b10'].avg.toFixed(2)} \u00B1 ${soilData.ph['b10'].std.toFixed(2)}`,
+                    a3:`${soilData.ph['b30'].avg.toFixed(2)} \u00B1 ${soilData.ph['b30'].std.toFixed(2)}`,
+                  },
+                  { 
+                    v:'Bulk Density (10 kg / m\u00B3)', 
+                    a1: `${soilData.density['b0'].avg.toFixed(2)} \u00B1 ${soilData.density['b0'].std.toFixed(2)}`,
+                    a2:`${soilData.density['b10'].avg.toFixed(2)} \u00B1 ${soilData.density['b10'].std.toFixed(2)}`,
+                    a3:`${soilData.density['b30'].avg.toFixed(2)} \u00B1 ${soilData.density['b30'].std.toFixed(2)}`,
+                  },
+                ]}
+              />
             </div>
             <div className="w-[60%] flex-row">
               <div className="flex w-full">
