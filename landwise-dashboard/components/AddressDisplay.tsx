@@ -17,6 +17,10 @@ type AddressProps = {
 };
 
 const AddressDisplay = ({ addressComponents, latitude, longitude }: AddressProps) => {
+  if (!addressComponents) {
+    return null;
+  }
+    
   return (
     <div className="w-full">
       <div className="flex justify-between mb-2">

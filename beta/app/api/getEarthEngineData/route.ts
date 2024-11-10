@@ -11,7 +11,7 @@ import { fetchSoilData } from '@/lib/fetchSoilData';
 
 // NOTE: Longitude must come first in google earth engine. Latitude comes first in leaflet
 
-// const dataYears = ['2017', '2018', '2019', '2020', '2021', '2022'];
+// const dataYears = ['2014','2015','2016','2017', '2018', '2019', '2020', '2021', '2022','2023','2024'];
 const dataYears = ['2021','2022'];
 
 const cropNames = [
@@ -76,6 +76,24 @@ export async function POST(req: NextRequest) {
     const cropData = null;
     // const climateData = null;
     // const soilData = null;
+
+
+    // // To save the downloaded data
+    // const filePath = path.join(process.cwd(), 'downloadedData.json');
+
+    // // Write the data to the JSON file
+    // fs.writeFileSync(filePath, 
+    //                  JSON.stringify({ 
+    //                    landUseData, 
+    //                    elevationData, 
+    //                    climateData, 
+    //                    soilData, 
+    //                    bbox: [
+    //                     [boundCoordinates[0][1], boundCoordinates[0][0]],
+    //                     [boundCoordinates[2][1], boundCoordinates[2][0]]
+    //                   ],
+    //                   centroid: [centroid.coordinates[1], centroid.coordinates[0]],
+    //                  }, null, 2));
       
     // Note that were switching from longitude first to latitude first for leaflet use here
     return NextResponse.json({ 

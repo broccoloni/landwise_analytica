@@ -12,9 +12,10 @@ const SummaryScore = () => {
     'Estimated Yield', 
     'Climate', 
     'Topography',
+    'Soil',
   ];
 
-  const scores = [96, 92, 86];
+  const scores = [96, 92, 86, 90];
   const meanScores = scores.reduce((sum, value) => sum + value, 0) / scores.length;
   const overallScore = Math.round(meanScores);
 
@@ -68,10 +69,10 @@ const SummaryScore = () => {
               },
             },
             margin: {
-              t: 20,
+              t: 30,
               l: 160,
               r: 120,
-              b: 20,
+              b: 30,
             },
             showlegend: false,
             paper_bgcolor: '#fff',

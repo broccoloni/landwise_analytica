@@ -55,7 +55,8 @@ export const getStd = (numbers: (number | null)[]): number => {
   return Math.sqrt(variance);
 };
 
-export const Norm2 = (numbers: (number | null)[]): number => {
+export const norm2 = (numbers: (number | null)[]): number => {
   const validNumbers = numbers.filter((value): value is number => value !== null);
   return Math.sqrt(validNumbers.reduce((sum, val) => sum + Math.pow(val, 2), 0));
 };
+

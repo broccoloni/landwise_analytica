@@ -9,17 +9,19 @@ import SummaryScore from '@/components/SummaryScore';
 
 import EstimatedYield from '@/components/EstimatedYield';
 import Climate from '@/components/Climate';
-// import InfrastructureAccessibility from '@/components/InfrastructureAccessibility';
 import Topography from '@/components/Topography';
-// import EconomicViability from '@/components/EconomicViability';
+import Soil from '@/components/Soil';
 
-import { fetchRasterDataCache } from '@/hooks/fetchRasterDataCache';
-import { fetchCropHeatMaps } from '@/hooks/fetchCropHeatMaps';
-import { fetchYearlyYields } from '@/hooks/fetchYearlyYields';
-import { fetchClimateData } from '@/hooks/fetchClimateData';
-
-import { CropData } from '@/types/category';
-
+import { useFetchDemoData } from '@/hooks/useFetchDemoData';
+import { 
+  processYearlyYieldsData, 
+  processCropHeatMapData, 
+  processClimateData, 
+  processLandUseData, 
+  processElevationData, 
+  processWindData, 
+  processSoilData 
+} from '@/utils/dataProcessing';
 
 // const basePath = '/landwise_analytica';
 const basePath = '';
@@ -42,41 +44,84 @@ const DEMO_ADDRESS = {
 
 export default function Home() {
   const isDemoAddress = true;
-  const address = DEMO_ADDRESS.address;
-  const lat = DEMO_ADDRESS.lat;
-  const lng = DEMO_ADDRESS.lng;
-  const addressComponents = DEMO_ADDRESS.components;
 
+  // For property selection and definition
+  const [selectedAddress, setSelectedAddress] = useState<string>('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
+  const [landGeometry, setLandGeometry] = useState<number[][]>([]);
+
+  // Processed Demo Data
+  const [yearlyYieldsData, setYearlyYieldsData] = useState(null);
+  const [cropHeatMapData, setCropHeatMapData] = useState(null);
+  const [climateData, setClimateData] = useState(null);
+  const [elevationData, setElevationData] = useState(null);
+  const [windData, setWindData] = useState(null);
+  const [cropData, setCropData] = useState(null);
+  const [landUseData, setLandUseData] = useState(null);
+  const [soilData, setSoilData] = useState(null);
+  const [bbox, setBbox] = useState<number[] | null>(null);
+    
+  // Scores
   const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
   const [climateScore, setClimateScore] = useState<number|null>(null);
   const [topographyScore, setTopographyScore] = useState<number|null>(null);
+  const [soilScore, setSoilScore] = useState<number|null>(null);
 
-  const [activeTab, setActiveTab] = useState('EstimatedYield');
+  // Set demo address on page load 
+  useEffect(() => {
+    setSelectedAddress(DEMO_ADDRESS.address);
+    setLatitude(DEMO_ADDRESS.lat);
+    setLongitude(DEMO_ADDRESS.lng);
+    setAddressComponents(DEMO_ADDRESS.components);
+  }, []);
+
+  // Load demo data
+  const { demoData, isLoading, error } = useFetchDemoData(basePath);
+  useEffect(() => {
+    console.log("Demo data:", isLoading, error, demoData);
+    if (!isLoading && demoData) {
+      setLatitude(demoData.centroid[0]);
+      setLongitude(demoData.centroid[1]);
+      setBbox(demoData.bbox);
+      setClimateData(processClimateData(demoData));
+      setElevationData(processElevationData(demoData));
+      setLandUseData(processLandUseData(demoData));
+      setWindData(processWindData(demoData));
+      setSoilData(processSoilData(demoData));
+    }
+  }, [demoData, isLoading, error]);
+
+  const tabs = [
+    // 'EstimatedYield',
+    'Climate',
+    'Topography',
+    'Soil',
+  ];
+    
+  const [activeTab, setActiveTab] = useState('Climate');
   const renderActiveComponent = () => {
     switch (activeTab) {
-      case 'EstimatedYield':
-        return (
-          <EstimatedYield
-            lat={lat}
-            lng={lng}
-            rasterDataCache={rasterDataCache}
-            elevationData={elevationData}
-            cropHeatMaps={cropHeatMaps}
-            yearlyYields={yearlyYields}
-            climateData={climateData}
-            score={estimatedYieldScore}
-            setScore={setEstimatedYieldScore}
-          />
-        );
+      // case 'EstimatedYield':
+      //   return (
+      //     <EstimatedYield
+      //       lat={lat}
+      //       lng={lng}
+      //       rasterDataCache={rasterDataCache}
+      //       elevationData={elevationData}
+      //       cropHeatMaps={cropHeatMaps}
+      //       yearlyYields={yearlyYields}
+      //       climateData={climateData}
+      //       score={estimatedYieldScore}
+      //       setScore={setEstimatedYieldScore}
+      //     />
+      //   );
       case 'Climate':
         return (
           <Climate
-            lat={lat}
-            lng={lng}
-            rasterDataCache={rasterDataCache}
-            elevationData={elevationData}
-            cropHeatMaps={cropHeatMaps}
-            yearlyYields={yearlyYields}
+            lat={latitude}
+            lng={longitude}
             climateData={climateData}
             score={climateScore}
             setScore={setClimateScore}
@@ -85,32 +130,31 @@ export default function Home() {
       case 'Topography':
         return (
           <Topography
-            lat={lat}
-            lng={lng}
-            rasterDataCache={rasterDataCache}
-            elevationData={elevationData}
-            cropHeatMaps={cropHeatMaps}
-            yearlyYields={yearlyYields}
-            climateData={climateData}
+            lat={latitude}
+            lng={longitude}
+            landUseData = {landUseData}
+            elevationData = {elevationData}
+            windData = {windData}
+            bbox = {bbox}
             score={topographyScore}
             setScore={setTopographyScore}
+          />
+        );
+      case 'Soil':
+        return (
+          <Soil
+            lat={latitude}
+            lng={longitude}
+            soilData={soilData}
+            bbox = {bbox}
+            score={soilScore}
+            setScore={setSoilScore}
           />
         );
       default:
         return null;
     }
   };
-
-  const tabs = [
-    'EstimatedYield',
-    'Climate',
-    'Topography',
-  ];
-    
-  const { rasterDataCache, elevationData } = fetchRasterDataCache(basePath);
-  const cropHeatMaps: CropData = fetchCropHeatMaps(basePath);
-  const yearlyYields = fetchYearlyYields(basePath);
-  const climateData = fetchClimateData(basePath);
     
   return (
     <div className={`${roboto.className} bg-accent-light text-black`}>
@@ -130,8 +174,8 @@ export default function Home() {
                 </div>
                 <AddressDisplay 
                   addressComponents={addressComponents} 
-                  latitude={lat} 
-                  longitude={lng} 
+                  latitude={latitude} 
+                  longitude={longitude} 
                 />
               </div>
               <div className="w-[56%] p-4">

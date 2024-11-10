@@ -31,10 +31,6 @@ const Soil = (
   const [attributeView, setAttributeView] = useState<string>('Water pH');
   const [attributeDepth, setAttributeDepth] = useState<string>('Surface');
   const [curAttributeData, setCurAttributeData] = useState(null);
-
-  useEffect(() => {
-    console.log("Soil Data:", soilData);
-  }, [soilData]);
       
   useEffect(() => {
     if (classificationView && classificationDepth && soilData) {
