@@ -24,83 +24,30 @@ export const processLandUseData = (data) => {
     Object.entries(landUseDataDict).forEach(([year, values]) => {
       const { landUseData, width, height } = values;
       
-      const counts: Record<number, number> = {};
+      const counts: Record<string, number> = {};
       landUseData.forEach((value) => {
-        if (value !== null) {
-          counts[value] = (counts[value] || 0) + 1;
-        }
-      });
-    
-      const totalSum = Object.values(counts).reduce((acc, count) => acc + count, 0);
-            
-      // Find the MajorCommodityCrop with the highest count
-      let maxCount = 0;
-      let highestCommodityCrop: MajorCommodityCrop | null = null;
-      let highestCommodityKey: number | null = null;
-      Object.keys(counts).forEach((key) => {
-        const numericKey = parseInt(key);
+        const numericKey = parseInt(value);
         const commodityName: string = cropNames[numericKey];
-      
-        if (majorCommodityCrops.includes(commodityName as MajorCommodityCrop)) {
-          const cropCount = counts[numericKey];
-        
-          // Track the crop with the highest count
-          if (cropCount > maxCount) {
-            maxCount = cropCount;
-            highestCommodityCrop = commodityName as MajorCommodityCrop;
-            highestCommodityKey = numericKey;
-          }
-        }
-      });
-    
-      // Map all major crops with a frequency of less than 3% to the highest commodity crop
-      let cropSum = 0;
-      const cropTol = 3;
-      const cropKeysToConvert = [];
-      const majorCommodityCropsGrown: string[] = [];
-      Object.keys(counts).forEach((key) => {
-        const numericKey = parseInt(key);
-        const commodityName: string = cropNames[numericKey];
-      
-        if (majorCommodityCrops.includes(commodityName as MajorCommodityCrop)) {
-          const cropCount = counts[numericKey];
-          const cropPercentage = (cropCount / totalSum) * 100;
-        
-          if (cropPercentage < cropTol && highestCommodityCrop) {
-            // Add the count of this crop to the highest commodity crop and set it to 0
-            counts[highestCommodityKey] += cropCount;
-            counts[numericKey] = 0;  // Set the low-percentage crop count to zero
-            cropKeysToConvert.push(numericKey);
-          } else {
-            // Track significant major crops grown
-            majorCommodityCropsGrown.push(commodityName);
-          }
-          // Keep track of total majorCommodityCrop area for land use pct
-          cropSum += cropCount;
+
+        if (value !== null && value !== 'Cloud') {
+          counts[commodityName] = (counts[commodityName] || 0) + 1;
         }
       });
 
-      // Convert pixel values to index in cropNames, and 
-      // Convert cropKeysToConvert (pixel values that occur less than 3%) to highest % majorCommodityCrop
-      const convertedLandUse = landUseData.map((val) => cropKeysToConvert.includes(val) ? highestCommodityKey : val);
-        
       // Calculate Land use Pcts
-      const usableLandPct = cropSum / totalSum;
-      const area = totalSum;
-
-      const landUseImageData = getImageLegendUnique({ sampleData: convertedLandUse, width, height }, cropNames, scale);
+      const area = Object.values(counts).reduce((acc, count) => acc + count, 0);
+      const cropArea = majorCommodityCrops.reduce((acc, key) => acc + (counts[key] || 0), 0);
+        
+      const landUseImageData = getImageLegendUnique({ sampleData: landUseData, width, height }, cropNames, scale);
       const { imageUrl, legend, uniqueElements } = landUseImageData;
 
         
       newLandUseData[year] = {
         imageUrl,
-        landUseData: convertedLandUse,
-        height, 
-        width, 
         legend,
-        usableLandPct,
+        counts,
+        cropArea,
         area,
-        majorCommodityCropsGrown,
       };
     });
 
@@ -111,43 +58,196 @@ export const processLandUseData = (data) => {
   }
 };
 
-export const processHeatmapData = (data) => {
-  return null;
-}
+export const processHistoricData = (data) => {
+  try {
+    const landUseDataDict = data.landUseData;
+    const yearlyYields = data.yearlyYields;
+    const historicYears = Object.keys(landUseDataDict);
+      
+    const predominantCropGrown = historicYears.map((year: number) => {
+      const { landUseData, width, height } = landUseDataDict[year];
+      
+      const majorCommodityCropCounts: Record<string, number> = {};
+        
+      landUseData.forEach((value) => {
+        if (value !== null) {
+          const numericKey = parseInt(value);
+          const commodityName: string = cropNames[numericKey];
+          if (majorCommodityCrops.includes(commodityName as MajorCommodityCrop)) {
+            majorCommodityCropCounts[commodityName] = (majorCommodityCropCounts[commodityName] || 0) + 1;
+          }
+        }
+      });
 
-// // Helper function to apply heat map to the image data
-// const processData = (data: TypedArray, crop: MajorCommodityCrop) => {
-//   // const heatmapColors = ['#6A0DAD', '#228B22', '#FFD700', '#8B0000'];
-//   const heatmapColors = ['black', 'red', 'yellow', 'white'];
-//   const heatMapScale = chroma.scale(heatmapColors).correctLightness().domain([0, 1]);
-//   const yields: number[] = [];
-//   const { vmin: thresholdMin, vmax: thresholdMax } = majorCommodityThresholds[crop];
-//   const range = thresholdMax - thresholdMin;
-  
-//   for (let i = 0; i < data.length; i += 4) {
-//     const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-//     const normalized = brightness / 255;
-//     yields.push(normalized * range + thresholdMin);
+      let highestCount = 0;
+      let cropWithHighestCount = null;
     
-//     const heatColor = heatMapScale(normalized).rgb();
-//     data[i] = heatColor[0];
-//     data[i + 1] = heatColor[1];
-//     data[i + 2] = heatColor[2];
-//   }
+      for (const [crop, count] of Object.entries(majorCommodityCropCounts)) {
+        if (count > highestCount) {
+          highestCount = count;
+          cropWithHighestCount = crop;
+        }
+      }
+    
+      return cropWithHighestCount; 
+    });
 
-//   // Calculate stats based on normalized values
-//   const min = Math.min(...yields);
-//   const max = Math.max(...yields);
-//   const average = getAvg(yields);
-//   const stdDev = getStd(yields);
+    const labels = historicYears.map((year, index) => `${year} - ${predominantCropGrown[index]}`);
+    const property = historicYears.map((year, index) => {
+      const row = yearlyYields.find((item) => 
+        item.Crop === predominantCropGrown[index] && 
+        item.Year === parseInt(year) && 
+        item.levels === 'Property'
+      );
+      return row?.Yield || null;
+    });
 
-//   // Ensure no NaNs are returned
-//   if (isNaN(min) || isNaN(max) || isNaN(average) || isNaN(stdDev)) {
-//     console.error('processData is returning NaN values');
-//   }
+    const neighbourhood = historicYears.map((year, index) => {
+      const row = yearlyYields.find((item) => 
+        item.Crop === predominantCropGrown[index] && 
+        item.Year === parseInt(year) && 
+        item.levels === 'Neighbourhood'
+      );
+      return row?.Yield || null;
+    });
+      
+    const national = historicYears.map((year, index) => {
+      const row = yearlyYields.find((item) => 
+        item.Crop === predominantCropGrown[index] && 
+        item.Year === parseInt(year) && 
+        item.levels === 'National'
+      );
+      return row?.Yield || null;
+    });
+      
+    const neighbourhoodPerfs = property.map((cropYeild: number, index: number) => cropYeild / neighbourhood[index] * 100);
+    const nationalPerfs = property.map((cropYeild: number, index: number) => cropYeild / national[index] * 100);
+    const avgNePerf = getAvg(neighbourhoodPerfs);
+    const stdNePerf = getStd(neighbourhoodPerfs);
+    const avgNaPerf = getAvg(nationalPerfs);
+    const stdNaPerf = getStd(nationalPerfs);
 
-//   return { min, max, average, stdDev, range, thresholdMin, thresholdMax };
-// };
+    const cropsGrown = Array.from(new Set(predominantCropGrown));
+      
+    return {
+      labels,
+      property,
+      neighbourhood,
+      national,
+      avgNePerf,
+      stdNePerf,
+      avgNaPerf,
+      stdNaPerf,
+      cropsGrown,
+    };
+      
+  } catch (error) {
+    console.error('Error processing historic data:', error);
+  }
+};
+
+export const processProjectedData = (data) => {
+  const minYear = 2014;
+  const maxYear = 2034;
+  const curYear = 2024;
+  try {
+    const yearlyYields = data.yearlyYields;
+    const projectedData = {};
+
+    const years = Array.from(
+      new Set(
+        yearlyYields
+          .map((item: any) => Number(item.Year))
+          .filter((year: number) => year >= minYear && year <= maxYear)
+      ) 
+    );
+      
+    
+    majorCommodityCrops.forEach((crop: string) => {
+      const property = [];
+      const neighbourhood = [];
+      const national = [];
+      for (const yr of years) {
+        if (yr >= minYear && yr <= maxYear) {
+          const pr = yearlyYields.find((item) => 
+            item.Crop === crop && 
+            item.Year === parseInt(yr) && 
+            item.levels === 'Property'
+          );
+
+          const ne = yearlyYields.find((item) => 
+            item.Crop === crop && 
+            item.Year === parseInt(yr) && 
+            item.levels === 'Neighbourhood'
+          );
+
+          const na = yearlyYields.find((item) => 
+            item.Crop === crop && 
+            item.Year === parseInt(yr) && 
+            item.levels === 'National'
+          );
+
+          property.push(pr.Yield);
+          neighbourhood.push(ne.Yield);
+          national.push(na.Yield);
+        }
+      }
+        
+      const futProperty = property.filter((_, index) => years[index] >= curYear); 
+      const futNeighbourhood = neighbourhood.filter((_, index) => years[index] >= curYear); 
+      const futNational = national.filter((_, index) => years[index] >= curYear); 
+
+      const neighbourhoodPerfs = futProperty.map((cropYield: number, index: number) => cropYield / futNeighbourhood[index] * 100);
+      const nationalPerfs = futProperty.map((cropYield: number, index: number) => cropYield / futNational[index] * 100);
+
+      const avgNePerf = getAvg(neighbourhoodPerfs);
+      const stdNePerf = getStd(neighbourhoodPerfs);
+      const avgNaPerf = getAvg(nationalPerfs);
+      const stdNaPerf = getStd(nationalPerfs);
+
+      const avgPerf = (avgNePerf + avgNaPerf)/2;
+        
+
+      projectedData[crop] = { 
+        years,
+        property, 
+        neighbourhood, 
+        national, 
+        avgNePerf, 
+        stdNePerf,
+        avgNaPerf,
+        stdNaPerf,
+        avgPerf,
+      };
+    });
+      
+    return projectedData
+      
+  } catch (error) {
+    console.error('Error processing projected data:', error);
+  }
+};
+
+
+export const processCropHeatmapData = (data) => {
+  try {
+    const cropHeatmaps = data.cropHeatmaps;
+    const cropHeatmapData = {};
+
+    Object.entries(cropHeatmaps).forEach(([crop, heatmap]) => {
+      const heatmapData = getImageAndStats(heatmap, scale, heatColors);
+      cropHeatmapData[crop] = {
+        ...heatmapData,
+        variation: heatmapData.std / (heatmapData.avg ?? 1),
+      }
+    });
+
+    return cropHeatmapData;
+    
+  } catch (error) {
+    console.error('Error processing crop heatmap data:', error);
+  }
+};
 
 export const processClimateData = (data) => {
   try {

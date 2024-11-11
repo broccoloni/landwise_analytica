@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { majorCommodityCrops } from '@/types/majorCommodityCrops';
+import { majorCommodityCrops, majorCommodityThresholds } from '@/types/majorCommodityCrops';
 import { CropData } from '@/types/category';
 
-export const useFetchCropHeatMaps = (basePath: string) => {
+export const useFetchCropHeatmaps = (basePath: string) => {
   const [cropData, setCropData] = useState<CropData>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadCropHeatMaps = async () => {
+    const loadCropHeatmaps = async () => {
       try {
         const promises = majorCommodityCrops.map((crop) => {
           return new Promise<void>((resolve, reject) => {
@@ -28,8 +28,15 @@ export const useFetchCropHeatMaps = (basePath: string) => {
               canvas.height = img.height;
               ctx.drawImage(img, 0, 0);
               const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const data = Array.from(imageData.data); // Convert to array for compatibility
 
+              const { vmin, vmax } = majorCommodityThresholds[crop];
+              const range = vmax - vmin;
+              const data = [];
+              for (let i = 0; i < imageData.data.length; i += 4) {
+                const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+                data.push(avg === 0 ? null : Math.round((avg / 255) * range + vmin));
+              }
+                
               setCropData((prev) => ({
                 ...prev,
                 [crop]: { sampleData: data, width: img.width, height: img.height },
@@ -52,7 +59,7 @@ export const useFetchCropHeatMaps = (basePath: string) => {
       }
     };
 
-    loadCropHeatMaps();
+    loadCropHeatmaps();
   }, [basePath]);
 
   return { cropData, isLoading, error };

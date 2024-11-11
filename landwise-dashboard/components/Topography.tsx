@@ -23,7 +23,7 @@ const Topography = (
   const [landUsageYear, setLandUsageYear] = useState<number | null>(null);
   const [curLandUseData, setCurLandUseData] = useState<LandUseData | null>(null);
   const [avgArea, setAvgArea] = useState<number | null>(null);
-  const [avgUsableLandPct, setAvgUsableLandPct] = useState<number | null>(null);
+  const [avgCropArea, setAvgCropArea] = useState<number | null>(null);
 
   // Elevation
   const [elevationView, setElevationView] = useState<'Elevation' | 'Slope' | 'Convexity'>('Elevation');
@@ -47,18 +47,18 @@ const Topography = (
 
       // Calculate average useable land % and area throughout historical use
       const numYears = Object.keys(landUseData).length;
-      const { totalUsableLandPct, totalArea } = Object.values(landUseData).reduce(
+      const { totalCropArea, totalArea } = Object.values(landUseData).reduce(
         (acc, yearData: any) => {
-          if (yearData.usableLandPct) {
-            acc.totalUsableLandPct += yearData.usableLandPct;
+          if (yearData.cropArea) {
+            acc.totalCropArea += yearData.cropArea;
             acc.totalArea += yearData.area;
           }
           return acc;
         },
-        { totalUsableLandPct: 0, totalArea: 0 }
+        { totalCropArea: 0, totalArea: 0 }
       );
 
-      setAvgUsableLandPct(totalUsableLandPct / numYears);
+      setAvgCropArea(totalCropArea / numYears * metersPerPixel * metersPerPixel);
       setAvgArea(totalArea / numYears * metersPerPixel * metersPerPixel);
     }
   }, [landUseData]);
@@ -147,15 +147,15 @@ const Topography = (
                   },
                   { 
                     a: 'Historical Cropland',
-                    p: `${((avgUsableLandPct ?? 0) * 100)?.toFixed(2)}`, 
-                    a1: `${((avgArea ?? 0) * (avgUsableLandPct ?? 0))?.toFixed(2)}`, 
-                    a2: `${((avgArea ?? 0) / sqMetersPerAcre * (avgUsableLandPct ?? 0))?.toFixed(2)}`,
+                    p: `${((avgCropArea ?? 0) / (avgArea ?? 1) * 100)?.toFixed(2)}`, 
+                    a1: `${avgCropArea?.toFixed(2)}`, 
+                    a2: `${((avgCropArea ?? 0) / sqMetersPerAcre).toFixed(2)}`,
                   },
                   { 
                     a: 'Other',
-                    p: `${((1 - (avgUsableLandPct ?? 0)) * 100)?.toFixed(2)}`, 
-                    a1: `${((avgArea ?? 0) * (1 - (avgUsableLandPct ?? 0)))?.toFixed(2)}`, 
-                    a2: `${((avgArea ?? 0) / sqMetersPerAcre * (1 - (avgUsableLandPct ?? 0)))?.toFixed(2)}`,
+                    p: `${(((avgArea ?? 0 ) - (avgCropArea ?? 0)) / (avgArea ?? 1) * 100)?.toFixed(2)}`, 
+                    a1: `${((avgArea ?? 0 ) - (avgCropArea ?? 0))?.toFixed(2)}`, 
+                    a2: `${(((avgArea ?? 0 ) - (avgCropArea ?? 0)) / sqMetersPerAcre).toFixed(2)}`,
                   },
                 ]}
               />

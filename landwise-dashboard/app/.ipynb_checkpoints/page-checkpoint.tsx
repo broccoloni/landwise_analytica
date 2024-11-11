@@ -14,8 +14,9 @@ import Soil from '@/components/Soil';
 
 import { useFetchDemoData } from '@/hooks/useFetchDemoData';
 import { 
-  processYearlyYieldsData, 
-  processCropHeatMapData, 
+  processHistoricData,
+  processProjectedData,
+  processCropHeatmapData, 
   processClimateData, 
   processLandUseData, 
   processElevationData, 
@@ -53,7 +54,8 @@ export default function Home() {
   const [landGeometry, setLandGeometry] = useState<number[][]>([]);
 
   // Processed Demo Data
-  const [yearlyYieldsData, setYearlyYieldsData] = useState(null);
+  const [historicData, setHistoricData] = useState(null);
+  const [projectedData, setProjectedData] = useState(null);
   const [cropHeatMapData, setCropHeatMapData] = useState(null);
   const [climateData, setClimateData] = useState(null);
   const [elevationData, setElevationData] = useState(null);
@@ -80,11 +82,13 @@ export default function Home() {
   // Load demo data
   const { demoData, isLoading, error } = useFetchDemoData(basePath);
   useEffect(() => {
-    console.log("Demo data:", isLoading, error, demoData);
     if (!isLoading && demoData) {
       setLatitude(demoData.centroid[0]);
       setLongitude(demoData.centroid[1]);
       setBbox(demoData.bbox);
+      setHistoricData(processHistoricData(demoData));
+      setProjectedData(processProjectedData(demoData));
+      setCropHeatMapData(processCropHeatmapData(demoData));
       setClimateData(processClimateData(demoData));
       setElevationData(processElevationData(demoData));
       setLandUseData(processLandUseData(demoData));
@@ -94,29 +98,28 @@ export default function Home() {
   }, [demoData, isLoading, error]);
 
   const tabs = [
-    // 'EstimatedYield',
+    'EstimatedYield',
     'Climate',
     'Topography',
     'Soil',
   ];
     
-  const [activeTab, setActiveTab] = useState('Climate');
+  const [activeTab, setActiveTab] = useState('EstimatedYield');
   const renderActiveComponent = () => {
     switch (activeTab) {
-      // case 'EstimatedYield':
-      //   return (
-      //     <EstimatedYield
-      //       lat={lat}
-      //       lng={lng}
-      //       rasterDataCache={rasterDataCache}
-      //       elevationData={elevationData}
-      //       cropHeatMaps={cropHeatMaps}
-      //       yearlyYields={yearlyYields}
-      //       climateData={climateData}
-      //       score={estimatedYieldScore}
-      //       setScore={setEstimatedYieldScore}
-      //     />
-      //   );
+      case 'EstimatedYield':
+        return (
+          <EstimatedYield
+            lat={latitude}
+            lng={longitude}
+            historicData={historicData}
+            projectedData={projectedData}
+            cropHeatMapData={cropHeatMapData}
+            bbox = {bbox}
+            score={estimatedYieldScore}
+            setScore={setEstimatedYieldScore}
+          />
+        );
       case 'Climate':
         return (
           <Climate
