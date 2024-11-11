@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { yearlyYield } from '@/types/category';
 import Papa from "papaparse";

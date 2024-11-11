@@ -7,10 +7,10 @@ import Container from '@/components/Container';
 import AddressDisplay from '@/components/AddressDisplay';
 import SummaryScore from '@/components/SummaryScore';
 
-import EstimatedYield from '@/components/EstimatedYield';
-import Climate from '@/components/Climate';
-import Topography from '@/components/Topography';
-import Soil from '@/components/Soil';
+import EstimatedYield from '@/components/tabs/EstimatedYield';
+import Climate from '@/components/tabs/Climate';
+import Topography from '@/components/tabs/Topography';
+import Soil from '@/components/tabs/Soil';
 
 import { useFetchDemoData } from '@/hooks/useFetchDemoData';
 import { 

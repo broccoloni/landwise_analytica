@@ -1,3 +1,5 @@
+'use client';
+
 const metersPerPixel = 30;
 
 export function calculateSlopeAspectConvexity(

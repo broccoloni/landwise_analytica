@@ -1,3 +1,5 @@
+'use client';
+
 export const intsToDayOfYear = (year: number, month: number, day: number): number => {
   // Note: This function assumes month and day are 1 based, ie 2024-01-01 if Jan 1,
   // but Date requires 0-based so 2024-01-01 -> 2024-00-00

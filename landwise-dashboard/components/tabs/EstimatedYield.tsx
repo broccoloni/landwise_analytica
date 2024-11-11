@@ -63,13 +63,13 @@ const EstimatedYield = ({ lat, lng, historicData, projectedData, cropHeatMapData
       return projectedData[b].avgPerf - projectedData[a].avgPerf;
     });
       
-    const headers = ['Rank','Crop', 'Property Relative to Neighbourhood', 'Property Relative to National'];
+    const headers = ['Rank','Crop', 'Average Property Yield Relative to Neighbourhood (%)', 'Average Property Yield Relative to National (%)'];
 
     const data = sortedCrops.map((crop, index) => ({
       rank: index+1,
       crop,
-      neighbourhoodPerf: `${Math.round(projectedData[crop].avgNePerf)}% \u00B1 ${Math.round(projectedData[crop].stdNePerf)}%`,
-      nationalPerf: `${Math.round(projectedData[crop].avgNaPerf)}% \u00B1 ${Math.round(projectedData[crop].stdNaPerf)}%`,
+      neighbourhoodPerf: `${Math.round(projectedData[crop].avgNePerf)} \u00B1 ${Math.round(projectedData[crop].stdNePerf)}`,
+      nationalPerf: `${Math.round(projectedData[crop].avgNaPerf)} \u00B1 ${Math.round(projectedData[crop].stdNaPerf)}`,
     }));
       
     return (
@@ -91,18 +91,18 @@ const EstimatedYield = ({ lat, lng, historicData, projectedData, cropHeatMapData
       return cropHeatMapData[a].variation - cropHeatMapData[b].variation;
     });
 
-    const headers = ['Rank','Crop', 'Average', 'Variation'];
+    const headers = ['Rank','Crop', 'Average (Bushels/Acre)', 'Variation (%)'];
     const data = sortedCrops.map((crop, index) => ({
       rank: index+1,
       crop,
-      average: `${Math.round(cropHeatMapData[crop].avg)} \u00B1 ${Math.round(cropHeatMapData[crop].std)}`,
-      variation: `${(cropHeatMapData[crop].variation).toFixed(3)}`,
+      average: `${(cropHeatMapData[crop].avg).toFixed(2)} \u00B1 ${(cropHeatMapData[crop].std).toFixed(2)}`,
+      variation: `${(cropHeatMapData[crop].variation * 100).toFixed(2)}`,
     }));
       
     return (
       <div>
         <div className={`${montserrat.className} mb-4 mx-4`}>
-          Average Yield Across Property (Bushels/Acre)
+          Average Yield Across Property
         </div>
         <div className="mb-4">
           <PlainTable
@@ -141,12 +141,12 @@ const EstimatedYield = ({ lat, lng, historicData, projectedData, cropHeatMapData
                 </div>
               </div>
               <div className="flex justify-between mb-2 mx-4">
-                <div className="">Average Yield vs Neighbourhood:</div>
-                <div className="">{historicData.avgNePerf}%</div>
+                <div className="">Average Property Yield Relative to Neighbourhood (%):</div>
+                <div className="">{`${Math.round(historicData.avgNePerf)} \u00B1 ${Math.round(historicData.stdNePerf)}`}</div>
               </div>
               <div className="flex justify-between mb-2 mx-4">
-                <div className="">Average Yield vs National:</div>
-                <div className="">{historicData.avgNaPerf}</div>
+                <div className="">Average Property Yield Relative to National (%):</div>
+                <div className="">{`${Math.round(historicData.avgNaPerf)} \u00B1 ${Math.round(historicData.stdNaPerf)}`}</div>
               </div>
             </div>
             <div className="w-[60%]">

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { montserrat, merriweather } from '@/ui/fonts';
 import Dropdown from '@/components/Dropdown';
@@ -167,44 +169,6 @@ const Climate = (
     }  
   }, [tempYear, climateData]);
 
-  // useEffect(() => {
-  //   if (climateData && precipYear) {
-  //     const yearlyData = climateData[precipYear].weatherData;
-  //     if (Object.keys(yearlyData).length > 0) {
-  //       const daysPerWeek = 7;
-  //       const weeklyAvgs = [Array(52).fill(0), Array(52).fill(0), Array(52).fill(0)];
-  //       const counts = Array(52).fill(0);
-  //       const dates = Object.values(yearlyData).map((data: WeatherData) => data.dateStr);
-  //       const precip = Object.values(yearlyData).map((data: WeatherData) => data.precip);
-  //       const temp = Object.values(yearlyData).map((data: WeatherData) => data.temp);
-  //       const dew = Object.values(yearlyData).map((data: WeatherData) => data.dew);
-          
-  //       dates.forEach((date: string, index: number) => {
-  //         const weekIndex = Math.min(51,Math.floor(index / daysPerWeek));
-  //         weeklyAvgs[0][weekIndex] += precip[index];
-  //         weeklyAvgs[1][weekIndex] += temp[index];
-  //         weeklyAvgs[2][weekIndex] += dew[index];
-  //         counts[weekIndex] += 1;
-  //       });
-
-  //       weeklyAvgs.forEach((metricArray, metricIndex) => {
-  //         weeklyAvgs[metricIndex] = metricArray.map((sum, weekIndex) => 
-  //           counts[weekIndex] > 0 ? sum / counts[weekIndex] : 0
-  //         );
-  //       });
-       
-  //       const xValues = Array.from({ length: 52 }, (_, i) => i + 1);
-  //       const xNames = xValues.map(x => getWeekDateRange(x));
-  //       setPrecipData({ 
-  //         precip: weeklyAvgs[0], 
-  //         temp: weeklyAvgs[1], 
-  //         dew: weeklyAvgs[2], 
-  //         xValues, 
-  //         xNames 
-  //       });
-  //     }        
-  //   }
-  // }, [precipYear, climateData]);
   useEffect(() => {
     if (precipYear && climateData) {
       const yearlyData = climateData[precipYear].weatherData;
@@ -594,14 +558,6 @@ const Climate = (
         <Loading />
       )}
       </div>
-      {/* <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Climate Resilience</div>
-        <p>Climate projections and proximity to mitigation features.</p>
-      </div>
-      <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Flood Risk</div>
-        <p>Vulnerability of the land to seasonal flooding or waterlogging.</p>
-      </div> */}
     </div>
   );
 };

@@ -1,3 +1,5 @@
+'use client';
+
 import chroma from 'chroma-js';
 import { getStats } from '@/utils/stats';
 import { colorSet, rangeColors, heatColors } from '@/types/colorPalettes';

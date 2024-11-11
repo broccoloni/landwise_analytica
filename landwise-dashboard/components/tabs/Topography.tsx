@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import dynamic from 'next/dynamic';
@@ -315,16 +317,6 @@ const Topography = (
           <Loading />
         )}
       </div>
-        
-      {/* <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Water Pooling Potential</div>
-        <p>Based on slope/gradient of land. Could also quantify based on the amount of land with different slopes, e.g., 75% of land has less than a 3% slope.</p>
-      </div>
-
-      <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Drainage Systems</div>
-        <p>Presence and effectiveness of natural or man-made drainage systems.</p>
-      </div> */}
     </div>
   );
 };

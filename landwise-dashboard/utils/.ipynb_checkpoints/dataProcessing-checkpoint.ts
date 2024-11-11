@@ -1,3 +1,5 @@
+'use client';
+
 import { calculateGrowingSeason, calculateCornHeatUnits, calculateGDD } from '@/utils/climateUtils';
 import { MajorCommodityCrop, majorCommodityCrops } from '@/types/majorCommodityCrops';
 import { cropNames, soilTaxonomyNames, soilTextureNames } from '@/types/valuesToNames';
@@ -235,8 +237,8 @@ export const processCropHeatmapData = (data) => {
     const cropHeatmapData = {};
 
     Object.entries(cropHeatmaps).forEach(([crop, heatmap]) => {
-      console.log(crop, heatmap);
       const heatmapData = getImageAndStats(heatmap, scale, heatColors);
+
       cropHeatmapData[crop] = {
         ...heatmapData,
         variation: heatmapData.std / (heatmapData.avg ?? 1),

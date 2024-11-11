@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useFetchDownloadedData } from '@/hooks/useFetchDownloadedData';
 import { useFetchCropHeatmaps } from '@/hooks/useFetchCropHeatmaps';

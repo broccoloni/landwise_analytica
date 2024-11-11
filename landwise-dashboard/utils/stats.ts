@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Calculate the minimum, maximum, average, and standard deviation of an array of numbers, skipping null values.
  * @param numbers Array of numbers to calculate statistics.

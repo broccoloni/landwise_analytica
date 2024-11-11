@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { majorCommodityCrops, majorCommodityThresholds } from '@/types/majorCommodityCrops';
 import { CropData } from '@/types/category';
