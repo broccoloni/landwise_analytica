@@ -7,30 +7,24 @@ import Container from '@/components/Container';
 import AddressDisplay from '@/components/AddressDisplay';
 import SummaryScore from '@/components/SummaryScore';
 
+// Tabs
 import EstimatedYield from '@/components/tabs/EstimatedYield';
 import Climate from '@/components/tabs/Climate';
 import Topography from '@/components/tabs/Topography';
 import Soil from '@/components/tabs/Soil';
 
 import { useFetchDemoData } from '@/hooks/useFetchDemoData';
-import { 
-  processHistoricData,
-  processProjectedData,
-  processCropHeatmapData, 
-  processClimateData, 
-  processLandUseData, 
-  processElevationData, 
-  processWindData, 
-  processSoilData 
-} from '@/utils/dataProcessing';
+import { saveData } from '@/utils/save';
 
-// const basePath = '/landwise_analytica';
-const basePath = '';
+import { ImageAndStats, ImageAndLegend, PerformanceData } from '@/types/dataTypes';
+
+const basePath = '/landwise_analytica';
+// const basePath = '';
 
 const DEMO_ADDRESS = {
   address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
-  lat: "43.6929954",
-  lng: "-80.3071343",
+  lat: 43.6929954,
+  lng: -80.3071343,
   components: {
     "street_number": "8159",
     "route": "Side Road 30",
@@ -51,19 +45,20 @@ export default function Home() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
-  const [landGeometry, setLandGeometry] = useState<number[][]>([]);
-
+    
   // Processed Demo Data
-  const [historicData, setHistoricData] = useState(null);
-  const [projectedData, setProjectedData] = useState(null);
-  const [cropHeatMapData, setCropHeatMapData] = useState(null);
-  const [climateData, setClimateData] = useState(null);
-  const [elevationData, setElevationData] = useState(null);
-  const [windData, setWindData] = useState(null);
-  const [cropData, setCropData] = useState(null);
-  const [landUseData, setLandUseData] = useState(null);
-  const [soilData, setSoilData] = useState(null);
-  const [bbox, setBbox] = useState<number[] | null>(null);
+  const [historicData, setHistoricData] = useState<PerformanceData|null>(null);
+  const [projectedData, setProjectedData] = useState<Record<string, PerformanceData>|null>(null);
+  const [cropHeatMapData, setCropHeatMapData] = useState<Record<string, ImageAndStats>|null>(null);
+  const [heatUnitData, setHeatUnitData] = useState(null);
+  const [growingSeasonData, setGrowingSeasonData] = useState(null);
+  const [climateData, setClimateData] = useState<any>(null);
+  const [elevationData, setElevationData] = useState<Record<string, ImageAndStats>|null>(null);
+  const [windData, setWindData] = useState<Record<string, ImageAndStats>|null>(null);
+  const [cropData, setCropData] = useState<any>(null);
+  const [landUseData, setLandUseData] = useState<Record<number, ImageAndLegend>|null>(null);
+  const [soilData, setSoilData] = useState<any>(null);
+  const [bbox, setBbox] = useState<number[][] | null>(null);
     
   // Scores
   const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
@@ -82,18 +77,22 @@ export default function Home() {
   // Load demo data
   const { demoData, isLoading, error } = useFetchDemoData(basePath);
   useEffect(() => {
+    console.log("Demo data:", demoData);
     if (!isLoading && demoData) {
-      setLatitude(demoData.centroid[0]);
-      setLongitude(demoData.centroid[1]);
+      // saveData(demoData, 'demoData.json');
+      setLatitude(demoData.latitude);
+      setLongitude(demoData.longitude);
       setBbox(demoData.bbox);
-      setHistoricData(processHistoricData(demoData));
-      setProjectedData(processProjectedData(demoData));
-      setCropHeatMapData(processCropHeatmapData(demoData));
-      setClimateData(processClimateData(demoData));
-      setElevationData(processElevationData(demoData));
-      setLandUseData(processLandUseData(demoData));
-      setWindData(processWindData(demoData));
-      setSoilData(processSoilData(demoData));
+      setHistoricData(demoData.historicData);
+      setProjectedData(demoData.projectedData);
+      setCropHeatMapData(demoData.cropHeatMapData);
+      setHeatUnitData(demoData.heatUnitData);
+      setGrowingSeasonData(demoData.growingSeasonData);
+      setClimateData(demoData.climateData);
+      setElevationData(demoData.elevationData);
+      setLandUseData(demoData.landUseData);
+      setWindData(demoData.windData);
+      setSoilData(demoData.soilData);
     }
   }, [demoData, isLoading, error]);
 
@@ -125,6 +124,8 @@ export default function Home() {
           <Climate
             lat={latitude}
             lng={longitude}
+            heatUnitData={heatUnitData}
+            growingSeasonData={growingSeasonData}
             climateData={climateData}
             score={climateScore}
             setScore={setClimateScore}

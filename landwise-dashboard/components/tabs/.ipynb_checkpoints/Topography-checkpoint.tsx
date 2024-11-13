@@ -10,30 +10,31 @@ import ColorBar from '@/components/ColorBar';
 import { Slider } from "@mui/material";
 import PlainTable from '@/components/PlainTable';
 import WindDirectionDisplay from "@/components/WindDirectionDisplay";
-import { RasterData, ElevationData, LandUseData, WindData } from '@/types/category';
+import { ImageAndLegend, ImageAndStats, PerformanceData} from '@/types/dataTypes';
 import { rangeColors } from '@/types/colorPalettes';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
 const Topography = (
   { lat, lng, landUseData, elevationData, windData, bbox, score, setScore }: 
-  { lat: number; lng: number; landUseData: { [key: number]: LandUseData } | null; elevationData: ElevationData; windData: WindData;
-    bbox: number[]; score: number | null; setScore: React.Dispatch<React.SetStateAction<number | null>>; }) => {
+  { lat: number|null; lng: number|null; elevationData: Record<string, ImageAndStats>|null; landUseData: Record<number, ImageAndLegend>|null;
+    windData: Record<string, ImageAndStats>|null; bbox: number[][]|null; score: number | null; 
+    setScore: React.Dispatch<React.SetStateAction<number | null>>; }) => {
 
   // Land Use
   const [landUsageYears, setLandUsageYears] = useState<number[]>([]);
   const [landUsageYear, setLandUsageYear] = useState<number | null>(null);
-  const [curLandUseData, setCurLandUseData] = useState<LandUseData | null>(null);
+  const [curLandUseData, setCurLandUseData] = useState<ImageAndLegend | null>(null);
   const [avgArea, setAvgArea] = useState<number | null>(null);
   const [avgCropArea, setAvgCropArea] = useState<number | null>(null);
 
   // Elevation
   const [elevationView, setElevationView] = useState<'Elevation' | 'Slope' | 'Convexity'>('Elevation');
-  const [curElevationData, setCurElevationData] = useState<any>(null);
+  const [curElevationData, setCurElevationData] = useState<ImageAndStats|null>(null);
 
   // Wind exposure    
   const [windExposureType, setWindExposureType] = useState<'Wind' | 'Gust'>('Wind');
-  const [curWindExposure, setCurWindExposure] = useState<any>(null);
+  const [curWindExposure, setCurWindExposure] = useState<ImageAndStats|null>(null);
   
   const metersPerPixel = 30;
   const sqMetersPerAcre = 4046.8565;
@@ -96,27 +97,11 @@ const Topography = (
     if (windExposureType && windData) {
       switch (windExposureType) {
         case 'Wind':
-          setCurWindExposure({
-            imageUrl: windData.windExposureUrl,
-            min: windData.minWindExposure,
-            max: windData.maxWindExposure,
-            avg: windData.avgWindExposure,
-            std: windData.stdWindExposure,
-            avgDir: windData.avgWindDir,
-            stdDir: windData.stdWindDir
-          });
+          setCurWindExposure(windData.wind);
           break;
     
         case 'Gust':
-          setCurWindExposure({
-            imageUrl: windData.gustExposureUrl,
-            min: windData.minGustExposure,
-            max: windData.maxGustExposure,
-            avg: windData.avgGustExposure,
-            std: windData.stdGustExposure,
-            avgDir: windData.avgGustDir,
-            stdDir: windData.stdGustDir,
-          });
+          setCurWindExposure(windData.gust);
           break;
     
         default:
@@ -263,11 +248,11 @@ const Topography = (
                 data={[
                   { 
                     type:'Wind Speed', 
-                    avg:`${windData.avgWindSpeed.toFixed(2)} \u00B1 ${windData.stdWindSpeed.toFixed(2)}`,
+                    avg:`${(windData?.wind?.avg ?? 0).toFixed(2)} \u00B1 ${(windData?.wind?.std ?? 0).toFixed(2)}`,
                   },
                   { 
                     type:'Wind Gust', 
-                    avg:`${windData.avgGustSpeed.toFixed(2)} \u00B1 ${windData.stdGustSpeed.toFixed(2)}`,
+                    avg:`${(windData?.gust?.avg ?? 0).toFixed(2)} \u00B1 ${(windData?.gust?.std ?? 0).toFixed(2)}`,
                   },
                 ]}
               />

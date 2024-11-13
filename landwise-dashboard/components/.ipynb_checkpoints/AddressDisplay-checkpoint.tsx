@@ -11,9 +11,9 @@ type AddressComponents = {
 };
 
 type AddressProps = {
-  addressComponents: AddressComponents;
-  latitude: string|number;
-  longitude: string|number;
+  addressComponents: Record<string, string>|null;
+  latitude: number|null;
+  longitude: number|null;
 };
 
 const AddressDisplay = ({ addressComponents, latitude, longitude }: AddressProps) => {
