@@ -18,6 +18,7 @@ export const useFetchDemoData = (basePath: string) => {
         }
 
         const jsonData = await response.json();
+          
         setDemoData(jsonData as DemoData);  
       } catch (err: any) {
         setError(err.message);
