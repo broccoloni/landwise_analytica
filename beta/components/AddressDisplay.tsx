@@ -1,22 +1,16 @@
 import React from 'react';
 
-type AddressComponents = {
-  street_number: string;
-  route: string;
-  locality: string;
-  postal_code: string;
-  administrative_area_level_1: string;
-  administrative_area_level_2: string;
-  country: string;
-};
-
 type AddressProps = {
-  addressComponents: AddressComponents;
-  latitude: string|number;
-  longitude: string|number;
+  addressComponents: Record<string, string>|null;
+  latitude: number|null;
+  longitude: number|null;
 };
 
 const AddressDisplay = ({ addressComponents, latitude, longitude }: AddressProps) => {
+  if (!addressComponents) {
+    return null;
+  }
+    
   return (
     <div className="w-full">
       <div className="flex justify-between mb-2">

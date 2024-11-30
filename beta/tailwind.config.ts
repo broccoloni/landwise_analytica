@@ -11,11 +11,26 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        accent: {
-          DEFAULT: 'var(--accent)',
-          light: 'var(--accent-light)',
-          medium: 'var(--accent-medium)',
-          dark: 'var(--accent-dark)',
+        light: {
+          DEFAULT: 'var(--light-green)',
+          green: 'var(--light-green)',
+          yellow: 'var(--light-yellow)',
+          blue: 'var(--light-blue)',
+          brown: 'var(--light-brown)',
+        },
+        medium: {
+          DEFAULT: 'var(--medium-green)',
+          green: 'var(--medium-green)',
+          yellow: 'var(--medium-yellow)',
+          orange: 'var(--medium-orange)',
+          brown: 'var(--medium-brown)',
+        },
+        dark: {
+          DEFAULT: 'var(--dark-green)',
+          green: 'var(--dark-green)',
+          olive: 'var(--dark-olive)',
+          blue: 'var(--dark-blue)',
+          brown: 'var(--dark-brown)',
         },
       },
     },

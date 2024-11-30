@@ -18,19 +18,22 @@ const ScrollToTop = () => {
   };
 
   useEffect(() => {
-    window.addEventListener('scroll', toggleVisibility);
+    // Wait until component fully mounts to add scroll listener
+    // Otherwise it scrolls down on page load
+    const handleScroll = () => toggleVisibility();
+    setTimeout(() => window.addEventListener('scroll', handleScroll), 0);
 
     return () => {
-      window.removeEventListener('scroll', toggleVisibility);
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, []); // Only run once on mount
+  }, []);
 
   return (
     <div className="fixed bottom-10 right-10">
       {isVisible && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="flex px-4 py-2 rounded-full bg-accent-medium text-white shadow-lg hover:opacity-75 transition duration-300"
+          className="flex px-4 py-2 rounded-full bg-medium text-white shadow-lg hover:opacity-75 transition duration-300"
         >
           <p className="font-bold mr-2">Scroll Up</p>
           <ArrowUp className="w-6 h-6" />

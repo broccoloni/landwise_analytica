@@ -45,7 +45,7 @@ const Dropdown: React.FC<DropdownProps> = ({ options, selected, onSelect, classN
                 onSelect(option);
                 setIsOpen(false);
               }}
-              className={`p-2 cursor-pointer hover:bg-accent-medium hover:text-white border-b border-gray-300 ${index === options.length - 1 ? 'border-b-0' : ''}`}
+              className={`p-2 cursor-pointer hover:bg-medium hover:text-white border-b border-gray-300 ${index === options.length - 1 ? 'border-b-0' : ''}`}
             >
               {option}
             </li>

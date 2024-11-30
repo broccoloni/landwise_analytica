@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import ScrollToTop from '@/components/ScrollToTop';
+import Footer from '@/components/Footer';
 import '@/ui/globals.css';
 
 export const metadata = {
@@ -18,13 +18,15 @@ export default function RootLayout({
     
   return (
     <html lang="en">
-      <body>
-        <div className="h-full min-h-screen text-white w-auto bg-accent-light">
+      <body className="h-full">
+        <div className="min-h-screen w-full flex flex-col">
           <Header />
-          <div className="px-20 py-4">
+            
+          <main className="flex-1 bg-light-brown text-black">
             {children}
-          </div>
-          <ScrollToTop />
+          </main>
+            
+          <Footer />
         </div>
       </body>
     </html>

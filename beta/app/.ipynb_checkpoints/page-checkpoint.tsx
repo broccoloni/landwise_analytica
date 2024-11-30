@@ -1,66 +1,18 @@
 'use client';
 
-import Container from '@/components/Container';
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
-import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import Link from 'next/link';
 import AddressSearch from '@/components/AddressSearch';
-import { processClimateData, processLandUseData, processElevationData, processWindData, processSoilData } from '@/utils/dataProcessing';
+import Container from '@/components/Container';
+import { useState } from 'react';
 
-// import EstimatedYield from '@/components/EstimatedYield';
-import Climate from '@/components/Climate';
-import Topography from '@/components/Topography';
-import Soil from '@/components/Soil';
 
-// const basePath = '/landwise_analytica';
-const basePath = '';
-
-const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
-
-type TypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Float32Array | Float64Array;
-
-const DEMO_ADDRESS = {
-  address: "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
-  lat: "43.6929954",
-  lng: "-80.3071343",
-  components: {
-    "street_number": "8159",
-    "route": "Side Road 30",
-    "locality": "Rockwood",
-    "administrative_area_level_3": "Centre Wellington",
-    "administrative_area_level_2": "Wellington County",
-    "administrative_area_level_1": "ON",
-    "country": "CA",
-    "postal_code": "N0B 2K0"
-  },
-};
-
-export default function Search() {
-  // For property selection and definition
+export default function Home() {
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
-  const [landGeometry, setLandGeometry] = useState<number[][]>([]);
-
-  // State variables that stem from fetched ee data
-  const [climateData, setClimateData] = useState(null);
-  const [elevationData, setElevationData] = useState(null);
-  const [windData, setWindData] = useState(null);
-  const [cropData, setCropData] = useState(null);
-  const [landUseData, setLandUseData] = useState(null);
-  const [soilData, setSoilData] = useState(null);
-  const [bbox, setBbox] = useState<number[] | null>(null);
-
-  // Score trackers
-  // const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
-  const [climateScore, setClimateScore] = useState<number|null>(null);
-  const [topographyScore, setTopographyScore] = useState<number|null>(null);
-  const [soilScore, setSoilScore] = useState<number|null>(null);
-
-  // For managing report tabs
-  const [loadingData, setLoadingData] = useState(true);
-  const [activeTab, setActiveTab] = useState('Climate');
     
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {      
     setSelectedAddress(address);
@@ -69,244 +21,131 @@ export default function Search() {
     setAddressComponents(components);
   };
 
-  const handleUseDemoAddress = () => {
-    setSelectedAddress(DEMO_ADDRESS.address);
-    setLatitude(DEMO_ADDRESS.lat);
-    setLongitude(DEMO_ADDRESS.lng);
-    setAddressComponents(DEMO_ADDRESS.components);
-  };
-
-  const fetchEarthEngineData = async (points: number[][]) => {
-    try {
-      const response = await fetch('/api/getEarthEngineData', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ points }),
-      });
-        
-      if (!response.ok) {
-        throw new Error('Failed to fetch data from the API');
-      }
-
-      const data = await response.json();
     
-      setLatitude(data.centroid[0]);
-      setLongitude(data.centroid[1]);
-      setBbox(data.bbox);
-      setClimateData(processClimateData(data));
-      setElevationData(processElevationData(data));
-      setLandUseData(processLandUseData(data));
-      setWindData(processWindData(data));
-      setSoilData(processSoilData(data));
-        
-      console.log('Fetched Earth Engine data:', data);
-      setLoadingData(false);
-        
-    } catch (error) {
-      console.error('Error fetching Earth Engine data:', error);
-    }
-  };
-    
-  useEffect(() => {
-    if (landGeometry.length > 0) {
-      fetchEarthEngineData(landGeometry);
-    }
-  }, [landGeometry]);
-    
-  const PrintGeometry = () => {
-    if (landGeometry.length === 0) {
-      return null;
-    }
-    return (
-      <div className="">
-        {landGeometry.map((point, index) => (
-          <div key={index} className="pb-2">
-            <span className="mr-4">Point {index + 1}:</span> 
-            <span>Longitude: {point[0]}</span>, <span>Latitude: {point[1]}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderActiveComponent = () => {
-    switch (activeTab) {
-      // case 'EstimatedYield':
-      //   return (
-      //     <EstimatedYield
-      //       lat={lat}
-      //       lng={lng}
-      //       rasterDataCache={rasterDataCache}
-      //       elevationData={elevationData}
-      //       cropHeatMaps={cropHeatMaps}
-      //       yearlyYields={yearlyYields}
-      //       climateData={climateData}
-      //       score={estimatedYieldScore}
-      //       setScore={setEstimatedYieldScore}
-      //     />
-      //   );
-      case 'Climate':
-        return (
-          <Climate
-            lat={latitude}
-            lng={longitude}
-            climateData={climateData}
-            score={climateScore}
-            setScore={setClimateScore}
-          />
-        );      
-      case 'Topography':
-        return (
-          <Topography
-            lat={latitude}
-            lng={longitude}
-            landUseData = {landUseData}
-            elevationData = {elevationData}
-            windData = {windData}
-            bbox = {bbox}
-            score={topographyScore}
-            setScore={setTopographyScore}
-          />
-        );
-      case 'Soil':
-        return (
-          <Soil
-            lat={latitude}
-            lng={longitude}
-            soilData={soilData}
-            bbox = {bbox}
-            score={soilScore}
-            setScore={setSoilScore}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  const tabs = [
-    // 'EstimatedYield',
-    'Climate',
-    'Topography',
-    'Soil',
-  ];
-
   return (
-    <div className={`${roboto.className} bg-accent-light text-black`}>
-      <div className="relative m-4">
-        <Container className="mb-4">
-          <section id="search">
-            <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-              Search
+    <div className="">
+      <div className="px-40 py-20">
+        <div className="flex justify-between items-center">
+          <div className="w-[50%]">
+            <div className="flex-row justify-center items-center">
+              <div className={`${roboto.className} font-bold text-center text-[32px] mb-4`}>
+                Modernize the way you buy farmland
+              </div>
+              <div className="flex justify-center mb-12">
+                <div className="w-[90%] text-dark-blue">
+                  Our reports provide data-driven insights that are essential to a property's land suitability
+                </div>
+              </div>
+              <div className="flex justify-center mb-4">
+                <div className="w-[90%]">
+                  <AddressSearch
+                    onAddressSelect={handleAddressSelect} 
+                    prompt="Search for an address" 
+                  />
+                </div>
+              </div>
+              <div className="flex justify-center mb-4">
+                Or
+              </div>
+              <div className="flex justify-center mb-4">
+                <div className="bg-medium-brown rounded-lg px-4 py-2 w-[90%] text-center hover:opacity-75">
+                  <Link
+                    href="get-a-report"
+                    className="text-md text-white"
+                  >
+                    Get a Report
+                  </Link>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <Link
+                  href="/view-sample-report"
+                  className="text-md text-black hover:text-medium-brown hover:underline"
+                >
+                  View a Sample Report
+                </Link>
+              </div>
             </div>
-            <div className="mb-2">
-              Search for an address 
-            </div>
-            <div className = "mb-4">
-              <AddressSearch 
-                onAddressSelect={handleAddressSelect} 
-                prompt="Search for an address" 
+          </div>
+          <div className="w-[50%]">
+            <div className="flex justify-end">
+              <Image
+                src={'satelliteToHeatmap.png'}
+                width={500}
+                height={600}
+                className="rounded-xl"
               />
             </div>
-            <div className="">
-              <button
-                className="bg-accent-medium rounded-lg px-4 py-2 text-white hover:opacity-75"
-                onClick={handleUseDemoAddress}
-              >
-                Use Demo Address
-              </button>
+          </div>
+        </div>
+      </div>
+        
+      <div className="px-40 py-20 bg-white">
+        <div className="flex-row justify-center">
+          <div className="">
+            <div className={`${roboto.className} font-bold text-4xl mb-8 text-dark-blue`}>
+              Farming is ancient; The way you buy land doesn’t need to be.
             </div>
-          </section>
-        </Container>
-        {selectedAddress && (
-          <>
-            <Container className="mb-4">
-              <section id="property">
-                <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-                  Property
-                </div>
-                <div className="sm:flex flex-row">
-                  <div className="w-full">
-                    <div className="flex justify-between mb-2">
-                      <p className="mr-4">Address:</p>
-                      <p>{addressComponents.street_number} {addressComponents.route}</p>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <p className="mr-4">Locality:</p>
-                      <p>{addressComponents.locality}</p>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <p className="mr-4">Postal Code:</p>
-                      <p>{addressComponents.postal_code}</p>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <p className="mr-4">State:</p>
-                      <p>{addressComponents.administrative_area_level_1}</p>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <p className="mr-4">County:</p>
-                      <p>{addressComponents.administrative_area_level_2}</p>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <p className="mr-4">Country:</p>
-                      <p>{addressComponents.country}</p>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <p className="mr-4">Longitude:</p>
-                      <p>{longitude}</p>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <p className="mr-4">Latitude:</p>
-                      <p>{latitude}</p>
-                    </div>
-                  </div>
-                  <div className="sm:ml-4 sm:mt-0 mt-4 w-full">
-                    <div className='w-full h-full flex justify-center items-center text-center'>
-                      Image of address (not implemented yet)
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </Container>
-            <Container className="mb-4">
-              <section id="Map">
-                <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-                  Map
-                </div>
-                <div className="w-full h-full flex justify-center items-center">
-                  <MapDrawing latitude={latitude} longitude={longitude} zoom={15} setLandGeometry={setLandGeometry} />
-                </div>
-              </section>
-            </Container>
-          </>
-        )}
-        {landGeometry.length > 0 && (
-          <>
-            <Container className="mb-4">
-              <section id='report'>
-                <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-                  Report
-                </div>
-                <div className="flex justify-center space-x-8 border-b border-accent-dark mb-4 mt-10">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`py-2 px-4 w-48 rounded-t-lg ${
-                        activeTab === tab ? 'bg-accent-dark text-white' : 'text-black'
-                      } hover:bg-accent-dark hover:opacity-75 hover:text-white`}
-                    >
-                      {tab.replace(/([A-Z])/g, ' $1')}
-                    </button>
-                  ))}
-                </div>
-                <div>{renderActiveComponent()}</div>
-              </section>
-            </Container>
-          </>
-        )}
+            <div className="text-xl mb-12">
+              Our platform provides you with essential land suitability insights, helping you make better-informed decisions. Here are just a few of the key data points we evaluate:
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            <div className="flex justify-center items-center">
+              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 h-64 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+                <div className="font-semibold text-xl mb-2 text-medium-brown">Estimated Yields</div>
+                <ul className="list-disc space-y-2 pl-3">
+                  <li>Historic crop production</li>
+                  <li>Predicted future crop production</li>
+                  <li>Crop specific yield consistency</li>
+                </ul>
+              </Container>
+            </div>
+        
+            <div className="flex justify-center items-center">
+              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 h-64 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+                <div className="font-semibold text-xl mb-2 text-medium-brown">Climate</div>
+                <ul className="list-disc space-y-2 pl-3">
+                  <li>Historic precipitation, dew point & temperatures</li>
+                  <li>Historic growing degree days & corn heat units</li>
+                  <li>Historic growing seasons</li>
+                </ul>
+              </Container>
+            </div>
+        
+            <div className="flex justify-center items-center">
+              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 h-64 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+                <div className="font-semibold text-xl mb-2 text-medium-brown">Topography</div>
+                <ul className="list-disc space-y-2 pl-3">
+                  <li>Property area & layout</li>
+                  <li>Elevation & slope data</li>
+                  <li>Historic wind & gust exposure</li>
+                </ul>
+              </Container>
+            </div>
+
+            <div className="flex justify-center items-center">
+              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 h-64 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+                <div className="font-semibold text-xl mb-2 text-medium-brown">Soil</div>
+                <ul className="list-disc space-y-2 pl-3">
+                  <li>Taxonomy & Texture</li>
+                  <li>Water, sand, clay & organic carbon content</li>
+                  <li>pH & bulk density</li>
+                </ul>
+              </Container>
+            </div>
+          </div>
+          <div className="flex justify-center">
+            <div className="bg-medium-brown rounded-lg px-4 py-2 w-64 text-center hover:opacity-75">
+              <Link
+                href="/view-sample-report"
+                className="text-md text-white"
+              >
+                View a Sample Report
+              </Link>
+            </div>
+          </div>       
+        </div>
       </div>
     </div>
   );
