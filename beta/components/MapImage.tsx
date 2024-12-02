@@ -22,7 +22,8 @@ const ChangeView = ({ lat, lng, zoom, bbox }: { lat: number; lng: number; zoom: 
 
 const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox=[], imageUrl='' }) => {
   const [isClient, setIsClient] = useState(false);
-
+  const [opacity, setOpacity] = useState(0.8);
+    
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -47,12 +48,12 @@ const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox=[],
   }
 
   return (
-    <div className="">
+    <div className="relative">
       <MapContainer
         style={{ height: "400px", width: "100%" }}
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         />
         <ScaleControl position="bottomleft" maxWidth={200} metric={true} imperial={true} />
         {imageUrl && bbox && (
@@ -61,10 +62,28 @@ const MapImage: React.FC<MapImageProps> = ({ latitude, longitude, zoom, bbox=[],
             <ImageOverlay
               url={imageUrl}
               bounds={bbox}
+              opacity={opacity}
             />
           </>
         )}
       </MapContainer>
+
+      <div className="absolute top-4 right-4 z-10 bg-white p-2 rounded shadow">
+        <label htmlFor="opacity-slider" className="block text-sm font-medium text-gray-700">
+          Adjust Transparency: {opacity}
+        </label>
+        <input
+          id="opacity-slider"
+          type="range"
+          min="0"
+          max="1"
+          step="0.1"
+          value={opacity}
+          onChange={(e) => setOpacity(parseFloat(e.target.value))}
+          className="mt-1 w-full"
+        />
+      </div>
+        
       <style jsx global>{`
         .leaflet-control {
           z-index: 0 !important;

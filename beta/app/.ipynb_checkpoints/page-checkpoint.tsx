@@ -33,7 +33,7 @@ export default function Home() {
               </div>
               <div className="flex justify-center mb-12">
                 <div className="w-[90%] text-dark-blue">
-                  Our reports provide data-driven insights that are essential to a property's land suitability
+                  Our reports provide data-driven insights essential for land suitability assessments, all with just a few clicks
                 </div>
               </div>
               <div className="flex justify-center mb-4">

@@ -1,11 +1,14 @@
 'use client';
 
-import { montserrat, roboto, merriweather } from '@/ui/fonts';
+import { montserrat, roboto, merriweather, raleway } from '@/ui/fonts';
 import { useState, useEffect } from 'react';
 
 import Container from '@/components/Container';
 import AddressDisplay from '@/components/AddressDisplay';
 import SummaryScore from '@/components/SummaryScore';
+
+import PrintButton from '@/components/PrintButton';
+import DownloadPDF from '@/components/DownloadPDF';
 
 // Tabs
 import EstimatedYield from '@/components/tabs/EstimatedYield';
@@ -159,11 +162,28 @@ export default function SampleReport() {
         return null;
     }
   };
+
+  const reportId = 'XXXX-XXXX-XXXX'
+  const reportDate = '02-12-2024'
     
   return (
     <div className={`${roboto.className} text-black`}>
-      <div className="relative py-8">
-        <Container className="">
+      <div className="relative py-20">
+        <div className="flex justify-between mb-4">
+          <div className={`${montserrat.className} text-xl flex justify-center items-center space-x-4`}> 
+            <div className="">
+              Report: {reportId}
+            </div>
+            <div className="">
+              Date: {reportDate}
+            </div>
+          </div>
+          <div className="space-x-4 flex">
+            <DownloadPDF elementId={'report'} filename={`report-${reportId}.pdf`}/>
+            <PrintButton />
+          </div>
+        </div>
+        <Container className="" id="report">
           <section id="summary">
             <div className={`${montserrat.className} text-medium-brown text-2xl mb-2 w-full text-center`}>
               THIS IS A SAMPLE REPORT!
