@@ -64,7 +64,7 @@ export default function WhyBuyReport() {
           <div className="flex justify-center mb-4">
             <div className="bg-medium-brown rounded-lg px-4 py-2 w-64 text-center hover:opacity-75">
               <Link
-                href="buy-a-report"
+                href="get-a-report"
                 className="text-md text-white"
               >
                 Get Your Report Now

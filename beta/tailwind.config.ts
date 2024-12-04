@@ -33,6 +33,9 @@ const config: Config = {
           brown: 'var(--dark-brown)',
         },
       },
+      height: {
+        '86': '344px',
+      },
     },
   },
   plugins: [],

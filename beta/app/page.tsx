@@ -3,7 +3,7 @@
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
 import Image from 'next/image';
 import Link from 'next/link';
-import AddressSearch from '@/components/AddressSearch';
+import AddressSearchWithButton from '@/components/AddressSearchWithButton';
 import Container from '@/components/Container';
 import { useState } from 'react';
 
@@ -21,6 +21,9 @@ export default function Home() {
     setAddressComponents(components);
   };
 
+  const handleAddressSubmit = () => {
+    console.log("Submitting address:", selectedAddress);
+  };
     
   return (
     <div className="">
@@ -38,9 +41,10 @@ export default function Home() {
               </div>
               <div className="flex justify-center mb-4">
                 <div className="w-[90%]">
-                  <AddressSearch
+                  <AddressSearchWithButton
                     onAddressSelect={handleAddressSelect} 
                     prompt="Search for an address" 
+                    onSubmit={handleAddressSubmit}
                   />
                 </div>
               </div>

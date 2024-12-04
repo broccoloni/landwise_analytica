@@ -1,9 +1,84 @@
+'use client';
+
+import { useState } from 'react';
 import { montserrat, roboto, merriweather, raleway } from '@/ui/fonts';
+import Link from 'next/link';
 
 export default function Terms() {
+  const [reportId, setReportId] = useState('');
+
+  const handleReportIdChange = (e) => {
+    let value = e.target.value.toUpperCase().replace(/[^A-Z]/g, ''); // Only allow uppercase letters
+      
+    // Format the value with dashes after every 4 characters
+    if (value.length > 3 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 4)) {
+      value = value.slice(0, 4) + '-' + value.slice(4);
+    }
+    if (value.length > 8 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 9)) {
+      value = value.slice(0, 9) + '-' + value.slice(9);
+    }
+      
+    setReportId(value);
+  };
+
+  const handleSubmit = () => {
+    console.log("Submitting report Id:", reportId);
+  };
+    
   return (
-    <div className="flex px-40 py-20">
-      <div className="text-4xl">Get a Report</div>
+    <div className={`${roboto.className} min-h-screen px-80 pt-10 flex-row justify-between`}>
+      <div className="py-10">
+        <div className="font-bold text-4xl mb-8">View an Existing Report</div>
+
+        <div className="text-2xl font-semibold mb-4">Enter Report ID</div>
+        <input
+          id="reportId"
+          type="text"
+          value={reportId}
+          onChange={handleReportIdChange}
+          maxLength={14}
+          className="mt-1 block w-full px-3 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="XXXX-XXXX-XXXX"
+        />
+
+        <div className="flex justify-center w-full">
+          <div className="">            
+            <button
+              onClick={handleSubmit}
+              disabled={reportId.length !== 14}
+              className="mt-4 bg-medium-brown text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+            >
+              View Report
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-between text-md mx-auto mt-10">
+        <div className="flex">
+          <div className="mr-4 my-auto">Haven't Bought a Report Yet?</div>
+          <div className="ml-auto">
+            <Link
+              href="/get-a-report"
+              className="my-auto text-black hover:text-medium-brown hover:underline"
+            >
+              Get One Now
+            </Link>
+          </div>
+        </div>
+        <div className="flex">
+          <div className="mr-4 my-auto">Haven't Redeemed Your Report?</div>
+          <div className="ml-auto">
+            <Link
+              href="/view-an-existing-report"
+              className="my-auto text-black hover:text-medium-brown hover:underline"
+            >
+              Redeem Your Report
+            </Link>
+          </div>
+        </div>
+      </div>
+        
     </div>
   );
 }

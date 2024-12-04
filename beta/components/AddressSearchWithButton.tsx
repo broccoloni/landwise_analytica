@@ -1,16 +1,19 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 
-type AddressSearchProps = {
+type AddressSearchWithButtonProps = {
   onAddressSelect: (address: string, lat: number, lng: number, addressComponents: Record<string, string>) => void;
   prompt: string;
+  onSubmit;
 };
 
-export default function AddressSearch({ onAddressSelect, prompt }: AddressSearchProps) {
+export default function AddressSearchWithButton({ onAddressSelect, prompt, onSubmit }: AddressSearchWithButtonProps) {
   const [googleApiKey, setGoogleApiKey] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState<boolean>(false);
+  const [addressSelected, setAddressSelected] = useState<boolean>(false);
 
   // Fetch the API key from the server-side API route
   const fetchGoogleMapsApiKey = async () => {
@@ -65,6 +68,7 @@ export default function AddressSearch({ onAddressSelect, prompt }: AddressSearch
         const lng = place.geometry.location.lng();
         const addressComponents = extractAddressComponents(place.address_components);
         onAddressSelect(place.formatted_address, lat, lng, addressComponents);
+        setAddressSelected(true);
       } else {
         console.error("No place details available");
       }
@@ -94,13 +98,20 @@ export default function AddressSearch({ onAddressSelect, prompt }: AddressSearch
   };
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full flex">
       <input
         type="text"
         ref={inputRef}
         placeholder={prompt}
-        className="w-full text-black px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500"
+        className="w-full text-black px-4 py-2 border border-gray-300 rounded-l-full focus:outline-none focus:ring-2 focus:ring-gray-500"
       />
+      <button 
+        onClick={onSubmit}
+        disabled={!addressSelected}
+        className="bg-medium-brown text-white px-6 py-2 rounded-r-full hover:opacity-75"
+      >
+        <Search className="w-5 h-5 text-white" />
+      </button>
     </div>
   );
 }

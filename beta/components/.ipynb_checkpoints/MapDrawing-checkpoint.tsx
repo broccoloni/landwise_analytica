@@ -9,7 +9,8 @@ interface MapDrawingProps {
   latitude: string | null;
   longitude: string | null;
   zoom: number;
-  setLandGeometry: React.Dispatch<React.SetStateAction<number[][]>>;
+  points: React.Dispatch<React.StateAction<number[][]>>;
+  setPoints: React.Dispatch<React.SetStateAction<number[][]>>;
 }
 
 const ChangeView = ({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) => {
@@ -29,9 +30,9 @@ export default function MapDrawing({
   latitude: initialLatitude,
   longitude: initialLongitude,
   zoom: initialZoom,
-  setLandGeometry,
+  points,
+  setPoints,
 }: MapDrawingProps) {
-  const [points, setPoints] = useState<number[][]>([]);
   const [hoverPoint, setHoverPoint] = useState<number[] | null>(null);
   const [isPolygonClosed, setIsPolygonClosed] = useState(false);
   const [latitude, setLatitude] = useState<string>(initialLatitude);
@@ -118,17 +119,17 @@ export default function MapDrawing({
     setHoverPoint(null);
   };
 
-  const handleGenerateReport = () => {
-    // reverse the order of the points [[lat1,lng1],[lat2,lng2],...]
-    // to [[lng1,lat1],[lng2,lat2],...] because google earth engine
-    // requires longitude first
-    const reversedPoints = points.map(([lat, lng]) => [lng, lat]);
+  // const handleGenerateReport = () => {
+  //   // reverse the order of the points [[lat1,lng1],[lat2,lng2],...]
+  //   // to [[lng1,lat1],[lng2,lat2],...] because google earth engine
+  //   // requires longitude first
+  //   const reversedPoints = points.map(([lat, lng]) => [lng, lat]);
       
-    setLandGeometry(reversedPoints);
-    setIsPolygonClosed(true);
-    setIsPlacingMode(false);
-    setHoverPoint(null);
-  };
+  //   setLandGeometry(reversedPoints);
+  //   setIsPolygonClosed(true);
+  //   setIsPlacingMode(false);
+  //   setHoverPoint(null);
+  // };
     
   const MapClickHandler = ({ onPointAdd, onPointHover, onPolygonClose, onZoomChange, onCenterChange }) => {
     const map = useMap();
@@ -190,7 +191,7 @@ export default function MapDrawing({
         <div className="">
           <div className="inline-flex justify-start rounded-md mr-4">
             <button
-              className={`py-2 px-4 bg-accent text-white ${!isPlacingMode && 'opacity-75'} border border-white rounded-l-md hover:opacity-75`}
+              className={`py-2 px-4 bg-medium-brown text-white ${!isPlacingMode && 'opacity-75'} border border-white rounded-l-md hover:opacity-75`}
               onClick={() => {
                 setIsPlacingMode(false);
                 if (!isPolygonClosed) {
@@ -201,7 +202,7 @@ export default function MapDrawing({
               <MousePointer />
             </button>
             <button
-              className={`py-2 px-4 bg-accent text-white ${isPlacingMode && 'opacity-75'} border border-white rounded-r-md hover:opacity-75`}
+              className={`py-2 px-4 bg-medium-brown text-white ${isPlacingMode && 'opacity-75'} border border-white rounded-r-md hover:opacity-75`}
               onClick={() => {
                 setIsPlacingMode(true);
                 setIsPolygonClosed(false); // Reopen the polygon when switching back to placing mode
@@ -210,37 +211,39 @@ export default function MapDrawing({
               <Dot />
             </button>
           </div>
+        </div>
+        <div className="">
           <div className="inline-flex rounded-md">
             <button
-              className="bg-accent text-white py-2 px-4 rounded-l-md border border-white hover:opacity-75"
+              className="bg-medium-brown text-white py-2 px-4 rounded-l-md border border-white hover:opacity-75"
               onClick={handleUndo}
               disabled={points.length === 0}
             >
               <Undo />
             </button> 
             <button
-              className="bg-accent text-white py-2 px-4 border border-white hover:opacity-75"
+              className="bg-medium-brown text-white py-2 px-4 border border-white hover:opacity-75"
               onClick={handleRedo}
               disabled={redoStack.length === 0}
             >
               <Redo />
             </button> 
             <button
-              className="bg-accent text-white py-2 px-4 rounded-r-md border border-white hover:opacity-75"
+              className="bg-medium-brown text-white py-2 px-4 rounded-r-md border border-white hover:opacity-75"
               onClick={handleReset}
             >
               <RotateCcw />
             </button>
           </div>
         </div>
-        <div className="">
+        {/* <div className="">
           <button
-            className="bg-accent-dark text-white py-2 px-4 rounded-md border border-white hover:opacity-75"
+            className="bg- text-white py-2 px-4 rounded-md border border-white hover:opacity-75"
             onClick={handleGenerateReport}
           >
             Generate Report
           </button>
-        </div>
+        </div> */}
       </div>
         
       <MapContainer
@@ -250,7 +253,7 @@ export default function MapDrawing({
         <ScaleControl position="bottomleft" maxWidth={200} metric={true} imperial={true} />
         <ChangeView lat={lat} lng={lng} zoom={zoom} />
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         />
         <MapClickHandler
           onPointAdd={handlePointAdd}
