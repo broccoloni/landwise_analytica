@@ -6,7 +6,7 @@ landwise-dashboard/.next/
 landwise-dashboard/node_modules/
 beta/node_modules/
 beta/.next/
-beta/.env/
+beta/.env
 beta/landwise-analytica-service-key.json
 *.gdb/
 *.geojson
