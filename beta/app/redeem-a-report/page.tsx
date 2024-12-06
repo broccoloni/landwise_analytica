@@ -243,29 +243,22 @@ export default function RedeemReport() {
           </div>
         )}
       </div>
-      <div className="flex justify-between text-md mx-auto mt-20 px-80">
-        <div className="flex">
-          <div className="mr-4 my-auto">Haven't Bought a Report Yet?</div>
-          <div className="ml-auto">
-            <Link
-              href="/get-a-report"
-              className="my-auto text-black hover:text-medium-brown hover:underline"
-            >
-              Get One Now
-            </Link>
-          </div>
-        </div>
-        <div className="flex">
-          <div className="mr-4 my-auto">Already Redeemed Your Report?</div>
-          <div className="ml-auto">
-            <Link
-              href="/view-an-existing-report"
-              className="my-auto text-black hover:text-medium-brown hover:underline"
-            >
-              View Your Report
-            </Link>
-          </div>
-        </div>
+      <div className="flex text-lg justify-center mt-20">
+        <div className="mr-8 my-auto">Quick Links:</div>
+        <div className="flex space-x-8 w-96">
+          <Link
+            href="/get-a-report"
+            className="my-auto text-black hover:text-medium-brown hover:underline"
+          >
+            Get a Report
+          </Link>
+          <Link
+            href="/view-an-existing-report"
+            className="my-auto text-black hover:text-medium-brown hover:underline"
+          >
+            View a Redeemed Report
+          </Link>            
+        </div> 
       </div>
     </div>
   );

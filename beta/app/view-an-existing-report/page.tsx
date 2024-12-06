@@ -27,9 +27,8 @@ export default function Terms() {
     
   return (
     <div className={`${roboto.className} min-h-screen px-80 pt-10 flex-row justify-between`}>
-      <div className="py-10">
+      <div className="pt-10">
         <div className="font-bold text-4xl mb-8">View an Existing Report</div>
-
         <div className="text-2xl font-semibold mb-4">Enter Report ID</div>
         <input
           id="reportId"
@@ -53,30 +52,23 @@ export default function Terms() {
           </div>
         </div>
       </div>
-
-      <div className="flex justify-between text-md mx-auto mt-10">
-        <div className="flex">
-          <div className="mr-4 my-auto">Haven't Bought a Report Yet?</div>
-          <div className="ml-auto">
-            <Link
-              href="/get-a-report"
-              className="my-auto text-black hover:text-medium-brown hover:underline"
-            >
-              Get One Now
-            </Link>
-          </div>
-        </div>
-        <div className="flex">
-          <div className="mr-4 my-auto">Haven't Redeemed Your Report?</div>
-          <div className="ml-auto">
-            <Link
-              href="/view-an-existing-report"
-              className="my-auto text-black hover:text-medium-brown hover:underline"
-            >
-              Redeem Your Report
-            </Link>
-          </div>
-        </div>
+        
+      <div className="flex text-lg justify-center mt-20">
+        <div className="mr-8 my-auto">Quick Links:</div>
+        <div className="flex space-x-8 w-96">
+          <Link
+            href="/get-a-report"
+            className="my-auto text-black hover:text-medium-brown hover:underline"
+          >
+            Get a Report
+          </Link>
+          <Link
+            href="/redeem-a-report"
+            className="my-auto text-black hover:text-medium-brown hover:underline"
+          >
+            Redeem a Report
+          </Link>            
+        </div> 
       </div>
         
     </div>

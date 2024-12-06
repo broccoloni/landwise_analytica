@@ -6,23 +6,34 @@ import Link from 'next/link';
 import AddressSearchWithButton from '@/components/AddressSearchWithButton';
 import Container from '@/components/Container';
 import { useState } from 'react';
-
+import { useRouter } from 'next/navigation';
+import { useReportContext } from '@/contexts/ReportContext';
 
 export default function Home() {
-  const [selectedAddress, setSelectedAddress] = useState<string>('');
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-  const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
+  const router = useRouter();
+  const { address, setAddress, latitude, setLatitude, longitude, setLongitude, setAddressComponents, setLandGeometry } = useReportContext();
     
-  const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {      
-    setSelectedAddress(address);
+  const handleAddressSelect = (selectedAddress: string, lat: number, lng: number, components: Record<string, string>) => {      
+    setAddress(selectedAddress);
     setLatitude(lat);
     setLongitude(lng);
     setAddressComponents(components);
+    setLandGeometry([]);
   };
 
+  // Look into using react context for cleaner approach or if url might be too long
   const handleAddressSubmit = () => {
-    console.log("Submitting address:", selectedAddress);
+    if (address && latitude !== null && longitude !== null) {
+      router.push('/define-boundary');
+    }
+  };
+
+  const handleGetReport = () => {
+    setAddress(null);
+    setLatitude(null);
+    setLongitude(null);
+    setAddressComponents(null);
+    router.push('/get-a-report');
   };
     
   return (
@@ -52,14 +63,12 @@ export default function Home() {
                 Or
               </div>
               <div className="flex justify-center mb-4">
-                <div className="bg-medium-brown rounded-lg px-4 py-2 w-[90%] text-center hover:opacity-75">
-                  <Link
-                    href="get-a-report"
-                    className="text-md text-white"
+                <button
+                  className="bg-medium-brown rounded-lg px-4 py-2 w-[90%] text-white text-md text-center hover:opacity-75"
+                  onClick={handleGetReport}
                   >
-                    Get a Report
-                  </Link>
-                </div>
+                  Get a Report
+                </button>
               </div>
               <div className="flex justify-center">
                 <Link

@@ -4,9 +4,12 @@ import { montserrat, roboto, merriweather, raleway } from '@/ui/fonts';
 import Container from '@/components/Container';
 import { useState } from 'react';
 import Link from 'next/link';
+import { Check, RotateCcw } from 'lucide-react';
+import { useReportContext } from '@/contexts/ReportContext';
 
 export default function Terms() {
   const [numReports, setNumReports] = useState<number>(1);
+  const { address, setAddress, setLatitude, setLongitude, setAddressComponents, setLandGeometry } = useReportContext();
 
   const costOne = 1299.95;
   const costThree = 2999.95;
@@ -25,24 +28,52 @@ export default function Terms() {
     setNumReports(3);
     console.log("Buying 3 reports")
   };
+
+  const handleClearAddress = () => {
+    setAddress(null);
+    setLatitude(null);
+    setLongitude(null);
+    setAddressComponents(null);
+    setLandGeometry([]);
+  };
     
   return (
     <div className={`${roboto.className} px-40 py-20`}>
-      <div className="text-xl text-center mb-8">
+      <div className="text-2xl text-center mb-12">
         Modernize the way you assess farmland with 
         <span className={`${raleway.className} ml-2`}>Landwise Analytica</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-12 mb-12 mx-36">
+
+      <div className="grid grid-cols-2 gap-12 mx-36 justify-items-stretch">
+        {/* Single Report Container */}
         <div className="flex justify-center items-center">
           <Container className="text-black w-full pt-16 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
-            <div className="flex-row">
-              <div className="font-semibold text-2xl text-center mb-8 text-dark-blue">Single Report</div>
-              <div className={`${roboto.className} text-center text-4xl mb-8`}>
-                ${dollarsOne}<span className="text-sm relative bottom-4">{centsOne}</span>
+            <div className="flex flex-col">
+              <div className="font-semibold text-2xl text-center text-dark-blue">Single Report</div>
+              {address && (
+                <>
+                  <div className="text-xs mx-10 mt-4 h-12">
+                    <div className="mb-4">{address}</div>
+                  </div>
+                  <button 
+                    className="flex justify-center items-center mt-2 text-black text-xs hover:text-medium-brown hover:underline"
+                    onClick={handleClearAddress}
+                  >
+                    <RotateCcw className='h-3 w-3 mr-1' />
+                    Clear Address
+                  </button>
+                </>
+              )}
+              <div className={`${roboto.className} text-center text-4xl mt-4 mb-8`}>
+                ${dollarsOne}
+                <span className="text-sm relative bottom-4">{centsOne}</span>
               </div>
               <div className="mx-10 my-4">
-                <div className="mb-2">For <span className="font-bold">one</span> property</div>
-                <ul className="text-sm list-disc">
+                <div className="mb-2">
+                  For <span className="font-bold">one</span> property
+                  <span className="text-[0.5rem] align-super leading-none mr-1 font-bold">1</span>
+                </div>
+                <ul className="text-sm list-disc mb-2">
                   <li className="ml-5">Estimated Land Productivity</li>
                   <li className="ml-5">Climate & Heat Units</li>
                   <li className="ml-5">Layout, Elevation & Slope</li>
@@ -68,25 +99,44 @@ export default function Terms() {
             </div>
           </Container>
         </div>
-    
-        <div className="flex-row justify-center items-center">
-        
+     
+        {/* Three Reports Container */}
+        <div className="flex flex-col">
           <div className="bg-medium-green w-full rounded-t-lg text-white text-center text-xl flex justify-center items-center h-10">
             Best Deal
           </div>
           <Container className="text-black w-full bg-light-yellow border border-gray-300 rounded-lg shadow-lg pt-6 rounded-t-none">
-            <div className="flex-row">
-              <div className="font-semibold text-2xl text-center mb-4 text-dark-blue">Three Reports</div>
-              <div className={`${roboto.className} text-center text-4xl`}>
-                ${dollarsThree}<span className="text-sm relative bottom-4">{centsThree}</span>
+            <div className="flex flex-col">
+              <div className="font-semibold text-2xl text-center text-dark-blue">Three Reports</div>
+              {address && (
+                <>
+                  <div className="text-xs mx-10 mt-4 h-12">
+                    <div>{address}</div>
+                    <div className="ml-2 h-4">+2 other properties</div>
+                  </div>
+                  <button 
+                    className="flex justify-center items-center mt-2 text-black text-xs hover:text-medium-brown hover:underline"
+                    onClick={handleClearAddress}
+                  >
+                    <RotateCcw className='h-3 w-3 mr-1' />
+                    Clear Address
+                  </button>
+                </>
+              )}
+              <div className={`${roboto.className} mt-4 text-center text-4xl`}>
+                ${dollarsThree}
+                <span className="text-sm relative bottom-4">{centsThree}</span>
               </div>
-              <div className={`flex h-8 justify-center items-center text-gray-500`}>
+              <div className="flex h-8 justify-center items-center text-gray-500">
                 <div className="mr-2 font-bold">{discountPct}% off</div>
                 <div className="line-through">${threeCostOne.toFixed(2)}</div>
               </div>
               <div className="mx-10 my-4">
-                <div className="mb-2">For <span className="font-bold">three</span> properties</div>
-                <ul className="text-sm list-disc">
+                <div className="mb-2">
+                  For <span className="font-bold">three</span> properties
+                  <span className="text-[0.5rem] align-super leading-none mr-1 font-bold">1</span>
+                </div>
+                <ul className="text-sm list-disc mb-2">
                   <li className="ml-5">Estimated Land Productivity</li>
                   <li className="ml-5">Climate & Heat Units</li>
                   <li className="ml-5">Layout, Elevation & Slope</li>
@@ -108,29 +158,105 @@ export default function Terms() {
                 >
                   View a Sample Report
                 </Link>
-              </div> 
+              </div>
             </div>
           </Container>
         </div>
       </div>
-      <div className="my-20">
-        Our reports help blah blah blah
+
+      <div className="mx-20 my-20">
+        <div className="text-2xl text-dark-blue font-bold text-center mb-8">
+          The world's first data-driven land assessment platform
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+            {/* First row */}
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Historic crop production
+            </div>
+
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Historic precipitation, dew point & temperatures
+            </div>
+
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Property area & layout
+            </div>
+
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Taxonomy & Texture
+            </div>
+
+            {/* Second row */}
+            
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Predicted future crop production
+            </div>
+
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Historic growing degree days & corn heat units
+            </div>
+
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Elevation & slope data
+            </div>
+
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Water, sand, clay & organic carbon content
+            </div>
+            
+            {/* Third row */}
+            
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Crop specific yield consistency
+            </div>
+    
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Historic growing seasons
+            </div>
+    
+
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              Historic wind & gust exposure
+            </div>
+    
+            <div className="flex">
+              <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
+              pH & bulk density
+            </div>
+        </div>
       </div>
-      <div className="flex justify-center">
-        <div className="text-xl mr-8 my-auto">Already Bought a Report?</div>
-        <div className="flex justify-between w-96">
+
+        
+      <div className="text-sm text-gray-600 mx-40 mb-12">
+        <span className="text-[0.5rem] align-super leading-none mr-1 font-bold">1</span>
+        Reports can be redeemed at any time and will be available for 180 days after redemption.
+      </div>
+        
+      <div className="flex text-lg justify-center">
+        <div className="mr-8 my-auto">Quick Links:</div>
+        <div className="flex space-x-8 w-96">
           <Link
             href="/redeem-a-report"
-            className="text-lg my-auto text-black hover:text-medium-brown hover:underline"
+            className="my-auto text-black hover:text-medium-brown hover:underline"
           >
-            Redeem Your Report
+            Redeem a Report
           </Link>
-          <div className="my-auto mx-4 text-lg"> or </div>
           <Link
             href="/view-an-existing-report"
-            className="text-lg my-auto text-black hover:text-medium-brown hover:underline"
+            className="my-auto text-black hover:text-medium-brown hover:underline"
           >
-            View Your Report
+            View a Redeemed Report
           </Link>            
         </div> 
       </div>

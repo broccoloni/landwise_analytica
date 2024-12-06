@@ -1,5 +1,7 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { ReportProvider } from '@/contexts/ReportContext';
+
 import '@/ui/globals.css';
 
 export const metadata = {
@@ -23,7 +25,9 @@ export default function RootLayout({
           <Header />
             
           <main className="flex-1 bg-light-brown text-black">
-            {children}
+            <ReportProvider>
+              {children}
+            </ReportProvider>
           </main>
             
           <Footer />
