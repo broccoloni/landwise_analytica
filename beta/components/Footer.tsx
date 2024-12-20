@@ -23,16 +23,17 @@ const Footer = () => {
   const businessLinks = [
     { label: "Realtor Login", path: '/realtor-login' },
     { label: "Become A Realtor Member", path: 'realtor-signup' },
-    { label: "Banking, Insurance and Government", path: 'banking-insurance-government' },
+    { label: "Banking, Insurance & Government", path: 'banking-insurance-government' },
   ];
     
   return (
-    <div className={`w-full text-white bg-dark-brown py-24 px-40 ${raleway.className}`}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className={`w-full text-white bg-dark-brown py-10 sm:py-24 px-10 md:px-20 lg:px-40 ${raleway.className}`}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-8">
         <ListOfLinks title="Reports" links={reportLinks} />
         <ListOfLinks title="Company" links={companyLinks} />
         <ListOfLinks title="Solutions" links={businessLinks} />
       </div>
+        
       <div className="text-left mt-8 text-sm">
         © {new Date().getFullYear()} Landwise Analytica. All rights reserved.
       </div>

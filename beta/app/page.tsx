@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useReportContext } from '@/contexts/ReportContext';
 
 export default function Home() {
+
   const router = useRouter();
   const { address, setAddress, latitude, setLatitude, longitude, setLongitude, setAddressComponents, setLandGeometry } = useReportContext();
     
@@ -23,7 +24,7 @@ export default function Home() {
 
   // Look into using react context for cleaner approach or if url might be too long
   const handleAddressSubmit = () => {
-    if (address && latitude !== null && longitude !== null) {
+    if (address !== null && latitude !== null && longitude !== null) {
       router.push('/define-boundary');
     }
   };
@@ -37,10 +38,12 @@ export default function Home() {
   };
     
   return (
-    <div className="">
-      <div className="px-40 py-20">
-        <div className="flex justify-between items-center">
-          <div className="w-[50%]">
+    <div className="flex-row">
+
+      {/* First section */}
+      <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20">
+        <div className="flex-row lg:flex justify-center items-center ">
+          <div className="w-full lg:w-[50%]">
             <div className="flex-row justify-center items-center">
               <div className={`${roboto.className} font-bold text-center text-[32px] mb-4`}>
                 Modernize the way you buy farmland
@@ -80,20 +83,22 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="w-[50%]">
-            <div className="flex justify-end">
+          <div className="w-full lg:w-[50%] mt-8 lg:mt-0">
+            <div className="flex justify-center lg:justify-end">
               <Image
-                src={'satelliteToHeatmap.png'}
+                src={'/satelliteToHeatmap.png'}
                 width={500}
                 height={600}
                 className="rounded-xl"
+                alt="Farm with crop heatmap"
               />
             </div>
           </div>
         </div>
       </div>
-        
-      <div className="px-40 py-20 bg-white">
+
+      {/* Second section */}
+      <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20 bg-white">
         <div className="flex-row justify-center">
           <div className="">
             <div className={`${roboto.className} font-bold text-4xl mb-8 text-dark-blue`}>
@@ -105,7 +110,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             <div className="flex justify-center items-center">
-              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 h-64 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
                 <div className="font-semibold text-xl mb-2 text-medium-brown">Estimated Yields</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Historic crop production</li>
@@ -116,7 +121,7 @@ export default function Home() {
             </div>
         
             <div className="flex justify-center items-center">
-              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 h-64 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
                 <div className="font-semibold text-xl mb-2 text-medium-brown">Climate</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Historic precipitation, dew point & temperatures</li>
@@ -127,7 +132,7 @@ export default function Home() {
             </div>
         
             <div className="flex justify-center items-center">
-              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 h-64 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
                 <div className="font-semibold text-xl mb-2 text-medium-brown">Topography</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Property area & layout</li>
@@ -138,7 +143,7 @@ export default function Home() {
             </div>
 
             <div className="flex justify-center items-center">
-              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 h-64 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
                 <div className="font-semibold text-xl mb-2 text-medium-brown">Soil</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Taxonomy & Texture</li>
@@ -160,6 +165,7 @@ export default function Home() {
           </div>       
         </div>
       </div>
+        
     </div>
   );
 }

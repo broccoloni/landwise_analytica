@@ -18,16 +18,43 @@ export default function Terms() {
 
   const [dollarsOne, centsOne] = costOne.toFixed(2).split('.');
   const [dollarsThree, centsThree] = costThree.toFixed(2).split('.');
+
+  const reportContext = useReportContext();
+  console.log("Get a report context:", reportContext);
+
     
-  const handleBuyOne = () => {
-    setNumReports(1);
-    console.log("Buying 1 report")
+  const handleBuyOne = async () => {
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: 1 }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+    }
   };
 
-  const handleBuyThree = () => {
-    setNumReports(3);
-    console.log("Buying 3 reports")
+  const handleBuyThree = async () => {
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: 3 }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+    }
   };
+
 
   const handleClearAddress = () => {
     setAddress(null);
@@ -38,15 +65,15 @@ export default function Terms() {
   };
     
   return (
-    <div className={`${roboto.className} px-40 py-20`}>
+    <div className={`${roboto.className} px-10 md:px-20 lg:px-40 py-10 md:py-20`}>
       <div className="text-2xl text-center mb-12">
         Modernize the way you assess farmland with 
         <span className={`${raleway.className} ml-2`}>Landwise Analytica</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-12 mx-36 justify-items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:mx-10 lg:mx-36 justify-items-stretch">
         {/* Single Report Container */}
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center min-w-80">
           <Container className="text-black w-full pt-16 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
             <div className="flex flex-col">
               <div className="font-semibold text-2xl text-center text-dark-blue">Single Report</div>
@@ -101,7 +128,7 @@ export default function Terms() {
         </div>
      
         {/* Three Reports Container */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-80">
           <div className="bg-medium-green w-full rounded-t-lg text-white text-center text-xl flex justify-center items-center h-10">
             Best Deal
           </div>
@@ -164,11 +191,11 @@ export default function Terms() {
         </div>
       </div>
 
-      <div className="mx-20 my-20">
+      <div className="md:mx-10 lg:mx-20 mt-20 hidden sm:block">
         <div className="text-2xl text-dark-blue font-bold text-center mb-8">
           The world's first data-driven land assessment platform
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-4 lg:grid-cols-4 gap-4 mb-12">
             {/* First row */}
             <div className="flex">
               <Check className="w-5 h-5 text-medium-green mr-2 mb-auto flex-shrink-0" />
@@ -238,7 +265,7 @@ export default function Terms() {
       </div>
 
         
-      <div className="text-sm text-gray-600 mx-40 mb-12">
+      <div className="text-sm text-gray-600 mb-12 mt-10 sm:mt-20 md:mx-10 lg:mx-36">
         <span className="text-[0.5rem] align-super leading-none mr-1 font-bold">1</span>
         Reports can be redeemed at any time and will be available for 180 days after redemption.
       </div>

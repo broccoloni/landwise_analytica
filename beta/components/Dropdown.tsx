@@ -7,7 +7,7 @@ interface DropdownProps {
   className?: string;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({ options, selected, onSelect, className }) => {
+const Dropdown: React.FC<DropdownProps> = ({ options, selected, onSelect, className='' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null); // Reference for the dropdown
 

@@ -8,7 +8,7 @@ interface PlantInHandIconProps {
 }
 
 const PlantInHandIcon: React.FC<PlantInHandIconProps> = ({
-  className,
+  className = '',
   width = 256,
   height = 256,
   color = 'white',

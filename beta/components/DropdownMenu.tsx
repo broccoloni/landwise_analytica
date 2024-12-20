@@ -8,7 +8,7 @@ interface DropdownMenuProps {
   className?: string;
 }
 
-const DropdownMenu: React.FC<DropdownMenuProps> = ({ title, options, className }) => {
+const DropdownMenu: React.FC<DropdownMenuProps> = ({ title, options, className='' }) => {
   return (
     <div className={`relative inline-block group ${className}`}>
       {/* Dropdown Trigger */}

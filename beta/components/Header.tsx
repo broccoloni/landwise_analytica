@@ -1,12 +1,17 @@
-'use client'; 
+'use client';
 
+import { useState } from 'react';
 import { montserrat, roboto, merriweather, nunito, raleway } from '@/ui/fonts';
 import Link from 'next/link';
 import PlantInHandIcon from '@/components/PlantInHandIcon';
 import DropdownMenu from '@/components/DropdownMenu';
+import { Menu } from 'lucide-react';
+import ListOfLinks from '@/components/ListOfLinks';
 
 const Header = () => {
-  const reportOptions = [
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const reportLinks = [
     { label: "Why Buy a Report", path: "/why-buy-a-report" },
     { label: "View a Sample Report", path: "/view-sample-report" },
     { label: "Get a Report", path: "/get-a-report" },
@@ -21,26 +26,63 @@ const Header = () => {
     { label: "Terms of Service", path: "/terms-of-service" },
   ];
 
+  const businessLinks = [
+    { label: "Realtor Login", path: '/realtor-login' },
+    { label: "Become A Realtor Member", path: 'realtor-signup' },
+    { label: "Banking, Insurance & Government", path: 'banking-insurance-government' },
+  ];
+
   return (
-    <div className={`w-full text-white bg-dark-olive py-4 px-36 ${raleway.className}`}>
-      <div className="flex justify-between items-center text-center">
+    <div className={`w-full text-white bg-dark-olive pt-4 md:px-20 lg:px-36 ${raleway.className}`}>
+      {/* Desktop Header */}
+      <div className="flex justify-between items-center pb-4 px-4">
         <Link href="/">
           <div className="flex items-center">
             <div className="flex justify-center mr-4">
-              <PlantInHandIcon className="" height={40} width={40} />
+              <PlantInHandIcon height={40} width={40} />
             </div>
-            <div className={`font-medium text-center text-2xl`}>
+            <div className="font-medium text-left text-2xl">
               LANDWISE ANALYTICA
             </div>
           </div>
         </Link>
-        <div className="">
-          <DropdownMenu title="Our Reports" options={reportOptions} />
-          <DropdownMenu title="Our Company" options={companyLinks} />
+
+        {/* Desktop Dropdown Menus */}
+        <div className="hidden md:flex">
+          <div className="min-w-40">
+            <DropdownMenu title="Our Reports" options={reportLinks} />
+          </div>
+          <div className="min-w-40">
+            <DropdownMenu title="Our Company" options={companyLinks} />
+          </div>
+          <div className="min-w-40">
+            <DropdownMenu title="Our Solutions" options={businessLinks} />
+          </div>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Mobile Menu"
+          >
+            <Menu size={32} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden bg-dark-olive opacity-80 absolute z-10 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-8">
+            <ListOfLinks title="Reports" links={reportLinks} />
+            <ListOfLinks title="Company" links={companyLinks} />
+            <ListOfLinks title="Solutions" links={businessLinks} />
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default Header;

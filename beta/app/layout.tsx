@@ -1,38 +1,40 @@
+import { ReactNode } from 'react';
+import { Metadata } from 'next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ReportProvider } from '@/contexts/ReportContext';
-
+import ClientProviders from './ClientProviders'; // Import the client-side provider
 import '@/ui/globals.css';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Landwise Analytica',
-  description: 'Landwise Analytica Website',
-  icons: {
-    icon: '/favicon.svg'
-  },
+  description: 'Landwise Analytica description',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-    
+interface LayoutProps {
+  children: ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
   return (
     <html lang="en">
-      <body className="h-full">
-        <div className="min-h-screen w-full flex flex-col">
-          <Header />
-            
-          <main className="flex-1 bg-light-brown text-black">
-            <ReportProvider>
+      <head>
+        <link rel="icon" href="/favicon.svg" />
+      </head>
+      <body>
+        <ClientProviders>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+          
+            <main className="flex-1 bg-light-brown">
               {children}
-            </ReportProvider>
-          </main>
-            
-          <Footer />
-        </div>
+            </main>
+          
+            <Footer />
+          </div>
+        </ClientProviders>
       </body>
     </html>
   );
 }
+
+

@@ -127,6 +127,7 @@ export default function About() {
               src='/supporters/elevx.png'
               width={250}
               height={50}
+              alt="ElevX Logo"
             />
           </div>
           <div className="flex justify-center items-center">
@@ -134,6 +135,7 @@ export default function About() {
               src='/supporters/idea.png'
               width={250}
               height={50}
+              alt="Idea Fund Logo"
             />
           </div>
           <div className="flex justify-center items-center">
@@ -141,6 +143,7 @@ export default function About() {
               src='/supporters/bioenterprise.png'
               width={250}
               height={50}
+              alt="Bioenterprise Logo"
             />
           </div>
         </div>
