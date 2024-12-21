@@ -36,21 +36,16 @@ const SubHeader = () => {
         {/* Left Side */}
         <div className="flex items-center space-x-8">
           {links.map((link) => (
-            <div
-              key={`${link.href}-container`}
-              className={`bg-light-brown rounded-md`}
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`text-sm text-white flex rounded-md px-4 py-2 hover:underline ${
+                pathname === link.href ? 'border border-white' : ''
+              }`}
             >
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-sm bg-dark-olive opacity-100 text-white flex  px-4 py-2 hover:underline ${
-                  pathname === link.href ? 'bg-dark-olive opacity-60' : ''
-                }`}
-              >
-                {link.icon}
-                {link.label}
-              </Link>
-            </div>
+              {link.icon}
+              {link.label}
+            </Link>
           ))}
         </div>
 

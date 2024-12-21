@@ -30,6 +30,8 @@ export default function SignUpForm() {
         redirect: false,
       });
 
+      console.log("Result:", result);
+
       if (result?.error) {
         setError(result.error);
         return;

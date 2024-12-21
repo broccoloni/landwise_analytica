@@ -1,8 +1,19 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand, GetCommand, UpdateCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import bcrypt from "bcryptjs";
+import { User } from "next-auth";
 
-const client = new DynamoDBClient({ region: "us-east-1" });
+const accessKeyId = process.env.DYNAMODB_ACCESS_KEY_ID;
+const secretAccessKey = process.env.DYNAMODB_SECRET_ACCESS_KEY;
+const region = process.env.AWS_REGION;
+
+const client = new DynamoDBClient({
+  credentials: {
+    accessKeyId: accessKeyId,
+    secretAccessKey: secretAccessKey,
+  },
+  region: region,
+});
 const docClient = DynamoDBDocumentClient.from(client);
 
 const TABLE_NAME = "Realtors";
@@ -19,14 +30,14 @@ const generateHash = async (password: string): Promise<string> => {
 /**
  * Verifies a hashed password.
  */
-const verifyHash = (password: string, hash: string): boolean => {
+export const verifyHash = (password: string, hash: string): boolean => {
   return bcrypt.compareSync(password, hash);
 };
 
 /**
  * Queries a user by email via the GSI.
  */
-export const getUserByEmail = async (email: string) => {
+export const getUserByEmail = async (email: string): Promise<User | null> => {
   try {
     const command = new QueryCommand({
       TableName: TABLE_NAME,
@@ -41,7 +52,7 @@ export const getUserByEmail = async (email: string) => {
     });
 
     const { Items } = await docClient.send(command);
-    return Items?.[0] || null; // Return the first matching user, or null if not found
+    return Items?.[0] as User || null; // Return the first matching user, or null if not found
   } catch (error) {
     console.error("Error querying user by email:", error);
     throw new Error("Unable to query user by email");
@@ -51,7 +62,7 @@ export const getUserByEmail = async (email: string) => {
 /**
  * Retrieves a user by ID.
  */
-export const getUserById = async (id: string) => {
+export const getUserById = async (id: string): Promise<User | null> => {
   try {
     const command = new GetCommand({
       TableName: TABLE_NAME,
@@ -68,31 +79,36 @@ export const getUserById = async (id: string) => {
 
 /**
  * Creates a new user in the database.
+ * @param user - The user object containing all user data.
  */
-export const createUser = async (id: string, email: string, password: string) => {
+export const createUser = async (user: User): Promise<{ success: boolean; message?: string; data?: User }> => {
   try {
+    const { password, ...otherFields } = user;
+
+    // Hash the password before storing
     const hashedPassword = await generateHash(password);
 
     const command = new PutCommand({
       TableName: TABLE_NAME,
       Item: {
-        id,
-        email,
-        password: hashedPassword,
+        ...otherFields, // Spread other user fields into the item
+        password: hashedPassword, // Store the hashed password
+        createdAt: new Date().toISOString(), // Timestamp for when the user was created
       },
     });
 
-    await docClient.send(command);
+    await docClient.send(command); // Assuming this will succeed or throw on failure
+    return { success: true, message: "User created successfully", data: { ...user, password: hashedPassword } };
   } catch (error) {
     console.error("Error creating user:", error);
-    throw new Error("Unable to create user");
+    return { success: false, message: "Unable to create user", error: error instanceof Error ? error.message : String(error) };
   }
 };
 
 /**
  * Updates a user's data in the database.
  */
-export const updateUser = async (id: string, updates: Record<string, any>) => {
+export const updateUser = async (id: string, updates: Partial<User>): Promise<{ success: boolean; message?: string; data?: User }> => {
   try {
     const updateExpressions: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
@@ -119,17 +135,21 @@ export const updateUser = async (id: string, updates: Record<string, any>) => {
       ExpressionAttributeValues: expressionAttributeValues,
     });
 
-    await docClient.send(command);
+    await docClient.send(command); // Assuming this will succeed or throw on failure
+
+    // Retrieve the updated user to return
+    const updatedUser = await getUserById(id);
+    return { success: true, message: "User updated successfully", data: updatedUser };
   } catch (error) {
     console.error("Error updating user:", error);
-    throw new Error("Unable to update user");
+    return { success: false, message: "Unable to update user", error: error instanceof Error ? error.message : String(error) };
   }
 };
 
 /**
  * Logs in a user by verifying their email and password.
  */
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (email: string, password: string): Promise<{ success: boolean; data?: User; message?: string }> => {
   try {
     const user = await getUserByEmail(email);
 

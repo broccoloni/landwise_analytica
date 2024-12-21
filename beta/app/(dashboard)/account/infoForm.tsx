@@ -1,10 +1,8 @@
-'use client';
-
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 export default function InfoForm() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [formData, setFormData] = useState({
     firstName: session?.user?.firstName || '',
     lastName: session?.user?.lastName || '',
@@ -12,32 +10,60 @@ export default function InfoForm() {
     realtyGroup: session?.user?.realtyGroup || '',
   });
 
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async () => {
-    try {
-      const response = await fetch('/api/account/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-      if (!response.ok) {
-        throw new Error('Failed to update account details');
+    const response = await fetch('/api/updateUser', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: session?.user?.id,
+        updates: formData,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      setSuccessMessage('User details updated successfully!');
+      setErrorMessage(null);
+
+      if (update) {
+        const newSession = { ...session.user, ...formData };
+        update(newSession);
       }
-
-      alert('Account details updated successfully');
-    } catch (error) {
-      alert(error.message);
+    } else {
+      setErrorMessage(result.message || 'Failed to update user.');
+      setSuccessMessage(null);
     }
   };
 
   return (
     <div>
       <h2 className="text-2xl mb-4">Edit Account Details</h2>
+
+      {successMessage && (
+        <div className="bg-green-100 text-green-800 p-4 rounded-md mb-4">
+          {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="bg-red-100 text-red-800 p-4 rounded-md mb-4">
+          {errorMessage}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
@@ -47,7 +73,7 @@ export default function InfoForm() {
             name="firstName"
             value={formData.firstName}
             onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2 border border-gray-300 focus:border-medium-brown focus:ring-medium-brown"
           />
         </div>
         <div className="mb-4">
@@ -58,7 +84,7 @@ export default function InfoForm() {
             name="lastName"
             value={formData.lastName}
             onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2 border border-gray-300 focus:border-medium-brown focus:ring-medium-brown"
           />
         </div>
         <div className="mb-4">
@@ -69,7 +95,7 @@ export default function InfoForm() {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2 border border-gray-300 focus:border-medium-brown focus:ring-medium-brown"
           />
         </div>
         <div className="mb-4">
@@ -80,7 +106,7 @@ export default function InfoForm() {
             name="realtyGroup"
             value={formData.realtyGroup}
             onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2 border border-gray-300 focus:border-medium-brown focus:ring-medium-brown"
           />
         </div>
         <button
