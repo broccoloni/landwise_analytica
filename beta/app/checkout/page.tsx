@@ -11,10 +11,19 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
 
 export default function Checkout() {
   const { quantity } = useCartContext();
-
+  const [details, setDetails] = useState({});
+    
   const reportContext = useReportContext();
   useEffect(() => {
-    console.log("Report context:", reportContext);
+    if (reportContext.address) {
+      setDetails({
+        address: reportContext.address,
+        addressComponents: reportContext.addressComponents,
+        longitude: reportContext.longitude,
+        latitude: reportContext.latitude,
+        landGeometry: reportContext.landGeometry,
+      });
+    }
   }, [reportContext]);
     
   const [loading, setLoading] = useState(false);
@@ -28,7 +37,7 @@ export default function Checkout() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ quantity }),
+        body: JSON.stringify({ quantity, details }),
       });
 
       if (!response.ok) {

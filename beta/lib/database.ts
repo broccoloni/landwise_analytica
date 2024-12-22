@@ -180,26 +180,36 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
 };
 
 // ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR REPORTS TABLE ~~~~~~~~~~~~~~~~~~~~~~~~~
-// Note: customerId can be either a realtor's customerId, or a checkoutSessionId
+
+/**
+ * Generates a unique report ID in the format XXXX-XXXX-XXXX
+ * using the first 12 characters of a UUID and ensures letters are capitalized.
+ */
+function generateReportId(): string {
+  const uuid = uuidv4().replace(/-/g, ''); // Remove dashes from the UUID
+  const id = uuid.slice(0, 12).toUpperCase(); // Take the first 12 characters and convert to uppercase
+  return id.match(/.{1,4}/g)?.join('-') as string; // Split into groups of 4 and join with dashes
+}
 
 /**
  * Creates a new report and stores it in the Reports table.
  */
-export const createReport = async (customerId: string): Promise<{ success: boolean; reportId?: string; message?: string }> => {
+export const createReport = async (sessionOrCustomerId: string): Promise<{ success: boolean; reportId?: string; message?: string }> => {
   const TABLE_NAME = "Reports";
 
   try {
-    const reportId = uuidv4(); // Generate a unique report ID
+    const reportId = generateReportId();
     const command = new PutCommand({
       TableName: TABLE_NAME,
       Item: {
+        sessionOrCustomerId,
         reportId,
-        customerId,
         createdAt: new Date().toISOString(),
       },
     });
 
     await docClient.send(command);
+    console.log("Generated report Id:", reportId);
     return { success: true, reportId, message: "Report created successfully" };
   } catch (error) {
     console.error("Error creating report:", error);
@@ -208,58 +218,45 @@ export const createReport = async (customerId: string): Promise<{ success: boole
 };
 
 /**
- * Retrieves all report IDs for a given customer ID.
+ * Retrieves all report IDs for a given sessionOrCustomerId.
  */
-export const getReportsByCustomerId = async (customerId: string): Promise<{ success: boolean; reportIds?: string[]; message?: string }> => {
+export const getReportIds = async (
+  sessionOrCustomerId: string
+): Promise<{ success: boolean; reportIds?: string[]; message?: string }> => {
+  const TABLE_NAME = "Reports";
+
   try {
     const command = new QueryCommand({
-      TableName: REPORTS_TABLE_NAME,
-      IndexName: "CustomerIdIndex",
-      KeyConditionExpression: "#customerId = :customerIdValue",
-      ExpressionAttributeNames: {
-        "#customerId": "customerId",
-      },
+      TableName: TABLE_NAME,
+      KeyConditionExpression: "sessionOrCustomerId = :id",
       ExpressionAttributeValues: {
-        ":customerIdValue": customerId,
+        ":id": sessionOrCustomerId,
       },
     });
 
     const { Items } = await docClient.send(command);
     const reportIds = Items?.map((item) => item.reportId) || [];
+
+    console.log("Retrieved report IDs:", reportIds, "for sessionOrCustomerId:", sessionOrCustomerId);
     return { success: true, reportIds };
   } catch (error) {
-    console.error("Error retrieving reports by customer ID:", error);
-    return { success: false, message: "Unable to retrieve reports", error: error instanceof Error ? error.message : String(error) };
+    console.error("Error retrieving reports by sessionOrCustomerId:", error);
+    return {
+      success: false,
+      message: "Unable to retrieve reports",
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 };
 
+// Details is a dict with: address, addressComponents, longitude, latitude, landGeometry
+export const redeemReport = async (reportId: string, details: any): Promise<{ success: boolean; message?: string }> => {
+  // Add a redeemed at date
 
-// ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR REPORTS TABLE ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-/**
- * Creates a new order in the Orders table.
- */
-export const createOrder = async (checkoutSessionId: string, email: string): Promise<{ success: boolean; message?: string }> => {
-  const TABLE_NAME = "Orders";
-
-  try {
-    const command = new PutCommand({
-      TableName: ORDERS_TABLE_NAME,
-      Item: {
-        checkoutSessionId,
-        email,
-        reportIds,
-        orderDate: new Date().toISOString(),
-      },
-    });
-
-    await docClient.send(command);
-    return { success: true, message: "Order created successfully" };
-  } catch (error) {
-    console.error("Error creating order:", error);
-    return { success: false, message: "Unable to create order", error: error instanceof Error ? error.message : String(error) };
-  }
+  console.log("Redeeming report:", reportId, " with details:", details);
+  return { success: true, message: 'Temporary function to redeem reports' };
 };
+
 
 
 

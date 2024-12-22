@@ -1,56 +1,70 @@
 'use client';
 
-import { montserrat, roboto, merriweather, raleway } from '@/ui/fonts';
+import { roboto } from '@/ui/fonts';
 import { useReportContext } from '@/contexts/ReportContext';
-import { useCartContext } from '@/contexts/CartContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function CheckoutComplete() {
   const reportContext = useReportContext();
-  useEffect(() => {
-    console.log("Report context:", reportContext);
-  }, [reportContext]);
 
-    
-  const { quantity } = useCartContext();
-            
-  // Create api route to async generate new report and return a reportId immediately
-  const reportId = 'XXXX-XXXX-XXXX';
-  const reportId1 = 'XXXX-XXXX-XXXX';
-  const reportId2 = 'YYYY-YYYY-YYYY';
-  const reportId3 = 'ZZZZ-ZZZZ-ZZZZ';
-        
+  const [reportIds, setReportIds] = useState([]);
+
+  // Function to fetch report IDs from the API
+  const fetchReportIds = async (sessionOrCustomerId) => {
+    try {
+      const response = await fetch('/api/getReportIds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionOrCustomerId }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setReportIds(result.reportIds);
+      } else {
+        console.error('Error retrieving report IDs:', result.message);
+      }
+    } catch (error) {
+      console.error('Error fetching report IDs:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Extract session_id from the URL query parameters
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const sessionId = urlParams.get('session_id');
+    console.log("Session ID:", sessionId);
+    if (sessionId) {
+      fetchReportIds(sessionId);
+    }
+  }, []);
+
   return (
     <div className={`${roboto.className} px-40 py-20`}>
       <div className="text-2xl text-center mb-12 font-bold">
         Thank You For Your Purchase!
       </div>
-      <div className="">
+      <div>
         <div className="text-xl">
-          {quantity === 1 ? (
-            <div className="">Your Report ID: {reportId}</div>
-          ) : quantity === 3 ? (
-            <div className="flex-row">
-              <div className="">Your Report IDs:</div>
-              <div className="ml-2">{reportId1}</div>
-              <div className="ml-2">{reportId2}</div>
-              <div className="ml-2">{reportId3}</div>
-            </div>
+          {reportIds.length > 0 ? (
+            <ul>
+              {reportIds.map((id) => (
+                <li key={id} className="my-2">
+                  Report ID: {id}
+                </li>
+              ))}
+            </ul>
           ) : (
-            <div className="">Report quantity not found</div>
+            <p>Loading report IDs...</p>
           )}
         </div>
         {reportContext.address ? (
           <div className="my-4">
-            <div className="">
-              Your report for {reportContext.address} may take a few minutes to process.
-            </div>
-            <div className="">
-              
-            </div>
+            <p>Your report for <strong>{reportContext.address}</strong> may take a few minutes to process.</p>
           </div>
         ) : (
-          <div className="my-4">No address</div>
+          <div className="my-4">No address provided.</div>
         )}
       </div>
     </div>
