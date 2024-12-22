@@ -33,8 +33,7 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       const storedLandGeometry = localStorage.getItem('landGeometry');
       if (storedLandGeometry) setLandGeometry(JSON.parse(storedLandGeometry));
 
-      const storedAddress = localStorage.getItem('reportAddress');
-      if (storedAddress) setAddress(storedAddress);
+      setAddress(localStorage.getItem('reportAddress') || null);
 
       const storedLatitude = localStorage.getItem('latitude');
       if (storedLatitude) setLatitude(parseFloat(storedLatitude));
@@ -45,9 +44,7 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       const storedAddressComponents = localStorage.getItem('addressComponents');
       if (storedAddressComponents) setAddressComponents(JSON.parse(storedAddressComponents));
 
-      const storedReportId = localStorage.getItem('reportId');
-      if (storedReportId) setReportId(storedReportId);
-        
+      setReportId(localStorage.getItem('reportId') || null);
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
     }
@@ -55,9 +52,7 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
 
   // Sync state changes with localStorage
   useEffect(() => {
-    landGeometry.length > 0
-      ? localStorage.setItem('landGeometry', JSON.stringify(landGeometry))
-      : localStorage.removeItem('landGeometry');
+    localStorage.setItem('landGeometry', JSON.stringify(landGeometry));
   }, [landGeometry]);
 
   useEffect(() => {

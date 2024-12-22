@@ -32,7 +32,7 @@ export default function AccountPage() {
               ${selectedTab === 'edit' ? 'bg-medium-brown text-white' : ''}`}
               onClick={() => setSelectedTab('edit')}
             >
-              <Pencil className="h-5 w-5 mr-2" /> Edit Account Details
+              <Pencil className="h-5 w-5 mr-2" /> Account Details
             </li>
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
@@ -46,7 +46,7 @@ export default function AccountPage() {
               ${selectedTab === 'subscription' ? 'bg-medium-brown text-white' : ''}`}
               onClick={() => setSelectedTab('subscription')}
             >
-              <CreditCard className="h-5 w-5 mr-2" /> Change Subscription
+              <CreditCard className="h-5 w-5 mr-2" /> Subscription
             </li>
             <li 
               className="flex items-center cursor-pointer px-4 py-2 rounded-md hover:bg-medium-brown hover:opacity-75 hover:text-white"

@@ -10,49 +10,63 @@ export default function SubscriptionForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const price_1 = 1299.95;
+  const price_5 = 999.95;
+  const price_10 = 849.95;
+  const price_20 = 699.95;
+    
   const options = [
-    { label: "1 - 4 Reports / Month", 
+    { label: "1+ Reports / Month", 
       details: 
         <>
-          <div className="flex justify-between w-48">
-            <div>Rate:</div><div>$1300 / Report</div>
+          <div className="flex justify-between w-56">
+            <div>Rate:</div><div>${price_1.toFixed(2)} / Report</div>
           </div>
-          <div className="flex justify-between w-48">
-            <div>Min Charge:</div><div>$1300 / Month</div>
+          <div className="flex justify-between w-56">
+            <div>Min Charge:</div><div>${price_1.toFixed(2)} / Month</div>
           </div>            
         </> 
     },
-    { label: "5 - 9 Reports / Month", 
+    { label: "5+ Reports / Month", 
       details: 
         <>
-          <div className="flex justify-between w-48">
-            <div>Rate:</div><div>$1050 / Report</div>
+          <div className="flex justify-between w-56">
+            <div>Rate:</div><div>${price_5.toFixed(2)} / Report</div>
           </div>
-          <div className="flex justify-between w-48">
-            <div>Min Charge:</div><div>$5250 / Month</div>
-          </div>            
+          <div className="flex justify-between w-56">
+            <div>Min Charge:</div><div>${(price_5 * 5).toFixed(2)} / Month</div>
+          </div>  
+          <div className="flex justify-between w-56">
+            <div>Discount:</div><div>{((price_1 - price_5)/price_1 * 100).toFixed(0)}% off</div>
+          </div>  
         </> 
     },
-    { label: "10 - 18 Reports / Month", 
+    { label: "10+ Reports / Month", 
       details: 
         <>
-          <div className="flex justify-between w-48">
-            <div>Rate:</div><div>$950 / Report</div>
+          <div className="flex justify-between w-56">
+            <div>Rate:</div><div>${price_10.toFixed(2)} / Report</div>
           </div>
-          <div className="flex justify-between w-48">
-            <div>Min Charge:</div><div>$9500 / Month</div>
-          </div>            
+          <div className="flex justify-between w-56">
+            <div>Min Charge:</div><div>${(price_10 * 10).toFixed(2)} / Month</div>
+          </div>  
+          <div className="flex justify-between w-56">
+            <div>Discount:</div><div>{((price_1 - price_10)/price_1 * 100).toFixed(0)}% off</div>
+          </div>  
         </> 
     },
-    { label: "19+ Reports / Month", 
+    { label: "20+ Reports / Month", 
       details: 
         <>
-          <div className="flex justify-between w-48">
-            <div>Rate:</div><div>$900 / Report</div>
+          <div className="flex justify-between w-56">
+            <div>Rate:</div><div>${price_20.toFixed(2)} / Report</div>
           </div>
-          <div className="flex justify-between w-48">
-            <div>Min Charge:</div><div>$17100 / Month</div>
-          </div>            
+          <div className="flex justify-between w-56">
+            <div>Min Charge:</div><div>${(price_20 * 20).toFixed(2)} / Month</div>
+          </div>  
+          <div className="flex justify-between w-56">
+            <div>Discount:</div><div>{((price_1 - price_20)/price_1 * 100).toFixed(0)}% off</div>
+          </div>  
         </> 
     },
   ];
@@ -139,7 +153,7 @@ export default function SubscriptionForm() {
                   className="h-4 w-4 text-medium-brown focus:ring-medium-brown border-gray-300 mr-4"
                 />
                 <label htmlFor={`subscription-${index}`} className="w-full">
-                  <span className="font-medium">{option.label}</span>
+                  <span className="font-bold text-dark-blue">{option.label}</span>
                   <div className="text-sm text-gray-500">{option.details}</div>
                 </label>
               </div>

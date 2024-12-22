@@ -2,22 +2,18 @@
 
 import { montserrat, roboto, merriweather, raleway } from '@/ui/fonts';
 import { useReportContext } from '@/contexts/ReportContext';
-import { useSearchParams } from 'next/navigation';
+import { useCartContext } from '@/contexts/CartContext';
+import { useEffect } from 'react';
 
-export default function PaymentComplete() {
-  const { address, latitude, longitude, addressComponents, landGeometry } = useReportContext();
-  console.log(address, latitude, longitude, addressComponents, landGeometry);
-
+export default function CheckoutComplete() {
   const reportContext = useReportContext();
+  useEffect(() => {
+    console.log("Report context:", reportContext);
+  }, [reportContext]);
 
-  console.log("Payment complete context", reportContext);
     
-    
-  const searchParams = useSearchParams();
-
-  // Get quantity of reports bought
-  const quantity = parseInt(searchParams.get('quantity'));
-    
+  const { quantity } = useCartContext();
+            
   // Create api route to async generate new report and return a reportId immediately
   const reportId = 'XXXX-XXXX-XXXX';
   const reportId1 = 'XXXX-XXXX-XXXX';
@@ -44,10 +40,10 @@ export default function PaymentComplete() {
             <div className="">Report quantity not found</div>
           )}
         </div>
-        {address ? (
+        {reportContext.address ? (
           <div className="my-4">
             <div className="">
-              Your report for {address} may take a few minutes to process.
+              Your report for {reportContext.address} may take a few minutes to process.
             </div>
             <div className="">
               

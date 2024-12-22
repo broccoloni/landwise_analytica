@@ -2,6 +2,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand, GetCommand, UpdateCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import bcrypt from "bcryptjs";
 import { User } from "next-auth";
+import { v4 as uuidv4 } from "uuid";
 
 const accessKeyId = process.env.DYNAMODB_ACCESS_KEY_ID;
 const secretAccessKey = process.env.DYNAMODB_SECRET_ACCESS_KEY;
@@ -16,9 +17,10 @@ const client = new DynamoDBClient({
 });
 const docClient = DynamoDBDocumentClient.from(client);
 
-const TABLE_NAME = "Realtors";
 const EMAIL_INDEX = "EmailIndex"; // GSI for querying by email
 
+
+// ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR REALTORS TABLE ~~~~~~~~~~~~~~~~~~~~~~~~~
 /**
  * Hashes a password using bcrypt.
  */
@@ -38,6 +40,8 @@ export const verifyHash = (password: string, hash: string): boolean => {
  * Queries a user by email via the GSI.
  */
 export const getUserByEmail = async (email: string): Promise<User | null> => {
+  const TABLE_NAME = "Realtors";
+
   try {
     const command = new QueryCommand({
       TableName: TABLE_NAME,
@@ -63,6 +67,8 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
  * Retrieves a user by ID.
  */
 export const getUserById = async (id: string): Promise<User | null> => {
+  const TABLE_NAME = "Realtors";
+
   try {
     const command = new GetCommand({
       TableName: TABLE_NAME,
@@ -82,6 +88,8 @@ export const getUserById = async (id: string): Promise<User | null> => {
  * @param user - The user object containing all user data.
  */
 export const createUser = async (user: User): Promise<{ success: boolean; message?: string; data?: User }> => {
+  const TABLE_NAME = "Realtors";
+
   try {
     const { password, ...otherFields } = user;
 
@@ -109,6 +117,8 @@ export const createUser = async (user: User): Promise<{ success: boolean; messag
  * Updates a user's data in the database.
  */
 export const updateUser = async (id: string, updates: Partial<User>): Promise<{ success: boolean; message?: string; data?: User }> => {
+  const TABLE_NAME = "Realtors";
+
   try {
     const updateExpressions: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
@@ -168,3 +178,92 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 };
+
+// ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR REPORTS TABLE ~~~~~~~~~~~~~~~~~~~~~~~~~
+// Note: customerId can be either a realtor's customerId, or a checkoutSessionId
+
+/**
+ * Creates a new report and stores it in the Reports table.
+ */
+export const createReport = async (customerId: string): Promise<{ success: boolean; reportId?: string; message?: string }> => {
+  const TABLE_NAME = "Reports";
+
+  try {
+    const reportId = uuidv4(); // Generate a unique report ID
+    const command = new PutCommand({
+      TableName: TABLE_NAME,
+      Item: {
+        reportId,
+        customerId,
+        createdAt: new Date().toISOString(),
+      },
+    });
+
+    await docClient.send(command);
+    return { success: true, reportId, message: "Report created successfully" };
+  } catch (error) {
+    console.error("Error creating report:", error);
+    return { success: false, message: "Unable to create report", error: error instanceof Error ? error.message : String(error) };
+  }
+};
+
+/**
+ * Retrieves all report IDs for a given customer ID.
+ */
+export const getReportsByCustomerId = async (customerId: string): Promise<{ success: boolean; reportIds?: string[]; message?: string }> => {
+  try {
+    const command = new QueryCommand({
+      TableName: REPORTS_TABLE_NAME,
+      IndexName: "CustomerIdIndex",
+      KeyConditionExpression: "#customerId = :customerIdValue",
+      ExpressionAttributeNames: {
+        "#customerId": "customerId",
+      },
+      ExpressionAttributeValues: {
+        ":customerIdValue": customerId,
+      },
+    });
+
+    const { Items } = await docClient.send(command);
+    const reportIds = Items?.map((item) => item.reportId) || [];
+    return { success: true, reportIds };
+  } catch (error) {
+    console.error("Error retrieving reports by customer ID:", error);
+    return { success: false, message: "Unable to retrieve reports", error: error instanceof Error ? error.message : String(error) };
+  }
+};
+
+
+// ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR REPORTS TABLE ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Creates a new order in the Orders table.
+ */
+export const createOrder = async (checkoutSessionId: string, email: string): Promise<{ success: boolean; message?: string }> => {
+  const TABLE_NAME = "Orders";
+
+  try {
+    const command = new PutCommand({
+      TableName: ORDERS_TABLE_NAME,
+      Item: {
+        checkoutSessionId,
+        email,
+        reportIds,
+        orderDate: new Date().toISOString(),
+      },
+    });
+
+    await docClient.send(command);
+    return { success: true, message: "Order created successfully" };
+  } catch (error) {
+    console.error("Error creating order:", error);
+    return { success: false, message: "Unable to create order", error: error instanceof Error ? error.message : String(error) };
+  }
+};
+
+
+
+
+
+
+
