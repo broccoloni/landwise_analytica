@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       return new NextResponse(JSON.stringify({ success: false, message: response.message }), { status: 500 });
     }
 
-    return new NextResponse(JSON.stringify({ success: true, reportIds: response.reportIds }), { status: 200 });
+    return new NextResponse(JSON.stringify({ success: true, reports: response.reports }), { status: 200 });
   } catch (error) {
     console.error("Error in getReportIds API route:", error);
     return new NextResponse(JSON.stringify({ success: false, message: 'Internal Server Error' }), { status: 500 });

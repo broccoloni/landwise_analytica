@@ -14,7 +14,7 @@ export default function GetReport() {
     
   const [numReports, setNumReports] = useState<number>(1);
   const { address, setAddress, setLatitude, setLongitude, setAddressComponents, setLandGeometry } = useReportContext();
-  const { setQuantity } = useCartContext();
+  const { setQuantity, setAutoRedeem } = useCartContext();
 
   const costOne = 1299.95;
   const costThree = 2999.95;
@@ -30,11 +30,13 @@ export default function GetReport() {
     
   const handleBuyOne = async () => {
     setQuantity(1);
+    setAutoRedeem(!!address);
     router.push('/checkout');
   };
 
   const handleBuyThree = async () => {
     setQuantity(3);
+    setAutoRedeem(!!address);
     router.push('/checkout');
   };
 

@@ -3,8 +3,14 @@ import { stripe } from '@/lib/stripe';
 
 export async function POST(req: Request) {
   try {
-    const { quantity, details } = await req.json();
+    // Note: Details is too long to store in stripe metadata
+    // Instead, we will generate the 3 reportIds the user buys,
+    // and on the checkout-complete page, we will allow them to quickly
+    // redeem the report with those details, which are still in the reportContext
+    const { quantity } = await req.json();
 
+    console.log("CHECKOUT QUANTITY:", quantity, quantity === 1, quantity === '1');
+      
     if (!quantity) {
       return NextResponse.json({ error: 'Missing checkout details' }, { status: 400 });
     }
@@ -27,7 +33,6 @@ export async function POST(req: Request) {
 
       metadata: {
         quantity,
-        details,
       },
 
       invoice_creation: {
@@ -39,6 +44,8 @@ export async function POST(req: Request) {
       return_url: `${req.headers.get('origin')}/checkout-complete?session_id={CHECKOUT_SESSION_ID}`,
       ui_mode: 'embedded',
     });
+
+    console.log("Session:", session);
       
     return NextResponse.json({ clientSecret: session.client_secret });
   } catch (error: any) {

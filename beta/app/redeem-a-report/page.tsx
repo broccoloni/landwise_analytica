@@ -1,26 +1,30 @@
 'use client';
 
 import { roboto } from '@/ui/fonts';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
 import ProgressBar from '@/components/ProgressBar';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useReportContext } from '@/contexts/ReportContext'; // Import the context
 
 // Dynamically import MapDrawing for client-side rendering
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
 export default function RedeemReport() {
-  const [reportId, setReportId] = useState('');
-  const [selectedAddress, setSelectedAddress] = useState<string>('');
-  const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-  const [landGeometry, setLandGeometry] = useState<number[][]>([]);
-  const [step, setStep] = useState(1);
+  // Use context values and setters
+  const { 
+    reportId, setReportId, 
+    address, setAddress, 
+    latitude, setLatitude, 
+    longitude, setLongitude, 
+    landGeometry, setLandGeometry, 
+    addressComponents, setAddressComponents 
+  } = useReportContext();
 
+  const [step, setStep] = useState(1);
   const stepNames = ['Enter ID', 'Select Address', 'Define Boundary', 'Review & Submit'];
 
   const handleReportIdChange = (e) => {
@@ -34,15 +38,14 @@ export default function RedeemReport() {
       value = value.slice(0, 9) + '-' + value.slice(9);
     }
       
-    setReportId(value);
+    setReportId(value); // Update the context
   };
 
-    
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
-    setSelectedAddress(address);
-    setLatitude(lat);
-    setLongitude(lng);
-    setAddressComponents(components);
+    setAddress(address); // Set the selected address
+    setLatitude(lat); // Set the latitude
+    setLongitude(lng); // Set the longitude
+    setAddressComponents(components); // Set address components
   };
 
   const handleBackStep = () => {
@@ -50,7 +53,7 @@ export default function RedeemReport() {
       setStep(prevStep => prevStep - 1);
     }
   };
-    
+
   const handleNextStep = () => {
     if (step < 4) {
       setStep(prevStep => prevStep + 1);
@@ -60,27 +63,27 @@ export default function RedeemReport() {
   const handleGenerateReport = () => {
     console.log('Generating report with the following details:');
     console.log('Report ID:', reportId);
-    console.log('Address:', selectedAddress);
+    console.log('Address:', address);
     console.log('Boundary:', landGeometry);
     // Add actual logic to generate the report here
   };
 
   return (
-    <div className={`${roboto.className} text-black min-h-screen py-10 flex-row justify-between`}>
-      <div className="mx-auto px-80 py-10">
+    <div className={`${roboto.className} text-black min-h-screen flex-row justify-between`}>
+      <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20 mx-auto">
         <div className="text-4xl font-bold mb-8 text-center">Redeem a Report</div>
-        <div className="mb-8">
+        <div className="mb-8 px-10 mx-auto max-w-2xl">
           <ProgressBar currentStep={step} totalSteps={stepNames.length} stepNames={stepNames} />
         </div>
 
         {/* Step 1: Enter Report ID */}
         {step === 1 && (
-          <div className="">
+          <div className="sm:px-10 mx-auto max-w-2xl">
             <div className="text-2xl font-semibold mb-4">Enter Report ID</div>
             <input
               id="reportId"
               type="text"
-              value={reportId}
+              value={reportId || ''}
               onChange={handleReportIdChange}
               maxLength={14}
               className="mt-1 block w-full px-3 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -100,7 +103,7 @@ export default function RedeemReport() {
               <div className="">            
                 <button
                   onClick={handleNextStep}
-                  disabled={reportId.length !== 14}
+                  disabled={reportId?.length !== 14}
                   className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
@@ -112,14 +115,14 @@ export default function RedeemReport() {
 
         {/* Step 2: Address Search */}
         {step === 2 && (
-          <div className="">
+          <div className="sm:px-10 mx-auto max-w-2xl">
             <div className="text-2xl font-semibold mb-4">Search for an Address</div>
             <AddressSearch
               onAddressSelect={handleAddressSelect}
               prompt="Search for a property address"
             />
 
-            <div className={`mx-auto w-96 ${latitude && 'my-8'}`}>
+            <div className={`mx-auto max-w-96 ${latitude && 'my-8'}`}>
               <AddressDisplay
                 addressComponents={addressComponents}
                 latitude={latitude}
@@ -140,7 +143,7 @@ export default function RedeemReport() {
               <div className="">            
                 <button
                   onClick={handleNextStep}
-                  disabled={!selectedAddress}
+                  disabled={!address}
                   className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
@@ -152,7 +155,7 @@ export default function RedeemReport() {
 
         {/* Step 3: Define Property Boundary */}
         {step === 3 && latitude !== null && longitude !== null && (
-          <div className="">
+          <div className="mx-auto max-w-4xl">
             <div className="text-2xl font-semibold mb-4">Define The Property Boundary</div>
             <ul className="mb-8 mx-8 space-y-2 text-dark-blue list-disc">
               <li className="">Click to add a boundary point</li>
@@ -183,7 +186,7 @@ export default function RedeemReport() {
               <div className="">            
                 <button
                   onClick={handleNextStep}
-                  disabled={!landGeometry}
+                  disabled={landGeometry.length < 3}
                   className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
@@ -195,38 +198,32 @@ export default function RedeemReport() {
 
         {/* Step 4: Generate Report */}
         {step === 4 && (
-          <div>
+          <div className="sm:px-10 mx-auto max-w-2xl">
             <div className="text-2xl font-semibold mb-4">Review & Submit</div>
             <div className="mb-2">
               <strong>Report ID:</strong> {reportId}
             </div>
             <div className="mb-2">
-              <strong>Address:</strong> {selectedAddress}
+              <strong>Address:</strong> {address}
             </div>
             
             <div className="mb-4">
               <strong>Boundary Points:</strong> 
-              <div className="flex justify-center mt-2">
-                {landGeometry.length > 0 ? (
-                  <ul className="list-none space-y-1">
-                    {landGeometry.map((point, index) => (
-                      <li key={index} className="text-dark-blue">
-                        Point {index + 1}: ({point[0]}, {point[1]})
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="text-gray-500">No boundary defined</div>
-                )}
-              </div>
+              <ul className="list-inside list-disc">
+                {landGeometry.map((point, index) => (
+                  <li className="" key={index}>
+                    <span className="mr-4">Lat: {point[0].toFixed(8)}</span>
+                    <span>Lng: {point[1].toFixed(8)}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div className="flex justify-between w-full">
               <div className="">            
                 <button
                   onClick={handleBackStep}
-                  disabled={step < 2}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </button>
@@ -234,32 +231,14 @@ export default function RedeemReport() {
               <div className="">            
                 <button
                   onClick={handleGenerateReport}
-                  disabled={!reportId || !selectedAddress || !landGeometry}
-                  className="mt-4 bg-medium-brown text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75"
                 >
-                  Generate Report
+                  Generate Report <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
               </div>
             </div>
           </div>
         )}
-      </div>
-      <div className="flex text-lg justify-center mt-20">
-        <div className="mr-8 my-auto">Quick Links:</div>
-        <div className="flex space-x-8 w-96">
-          <Link
-            href="/get-a-report"
-            className="my-auto text-black hover:text-medium-brown hover:underline"
-          >
-            Get a Report
-          </Link>
-          <Link
-            href="/view-an-existing-report"
-            className="my-auto text-black hover:text-medium-brown hover:underline"
-          >
-            View a Redeemed Report
-          </Link>            
-        </div> 
       </div>
     </div>
   );

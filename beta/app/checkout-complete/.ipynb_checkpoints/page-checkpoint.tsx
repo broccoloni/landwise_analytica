@@ -1,16 +1,18 @@
 'use client';
 
-import { roboto } from '@/ui/fonts';
+import { roboto, montserrat } from '@/ui/fonts';
 import { useReportContext } from '@/contexts/ReportContext';
 import { useEffect, useState } from 'react';
+import Loading from '@/components/Loading';
+import ReportBar from '@/components/ReportBar';
 
 export default function CheckoutComplete() {
   const reportContext = useReportContext();
 
-  const [reportIds, setReportIds] = useState([]);
+  const [reports, setReports] = useState([]);
 
   // Function to fetch report IDs from the API
-  const fetchReportIds = async (sessionOrCustomerId) => {
+  const fetchReports = async (sessionOrCustomerId) => {
     try {
       const response = await fetch('/api/getReportIds', {
         method: 'POST',
@@ -19,8 +21,9 @@ export default function CheckoutComplete() {
       });
 
       const result = await response.json();
+
       if (result.success) {
-        setReportIds(result.reportIds);
+        setReports(result.reports);
       } else {
         console.error('Error retrieving report IDs:', result.message);
       }
@@ -34,38 +37,41 @@ export default function CheckoutComplete() {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const sessionId = urlParams.get('session_id');
-    console.log("Session ID:", sessionId);
     if (sessionId) {
-      fetchReportIds(sessionId);
+      fetchReports(sessionId);
     }
   }, []);
-
+    
   return (
-    <div className={`${roboto.className} px-40 py-20`}>
+    <div className={`${roboto.className} px-10 sm:px-20 md:px-40 py-10 sm:py-20`}>
       <div className="text-2xl text-center mb-12 font-bold">
         Thank You For Your Purchase!
       </div>
+      <div className="mb-8 max-w-2xl mx-auto">You will be sent an email with these report IDs to be redeemed at any time. After being redeemed, you will have 180 days to view and download your report.</div>
       <div>
         <div className="text-xl">
-          {reportIds.length > 0 ? (
+          {reports.length > 0 ? (
             <ul>
-              {reportIds.map((id) => (
-                <li key={id} className="my-2">
-                  Report ID: {id}
+              {reports.map((report) => (
+                <li key={report.id} className="my-2 max-w-3xl mx-auto">
+                  <ReportBar report={report} />
                 </li>
               ))}
             </ul>
           ) : (
-            <p>Loading report IDs...</p>
+            <Loading className="h-5 w-5" />
           )}
         </div>
-        {reportContext.address ? (
-          <div className="my-4">
-            <p>Your report for <strong>{reportContext.address}</strong> may take a few minutes to process.</p>
+        {reportContext.address && reports.length > 0 ? (
+          <div className="my-8 text-md">
+            <div className="hover:underline hover:text-medium-brown max-w-2xl mx-auto">
+              Redeem 
+              <span className={`mx-2 ${montserrat.className}`}>{reports[0].id}</span> 
+              with <strong className="mr-2">{reportContext.address}</strong> 
+              here
+            </div>
           </div>
-        ) : (
-          <div className="my-4">No address provided.</div>
-        )}
+        ): ( <></>)}
       </div>
     </div>
   );

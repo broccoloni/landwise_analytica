@@ -5,26 +5,15 @@ import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import Loading from '@/components/Loading';
 import { useCartContext } from '@/contexts/CartContext';
-import { useReportContext } from '@/contexts/ReportContext';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
 
 export default function Checkout() {
+  // Note: Report details is too long to store in stripe metadata
+  // Instead, we will generate the 3 reportIds the user buys,
+  // and on the checkout-complete page, we will allow them to quickly
+  // redeem the report with those details, which are still in the reportContext
   const { quantity } = useCartContext();
-  const [details, setDetails] = useState({});
-    
-  const reportContext = useReportContext();
-  useEffect(() => {
-    if (reportContext.address) {
-      setDetails({
-        address: reportContext.address,
-        addressComponents: reportContext.addressComponents,
-        longitude: reportContext.longitude,
-        latitude: reportContext.latitude,
-        landGeometry: reportContext.landGeometry,
-      });
-    }
-  }, [reportContext]);
     
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState({});
@@ -37,7 +26,7 @@ export default function Checkout() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ quantity, details }),
+        body: JSON.stringify({ quantity }),
       });
 
       if (!response.ok) {
