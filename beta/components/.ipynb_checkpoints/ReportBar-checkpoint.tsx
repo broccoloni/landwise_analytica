@@ -29,7 +29,7 @@ interface ReportBarProps {
 
 const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   const router = useRouter();
-  const { setReportId, setLandGeometry, setAddress, setLatitude, setLongitude, setAddressComponents } = useReportContext();
+  const { setReportId, setLandGeometry, setAddress, setLatitude, setLongitude, setAddressComponents, setStatus } = useReportContext();
 
   // Pre-redirect logic for unredeemed reports
   const handleRedeemClick = () => {
@@ -39,6 +39,7 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
     setLongitude(null);
     setAddressComponents(null);
     setLandGeometry([]);
+    setStatus(report.status);
     router.push('/redeem-a-report');
   };
 

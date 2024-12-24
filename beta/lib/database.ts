@@ -21,6 +21,7 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client);
 
 const EMAIL_INDEX = "EmailIndex"; // GSI for querying by email
+const REPORTID_INDEX = "ReportIdIndex"; // GSI for querying by reportId
 
 // ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR REALTORS TABLE ~~~~~~~~~~~~~~~~~~~~~~~~~
 /**
@@ -243,7 +244,7 @@ export const createReport = async (sessionOrCustomerId: string): Promise<{ succe
  */
 export const getReportIds = async (
   sessionOrCustomerId: string
-): Promise<{ success: boolean; reports?: { id: string; status: string; createdAt: string }[]; message?: string }> => {
+): Promise<{ success: boolean; reports?: { id: string; status: string; createdAt: string; redeemedAt: string; }[]; message?: string }> => {
   const TABLE_NAME = "Reports";
 
   try {
@@ -259,6 +260,7 @@ export const getReportIds = async (
     const reports = Items?.map((item) => ({
       id: item.reportId,
       status: item.status,
+      createdAt: item.createdAt || null,
       redeemedAt: item.redeemedAt || null,
     })) || [];
 
@@ -268,12 +270,54 @@ export const getReportIds = async (
     console.error("Error retrieving reports by sessionOrCustomerId:", error);
     return {
       success: false,
-      message: "Unable to retrieve reports",
-      error: error instanceof Error ? error.message : String(error),
+      message: `Unable to retrieve reports: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 };
 
+export const getReportAttributesById = async (
+  reportId: string
+): Promise<{ success: boolean; report: { id: string; status: string; createdAt: string; redeemedAt: string; }; message?: string; }> => {
+  const TABLE_NAME = "Reports";
+
+  try {
+    const command = new QueryCommand({
+      TableName: TABLE_NAME,
+      IndexName: REPORTID_INDEX,
+      KeyConditionExpression: "#reportId = :reportIdValue",
+      ExpressionAttributeNames: {
+        "#reportId": "reportId",
+      },
+      ExpressionAttributeValues: {
+        ":reportIdValue": reportId,
+      },
+    });
+
+    const { Items } = await docClient.send(command);
+    if (!Items || Items.length === 0) {
+      return {
+        success: false,
+        message: "No report found for the provided reportId",
+      };
+    }
+    
+    const report = {
+      id: Items[0].reportId,
+      status: Items[0].status,
+      createdAt: Items[0].createdAt || null,
+      redeemedAt: Items[0].redeemedAt || null,
+    };
+
+    console.log("Retrieved report:", report, "for reportId:", reportId);
+    return { success: true, report };
+  } catch (error) {
+    console.error("Error retrieving report by repordId:", error);
+    return {
+      success: false,
+      message: `Unable to retrieve report: ${error instanceof Error ? error.message : String(error)}`
+    };
+  }
+};
 
 // Details is a dict with: address, addressComponents, longitude, latitude, landGeometry
 export const redeemReport = async (reportId: string, details: any): Promise<{ success: boolean; message?: string }> => {

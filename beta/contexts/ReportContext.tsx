@@ -15,6 +15,8 @@ interface ReportContextProps {
   setAddressComponents: (components: Record<string, string> | null) => void;
   reportId: string | null;
   setReportId: (id: string | null) => void;
+  status: string | null;
+  setStatus: (status: string | null) => void;
 }
 
 const ReportContext = createContext<ReportContextProps | undefined>(undefined);
@@ -26,7 +28,8 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);
-
+  const [status, setStatus] = useState<string | null>(null);
+    
   // Load initial values from localStorage once the component is mounted
   useEffect(() => {
     try {
@@ -47,6 +50,9 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
 
       const storedReportId = localStorage.getItem('reportId');
       if (storedReportId) setReportId(storedReportId);
+
+      const storedStatus = localStorage.getItem('reportStatus');
+      if (storedStatus) setStatus(storedStatus);
         
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
@@ -90,6 +96,12 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       : localStorage.removeItem('reportId');
   }, [reportId]);
 
+  useEffect(() => {
+    status !== null
+      ? localStorage.setItem('reportStatus', status)
+      : localStorage.removeItem('reportStatus');
+  }, [status]);
+
   const value = useMemo(
     () => ({
       landGeometry,
@@ -104,8 +116,10 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       setAddressComponents,
       reportId,
       setReportId,
+      status,
+      setStatus,
     }),
-    [landGeometry, address, latitude, longitude, addressComponents, reportId]
+    [landGeometry, address, latitude, longitude, addressComponents, reportId, status]
   );
 
   return <ReportContext.Provider value={value}>{children}</ReportContext.Provider>;

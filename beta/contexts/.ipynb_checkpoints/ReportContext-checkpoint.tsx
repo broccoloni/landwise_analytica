@@ -15,6 +15,8 @@ interface ReportContextProps {
   setAddressComponents: (components: Record<string, string> | null) => void;
   reportId: string | null;
   setReportId: (id: string | null) => void;
+  status: string | null;
+  setStatus: (status: string | null) => void;
 }
 
 const ReportContext = createContext<ReportContextProps | undefined>(undefined);
@@ -26,14 +28,16 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);
-
+  const [status, setStatus] = useState<string | null>(null);
+    
   // Load initial values from localStorage once the component is mounted
   useEffect(() => {
     try {
       const storedLandGeometry = localStorage.getItem('landGeometry');
       if (storedLandGeometry) setLandGeometry(JSON.parse(storedLandGeometry));
 
-      setAddress(localStorage.getItem('reportAddress') || null);
+      const storedAddress = localStorage.getItem('reportAddress');
+      if (storedAddress) setAddress(storedAddress);
 
       const storedLatitude = localStorage.getItem('latitude');
       if (storedLatitude) setLatitude(parseFloat(storedLatitude));
@@ -44,7 +48,12 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       const storedAddressComponents = localStorage.getItem('addressComponents');
       if (storedAddressComponents) setAddressComponents(JSON.parse(storedAddressComponents));
 
-      setReportId(localStorage.getItem('reportId') || null);
+      const storedReportId = localStorage.getItem('reportId');
+      if (storedReportId) setReportId(storedReportId);
+
+      const storedStatus = localStorage.getItem('reportStatus');
+      if (storedStatus) setStatus(storedStatus);
+        
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
     }
@@ -52,7 +61,9 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
 
   // Sync state changes with localStorage
   useEffect(() => {
-    localStorage.setItem('landGeometry', JSON.stringify(landGeometry));
+    landGeometry.length > 0
+      ? localStorage.setItem('landGeometry', JSON.stringify(landGeometry))
+      : localStorage.removeItem('landGeometry');
   }, [landGeometry]);
 
   useEffect(() => {
@@ -85,6 +96,12 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       : localStorage.removeItem('reportId');
   }, [reportId]);
 
+  useEffect(() => {
+    status !== null
+      ? localStorage.setItem('reportStatus', status)
+      : localStorage.removeItem('reportStatus');
+  }, [status]);
+
   const value = useMemo(
     () => ({
       landGeometry,
@@ -99,8 +116,10 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       setAddressComponents,
       reportId,
       setReportId,
+      status,
+      setStatus,
     }),
-    [landGeometry, address, latitude, longitude, addressComponents, reportId]
+    [landGeometry, address, latitude, longitude, addressComponents, reportId, status]
   );
 
   return <ReportContext.Provider value={value}>{children}</ReportContext.Provider>;

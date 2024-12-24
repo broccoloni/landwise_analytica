@@ -36,7 +36,7 @@ export default function Home() {
     setAddressComponents(null);
     router.push('/get-a-report');
   };
-    
+
   return (
     <div className="flex-row">
 

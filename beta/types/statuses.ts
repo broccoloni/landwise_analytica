@@ -10,4 +10,5 @@ export enum ReportStatus {
   Redeemed = "REDEEMED",
   Processing = "PROCESSING",
   Expired = "EXPIRED",
+  Invalid = "INVALID",
 }

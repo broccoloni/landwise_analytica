@@ -1,14 +1,16 @@
 'use client';
 
 import { roboto } from '@/ui/fonts';
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
 import ProgressBar from '@/components/ProgressBar';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { useReportContext } from '@/contexts/ReportContext'; // Import the context
+import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
+import { useReportContext } from '@/contexts/ReportContext';
+import Loading from '@/components/Loading';
+import { ReportStatus } from '@/types/statuses'; 
 
 // Dynamically import MapDrawing for client-side rendering
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
@@ -21,14 +23,44 @@ export default function RedeemReport() {
     latitude, setLatitude, 
     longitude, setLongitude, 
     landGeometry, setLandGeometry, 
-    addressComponents, setAddressComponents 
+    addressComponents, setAddressComponents,
+    status, setStatus,
   } = useReportContext();
 
   const [step, setStep] = useState(1);
   const stepNames = ['Enter ID', 'Select Address', 'Define Boundary', 'Review & Submit'];
 
+  const [validatingReportId, setValidatingReportId] = useState(false);
+  const fetchReportAttributes = async (reportId: string) => {
+    setValidatingReportId(true);
+    setStatus(null);
+    try {
+      const response = await fetch('/api/getReportAttributes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId }),
+      });
+
+      const result = await response.json();
+      setValidatingReportId(false);
+        
+      if (result.success) {
+        // setStatus(result.report.status);
+        setStatus(ReportStatus.Redeemed);
+        // return result.report.status;
+        return ReportStatus.Redeemed;
+      } else {
+        setStatus(ReportStatus.Invalid);
+      }
+    } catch (error) {
+      setValidatingReportId(false);
+      console.error('Error fetching report IDs:', error);
+      return null;
+    }
+  };
+
   const handleReportIdChange = (e) => {
-    let value = e.target.value.toUpperCase().replace(/[^A-Z]/g, ''); // Only allow uppercase letters
+    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Only allow uppercase letters and numbers
       
     // Format the value with dashes after every 4 characters
     if (value.length > 3 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 4)) {
@@ -38,7 +70,8 @@ export default function RedeemReport() {
       value = value.slice(0, 9) + '-' + value.slice(9);
     }
       
-    setReportId(value); // Update the context
+    setReportId(value);
+    if (status !== null) setStatus(null);
   };
 
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
@@ -54,11 +87,28 @@ export default function RedeemReport() {
     }
   };
 
-  const handleNextStep = () => {
-    if (step < 4) {
+  const handleNextStep = async () => {
+    if (step === 1) {
+      const status = await fetchReportAttributes(reportId);
+      if (status === ReportStatus.Unredeemed) {
+        console.log("Valid status, moving to step 2", status, ReportStatus.Unredeemed, status === ReportStatus.Unredeemed);
+        setAddressComponents(null);
+        setAddress(null);
+        setLatitude(null);
+        setLongitude(null);
+        setStep(prevStep => prevStep + 1);
+      } else {
+        console.error('Report is not in an unredeemed state.');
+      }
+    } else if (step === 2) {
+      setLandGeometry([]);
+      setStep(prevStep => prevStep + 1);
+    }
+    else if (step === 3) {
       setStep(prevStep => prevStep + 1);
     }
   };
+
 
   const handleGenerateReport = () => {
     console.log('Generating report with the following details:');
@@ -66,6 +116,61 @@ export default function RedeemReport() {
     console.log('Address:', address);
     console.log('Boundary:', landGeometry);
     // Add actual logic to generate the report here
+  };
+
+  const ReportStatusDisplay = () => {
+    if (validatingReportId) {
+      return (
+        <div className="flex justify-center items-center mt-4 p-4 bg-blue-100 rounded-md text-blue-800">
+          <div className="">
+            <Loading className="w-10 h-10 mr-2 text-blue-800" />
+          </div>
+          <div className="">
+            Validating Report ID...
+          </div>
+        </div>
+      );
+    }
+      
+    else if (!status) return null;
+      
+    else if (status === ReportStatus.Unredeemed) {
+      return (
+        <div className="flex justify-center items-center mt-4 p-4 bg-green-100 rounded-md text-dark-green">
+          <div className="mr-2 rounded-full border-2 border-dark-green">
+            <Check className="w-5 h-5 m-1" />
+          </div>
+          <div className="">
+            Valid Report ID
+          </div>
+        </div>
+      );
+    }
+      
+    else if (status === ReportStatus.Redeemed) {
+      return (
+        <div className="flex justify-center items-center mt-4 p-4 bg-yellow-100 rounded-md text-yellow-800">
+          <div className="">
+            Report has already been redeemed
+          </div>
+        </div>
+      );
+    }
+
+    else if (status === ReportStatus.Invalid) {
+      return (
+        <div className="flex justify-center items-center mt-4 p-4 bg-red-100 rounded-md text-red-800">
+          <div className="mr-2 rounded-full border-2 border-red-800">
+            <X className="w-5 h-5 m-1" />
+          </div>
+          <div className="text-red-800">
+            Invalid Report ID
+          </div>
+        </div>
+      );
+    }
+      
+    return null;
   };
 
   return (
@@ -90,6 +195,8 @@ export default function RedeemReport() {
               placeholder="XXXX-XXXX-XXXX"
             />
 
+            <ReportStatusDisplay />
+              
             <div className="flex justify-between w-full">
               <div className="">            
                 <button
