@@ -7,7 +7,7 @@ import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
 import ProgressBar from '@/components/ProgressBar';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
 import Loading from '@/components/Loading';
 import { ReportStatus } from '@/types/statuses'; 
@@ -15,8 +15,7 @@ import { ReportStatus } from '@/types/statuses';
 // Dynamically import MapDrawing for client-side rendering
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
-export default function RedeemReport() {
-  // Use context values and setters
+export default function RedeemReport() {    
   const { 
     reportId, setReportId, 
     address, setAddress, 
@@ -45,10 +44,8 @@ export default function RedeemReport() {
       setValidatingReportId(false);
         
       if (result.success) {
-        // setStatus(result.report.status);
-        setStatus(ReportStatus.Redeemed);
-        // return result.report.status;
-        return ReportStatus.Redeemed;
+        setStatus(result.report.status);
+        return result.report.status;
       } else {
         setStatus(ReportStatus.Invalid);
       }
@@ -107,16 +104,7 @@ export default function RedeemReport() {
     else if (step === 3) {
       setStep(prevStep => prevStep + 1);
     }
-  };
-
-
-  const handleGenerateReport = () => {
-    console.log('Generating report with the following details:');
-    console.log('Report ID:', reportId);
-    console.log('Address:', address);
-    console.log('Boundary:', landGeometry);
-    // Add actual logic to generate the report here
-  };
+  }
 
   const ReportStatusDisplay = () => {
     if (validatingReportId) {
@@ -149,11 +137,23 @@ export default function RedeemReport() {
       
     else if (status === ReportStatus.Redeemed) {
       return (
-        <div className="flex justify-center items-center mt-4 p-4 bg-yellow-100 rounded-md text-yellow-800">
-          <div className="">
-            Report has already been redeemed
+        <Link 
+          href='/view-report'
+          className="flex justify-between mt-4 p-4 bg-yellow-100 rounded-md text-yellow-800 hover:border hover:border-yellow-800"
+        >
+          <div className="flex items-center">
+            <div className="mr-2">
+              <NotebookText className="w-6 h-6 m-1" />
+            </div>
+            <div className="">
+              Report has already been redeemed
+            </div>
           </div>
-        </div>
+          <div className="flex justify-center items-center">
+            <div>View Now</div>
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </div>
+        </Link>
       );
     }
 
@@ -336,12 +336,12 @@ export default function RedeemReport() {
                 </button>
               </div>
               <div className="">            
-                <button
-                  onClick={handleGenerateReport}
+                <Link
+                  href="/view-report"
                   className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75"
                 >
                   Generate Report <ArrowRight className="h-5 w-5 ml-2" />
-                </button>
+                </Link>
               </div>
             </div>
           </div>
