@@ -13,12 +13,11 @@ import {
 import { getAvg, getStd, getStats } from '@/utils/stats';
 import chroma from 'chroma-js';
 import { heatColors, rangeColors, colorSet } from '@/types/colorPalettes';
-
+import { dayNumToMonthDay } from '@/utils/dates';
 const scale = 10;
 
-export const processLandUseData = (data) => {
+export const processLandUseData = (landUseDataDict) => {
   try {
-    const landUseDataDict = data.landUseData;
     
     const newLandUseData = {};
     Object.entries(landUseDataDict).forEach(([year, values]) => {
@@ -111,32 +110,96 @@ export const processLandUseData = (data) => {
   }
 };
 
+export const processGrowingSeasonData = (climateData) => {
+  try {
+    const x = Object.keys(climateData); // years of data
+    const y0 = []; //last frost day ints for each year
+    const y1 = []; //first frost day ints for each year
+    const growingSeasons = [];
+    const desc = [];
+      
+    Object.entries(climateData).forEach(([year, weatherData]) => {
+      const { firstFrost, lastFrost, growingSeasonLength } = calculateGrowingSeason(weatherData);
+      y0.push(lastFrost);
+      y1.push(firstFrost);
+      growingSeasons.push(growingSeasonLength);
+      desc.push(`Year: ${year}<br>Growing Season Length: ${growingSeasonLength} days<br>Last Frost Date: ${dayNumToMonthDay(lastFrost, year)}<br>First Frost Date: ${dayNumToMonthDay(firstFrost, year)}`);
+    });
 
+    const firstFrosts = getStats(y1);
+    const lastFrosts = getStats(y0);
+    const seasons = getStats(growingSeasons);
+      
+    return {
+      x,
+      y0,
+      y1,
+      desc,
+      firstFrosts,
+      lastFrosts,
+      seasons,
+    };
+    
+  } catch (error) {
+    console.error('Error processing growing season data:', error);
+  }
+};
 
-export const processClimateData = (data) => {
+export const processHeatUnitData = (climateData) => {
+  try {
+    const years = Object.keys(climateData);
+    const chu = { data: {} };
+    const gdd0 = { data: {} };
+    const gdd5 = { data: {} };
+    const gdd10 = { data: {} };
+    const gdd15 = { data: {} };
+
+    const endOfYearChu = [];
+    const endOfYearGdd0 = [];
+    const endOfYearGdd5 = [];
+    const endOfYearGdd10 = [];
+    const endOfYearGdd15 = [];
+      
+    Object.entries(climateData).forEach(([year, weatherData]) => {
+      chu.data[year] = calculateCornHeatUnits(weatherData);
+      gdd0.data[year] = calculateGDD(weatherData, 0);
+      gdd5.data[year] = calculateGDD(weatherData, 5);
+      gdd10.data[year] = calculateGDD(weatherData, 10);
+      gdd15.data[year] = calculateGDD(weatherData, 15);
+
+      endOfYearChu.push(Object.values(chu.data[year]).slice(-1)[0]);
+      endOfYearGdd0.push(Object.values(gdd0.data[year]).slice(-1)[0]);
+      endOfYearGdd5.push(Object.values(gdd5.data[year]).slice(-1)[0]);
+      endOfYearGdd10.push(Object.values(gdd10.data[year]).slice(-1)[0]);
+      endOfYearGdd15.push(Object.values(gdd15.data[year]).slice(-1)[0]);
+    });
+      
+    return {
+      years,
+      chu: { ...chu, ...getStats(endOfYearChu) },
+      gdd0: { ...gdd0, ...getStats(endOfYearGdd0) },
+      gdd5: { ...gdd5, ...getStats(endOfYearGdd5) },
+      gdd10: { ...gdd10, ...getStats(endOfYearGdd10) },
+      gdd15: { ...gdd15, ...getStats(endOfYearGdd15) },
+    };
+
+  } catch (error) {
+    console.error('Error processing heat unit data:', error);
+  }
+};
+
+export const processClimateData = (climateData) => {
   try {
     const newClimateData = {};
-    Object.entries(data.climateData).forEach(([key, values]) => {
-      const weatherData = values;
-      const { firstFrost, firstFrostStr, lastFrost, lastFrostStr, growingSeasonLength } = calculateGrowingSeason(weatherData);
-      const cornHeatUnits = calculateCornHeatUnits(weatherData);
-      const GDD0 = calculateGDD(weatherData, 0);
-      const GDD5 = calculateGDD(weatherData, 5);
-      const GDD10 = calculateGDD(weatherData, 10);
-      const GDD15 = calculateGDD(weatherData, 15);
-      
-      newClimateData[key] = {
-        weatherData,
-        firstFrost,
-        firstFrostStr,
-        lastFrost,
-        lastFrostStr,
-        growingSeasonLength,
-        cornHeatUnits,
-        GDD0,
-        GDD5,
-        GDD10,
-        GDD15,
+    Object.entries(climateData).forEach(([year, weatherData]) => {
+      const precip = Object.values(weatherData).map((dayData) => dayData.precip);
+      const temp = Object.values(weatherData).map((dayData) => dayData.temp);
+      const dew = Object.values(weatherData).map((dayData) => dayData.dew);
+
+      newClimateData[year] = {
+        precip,
+        temp,
+        dew,
       };
     });
 
@@ -146,16 +209,16 @@ export const processClimateData = (data) => {
   }
 };
 
-export const processElevationData = (data) => {
+export const processElevationData = (elevationData) => {
   try {
-    const width = data.elevationData.elevationData.width;
-    const height = data.elevationData.elevationData.height;
-    const elevation = getImageAndStats(data.elevationData.elevationData, scale);
+    const width = elevationData.elevationData.width;
+    const height = elevationData.elevationData.height;
+    const elevation = getImageAndStats(elevationData.elevationData, scale);
 
-    const slopeData = { sampleData: data.elevationData.slope, width: width-2, height: height-2 };
+    const slopeData = { sampleData: elevationData.slope, width: width-2, height: height-2 };
     const slope =  getImageAndStats(slopeData, scale);
       
-    const convexityData = { sampleData: data.elevationData.convexity, width: width-2, height: height-2 };
+    const convexityData = { sampleData: elevationData.convexity, width: width-2, height: height-2 };
     const convexity = getImageAndStats(convexityData, scale);
       
     return { elevation, slope, convexity };
@@ -165,21 +228,21 @@ export const processElevationData = (data) => {
   }
 };
 
-export const processSoilData = (data) => {
+export const processSoilData = (soilData) => {
   try {
     // Soil Classifications
-    const taxonomy = getImageLegendUnique(data.soilData.taxonomyData.grtgroup, soilTaxonomyNames, scale);
-    const texture = getBandImagesLegendsUnique(data.soilData.textureData, soilTextureNames, scale);
+    const taxonomy = getImageLegendUnique(soilData.taxonomyData.grtgroup, soilTaxonomyNames, scale);
+    const texture = getBandImagesLegendsUnique(soilData.textureData, soilTextureNames, scale);
 
     // Soil Contents
-    const water = getBandImagesAndStats(data.soilData.waterData, scale);
-    const sand = getBandImagesAndStats(data.soilData.sandData, scale);
-    const clay = getBandImagesAndStats(data.soilData.clayData, scale);
-    const carbon = getBandImagesAndStats(data.soilData.carbonData, scale);
+    const water = getBandImagesAndStats(soilData.waterData, scale);
+    const sand = getBandImagesAndStats(soilData.sandData, scale);
+    const clay = getBandImagesAndStats(soilData.clayData, scale);
+    const carbon = getBandImagesAndStats(soilData.carbonData, scale);
 
     // Soil Attributes
-    const ph = getBandImagesAndStats(data.soilData.phData, scale);
-    const density = getBandImagesAndStats(data.soilData.densityData, scale);
+    const ph = getBandImagesAndStats(soilData.phData, scale);
+    const density = getBandImagesAndStats(soilData.densityData, scale);
 
     return {
       taxonomy,
@@ -197,20 +260,20 @@ export const processSoilData = (data) => {
   }
 };
 
-export const processWindData = (data) => {
+export const processWindData = (elevationData, climateData) => {
   try {
-    const { aspect, slope } = data.elevationData;
-    const width = data.elevationData.elevationData.width-2;
-    const height = data.elevationData.elevationData.height-2;
+    const { aspect, slope } = elevationData;
+    const width = elevationData.elevationData.width-2;
+    const height = elevationData.elevationData.height-2;
       
     // Get most recent year of wind data
-    const sortedYears = Object.keys(data.climateData)
+    const sortedYears = Object.keys(climateData)
             .map(year => Number(year))
             .sort((a, b) => b - a);
 
     let windData = null;
     for (const year of sortedYears) {
-      const yearData = data.climateData[year];
+      const yearData = climateData[year];
       if (yearData && Object.keys(yearData).length >= 365) {
         windData = {
           windDir: Object.values(yearData).map(data => data.windDir),
@@ -230,10 +293,6 @@ export const processWindData = (data) => {
 
     const windExposure: (number|null)[] = [];
     const gustExposure: (number|null)[] = [];
-    let minWindExposure = 0;
-    let maxWindExposure = 0;
-    let minGustExposure = 0;
-    let maxGustExposure = 0;
 
     slope.forEach((slopeValue, idx) => {
       const aspectAngle = aspect[idx];
@@ -257,55 +316,19 @@ export const processWindData = (data) => {
 
         windExposure.push(avgWindExposure);
         gustExposure.push(avgGustExposure);
-          
-        minWindExposure = Math.min(minWindExposure, avgWindExposure);
-        maxWindExposure = Math.max(maxWindExposure, avgWindExposure);
-        minGustExposure = Math.min(minGustExposure, avgGustExposure);
-        maxGustExposure = Math.max(maxGustExposure, avgGustExposure);
       }
     });
 
-    const avgWindDir = getAvg(windData.windDir);
-    const stdWindDir = getStd(windData.windDir);
-    const avgGustDir = getAvg(windData.gustDir);
-    const stdGustDir = getStd(windData.gustDir);
-    const avgWindSpeed = getAvg(windData.windSpeed);
-    const stdWindSpeed = getStd(windData.windSpeed);
-    const avgGustSpeed = getAvg(windData.gustSpeed);
-    const stdGustSpeed = getStd(windData.gustSpeed);
+    const wind = getImageAndStats({ sampleData: windExposure, width, height }, scale);
+    const windDirStats = getStats(windData.windDir);
 
-    const windColorScale = chroma.scale(rangeColors).domain([minWindExposure, maxWindExposure]);
-    const windExposureUrl = dataToColorScaleUrl(windExposure, 
-                                                width,
-                                                height,
-                                                null, 
-                                                windColorScale,
-                                                scale);
-
-    const gustColorScale = chroma.scale(rangeColors).domain([minGustExposure, maxGustExposure]);
-    const gustExposureUrl = dataToColorScaleUrl(gustExposure, 
-                                                width, 
-                                                height,
-                                                null, 
-                                                gustColorScale,
-                                                scale);
+    const gust = getImageAndStats({ sampleData: gustExposure, width, height }, scale);
+    const gustDirStats = getStats(windData.gustDir);
 
     return {
-      windExposureUrl,
-      minWindExposure,
-      maxWindExposure,
-      avgWindSpeed,
-      stdWindSpeed,
-      avgWindDir,
-      stdWindDir,
-      gustExposureUrl,
-      minGustExposure,
-      maxGustExposure,
-      avgGustSpeed,
-      stdGustSpeed,
-      avgGustDir,
-      stdGustDir
-    };
+      wind: { ...wind, avgDir: windDirStats.avg, stdDir: windDirStats.std },
+      gust: { ...gust, avgDir: gustDirStats.avg, stdDir: gustDirStats.std },
+    };  
       
   } catch (error) {
     console.error('Error processing wind data:', error);

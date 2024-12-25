@@ -9,7 +9,16 @@ import { fetchCropData } from '@/lib/fetchCropData';
 import { fetchClimateData } from '@/lib/fetchClimateData';
 import { fetchSoilData } from '@/lib/fetchSoilData';
 import { ReportStatus } from '@/types/statuses'; 
-import { processClimateData, processLandUseData, processElevationData, processWindData, processSoilData } from '@/utils/dataProcessing';
+import { storeReportInS3, getReportFromS3 } from '@/lib/database';
+import { 
+  processHeatUnitData,
+  processGrowingSeasonData,
+  processClimateData, 
+  processLandUseData, 
+  processElevationData, 
+  processWindData, 
+  processSoilData 
+} from '@/utils/dataProcessing';
 
 // NOTE: Longitude must come first in google earth engine. Latitude comes first in leaflet
 
@@ -19,6 +28,8 @@ const dataYears = ['2021','2022'];
 export async function POST(req: NextRequest) {
   try {
     const { reportId, status, address, addressComponents, landGeometry } = await req.json();
+
+    // console.log("Get Report Data Recieved:", reportId, status, address, addressComponents, landGeometry);
       
     if (!landGeometry || !Array.isArray(landGeometry) || landGeometry.length < 3 || !reportId || !status) {
       return NextResponse.json({ message: 'Invalid input' }, { status: 400 });
@@ -29,19 +40,31 @@ export async function POST(req: NextRequest) {
     }
 
     if (status === ReportStatus.Unredeemed) {
+
+      // Reverse landGeometry points for earth engine
+      const points = landGeometry.map(([a, b]) => [b, a]);
+
       await initializeEarthEngine();
-      const polygon = ee.Geometry.Polygon(landGeometry);      
+      const polygon = ee.Geometry.Polygon(points);      
 
       // Download all data
-      const landUseData = await fetchLandUseData(dataYears, polygon);
-      const climateData = await fetchClimateData(dataYears, polygon);
-      const elevationData = await fetchElevationData(polygon);
-      const soilData = await fetchSoilData(polygon);
-      // const cropData = await fetchCropData(polygon, dataYears);
-      const cropData = null;
+      const unprocessedLandUseData = await fetchLandUseData(dataYears, polygon);
+      const unprocessedClimateData = await fetchClimateData(dataYears, polygon);
+      const unprocessedElevationData = await fetchElevationData(polygon);
+      const unprocessedSoilData = await fetchSoilData(polygon);
+      // const unprocessedCropData = await fetchCropData(polygon, dataYears);
 
+      const landUseData = processLandUseData(unprocessedLandUseData);
+      const climateData = processClimateData(unprocessedClimateData); //
+      const elevationData = processElevationData(unprocessedElevationData); 
+      const windData = processWindData(unprocessedElevationData,unprocessedClimateData);
+      const soilData = processSoilData(unprocessedSoilData);
+      const growingSeasonData = processGrowingSeasonData(unprocessedClimateData);
+      const heatUnitData = processHeatUnitData(unprocessedClimateData);
+      const cropData = null;
+      
       // Process all data
-              
+      // To do later
         
       const bounds = await polygon.bounds().getInfo();
       const boundCoordinates = bounds.coordinates[0];
@@ -49,6 +72,7 @@ export async function POST(req: NextRequest) {
         
       // Note that we're switching from longitude first to latitude first for leaflet use here
       const data = { 
+        reportId,
         latitude: centroid.coordinates[1],
         longitude: centroid.coordinates[0],
         address,
@@ -66,7 +90,7 @@ export async function POST(req: NextRequest) {
         landUseData, 
         windData,
         soilData,
-        cropData, // a reminder to add this when yields are done
+        cropData,
       };
 
       // // To save the data
@@ -77,14 +101,23 @@ export async function POST(req: NextRequest) {
         
       // Save processed data to AWS S3
       // Update Reports table with new status and redeemedAt
+
+      const storeResponse = await storeReportInS3(data)
+      if (!storeResponse.success) {
+        throw new Error(storeResponse.message);
+      }
         
       return NextResponse.json(data, { status: 200 });
     } 
 
     else if (status === ReportStatus.Redeemed) {
       // Retrieve data from AWS S3
-      const data = null;
-      return NextResponse.json(data, { status: 200 });
+      const getResponse = await getReportFromS3(reportId)
+      if (!getResponse.success) {
+        throw new Error(getResponse.message);
+      }
+        
+      return NextResponse.json(getResponse.report, { status: 200 });
     }
 
     else {

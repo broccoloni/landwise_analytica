@@ -30,28 +30,33 @@ export default function ViewReport() {
   const [error, setError] = useState('');
     
   // Data holders
-  const [climateData, setClimateData] = useState(null);
-  const [elevationData, setElevationData] = useState(null);
-  const [windData, setWindData] = useState(null);
-  const [cropData, setCropData] = useState(null);
-  const [landUseData, setLandUseData] = useState(null);
-  const [soilData, setSoilData] = useState(null);
-  const [bbox, setBbox] = useState<number[] | null>(null);
+  const [historicData, setHistoricData] = useState<PerformanceData|null>(null);
+  const [projectedData, setProjectedData] = useState<Record<string, PerformanceData>|null>(null);
+  const [cropHeatMapData, setCropHeatMapData] = useState<Record<string, ImageAndStats>|null>(null);
+  const [heatUnitData, setHeatUnitData] = useState(null);
+  const [growingSeasonData, setGrowingSeasonData] = useState(null);
+  const [climateData, setClimateData] = useState<any>(null);
+  const [elevationData, setElevationData] = useState<Record<string, ImageAndStats>|null>(null);
+  const [windData, setWindData] = useState<Record<string, ImageAndStats>|null>(null);
+  const [cropData, setCropData] = useState<any>(null);
+  const [landUseData, setLandUseData] = useState<Record<number, ImageAndLegend>|null>(null);
+  const [soilData, setSoilData] = useState<any>(null);
+  const [bbox, setBbox] = useState<number[][] | null>(null);
     
   // Score trackers
   // const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
+
   const [climateScore, setClimateScore] = useState<number|null>(null);
   const [topographyScore, setTopographyScore] = useState<number|null>(null);
   const [soilScore, setSoilScore] = useState<number|null>(null);
 
   // For managing report tabs and loading states
-  const [loadingData, setLoadingData] = useState(false);
-  const [processingData, setProcessingData] = useState(false);
+  // const [loadingData, setLoadingData] = useState(false);
+  // const [processingData, setProcessingData] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState('Climate');
 
   const fetchData = async () => {
-    setLoadingData(true);
     try {
       const response = await fetch('/api/getReportData', {
         method: 'POST',
@@ -62,15 +67,15 @@ export default function ViewReport() {
       });
 
       const data = await response.json();
-      setDataLoaded(true);
-
+      console.log('Fetched data:', data);
+        
       // Report Context Info
-      setLatitude(data.latitude);
-      setLongitude(data.longitude);
-      setAddress(data.address);
-      setAddressComponents(data.addressComponents);
-      setLandGeometry(data.landGeometry);
-      setStatus(data.status);
+      setLatitude(data.latitude | null);
+      setLongitude(data.longitude | null);
+      setAddress(data.address | null);
+      setAddressComponents(data.addressComponents | null);
+      setLandGeometry(data.landGeometry | []);
+      setStatus(data.status | null);
         
       // Report Data
       setBbox(data.bbox);
@@ -86,7 +91,7 @@ export default function ViewReport() {
       // setCropHeatMapData(demoData.cropHeatMapData);
         
       console.log('Fetched data:', data);
-      setLoadingData(false);
+      setDataLoaded(true);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -95,7 +100,7 @@ export default function ViewReport() {
   };
 
   useEffect(() => {
-    if (reportId && status && !loadingData && !dataLoaded) {
+    if (reportId && status && !dataLoaded) {
       if (status === ReportStatus.Unredeemed && address && addressComponents && landGeometry.length > 3) {
         fetchData();
       }
@@ -106,7 +111,7 @@ export default function ViewReport() {
        setError("Something went wrong");
       } 
     }
-  }, [reportId, status, loadingData, dataLoaded, landGeometry, address, addressComponents]);
+  }, [reportId, status, dataLoaded, landGeometry, address, addressComponents]);
 
   const tabs = [
     // 'EstimatedYield',
@@ -194,8 +199,8 @@ export default function ViewReport() {
   };
     
   return (
-    <div className={`${roboto.className} text-black px-10 sm:px-20 md:px-40 py-10 sm:py-20`}>
-      <div className="relative py-20">
+    <div className={`${roboto.className} text-black px-10 sm:px-20 md:px-40 py-10`}>
+      <div className="relative">
         <div className="flex justify-between mb-4">
           <div className={`${montserrat.className} text-xl flex justify-center items-center space-x-4`}> 
             <div className="">
@@ -211,7 +216,7 @@ export default function ViewReport() {
           </div>
         </div>
         <Container className="" id="report">
-          {dataLoaded && !loadingData ? (
+          {dataLoaded ? (
             <div>
               <section id="summary">
                 <div className={`${merriweather.className} text-medium-brown text-3xl pb-2`}>

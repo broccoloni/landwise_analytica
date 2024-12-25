@@ -328,9 +328,101 @@ export const redeemReport = async (reportId: string, details: any): Promise<{ su
 };
 
 
+// ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR AWS S3 REPORT STORAGE ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+
+const s3ReportsBucket = process.env.REPORTS_BUCKET;
+const s3AccessKeyId = process.env.AWS_ACCESS_KEY_ID;
+const s3SecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+
+if (!s3AccessKeyId || !s3SecretAccessKey || !s3ReportsBucket || !region) {
+  throw new Error('AWS S3 credentials or region are not defined');
+}
+
+const s3Client = new S3Client({
+  credentials: {
+    accessKeyId: s3AccessKeyId,
+    secretAccessKey: s3SecretAccessKey,
+  },
+  region,
+});
+
+/**
+ * Stores a report as a JSON file in the S3 bucket.
+ * @param report - The report object to store.
+ * @returns Success or error message.
+ */
+export const storeReportInS3 = async (
+  report: { reportId: string; [key: string]: any }
+): Promise<{ success: boolean; message?: string }> => {
+  const objectKey = `${report.reportId}.json`;
+
+  try {
+    const command = new PutObjectCommand({
+      Bucket: s3ReportsBucket,
+      Key: objectKey,
+      Body: JSON.stringify(report),
+      ContentType: 'application/json',
+    });
+
+    await s3Client.send(command);
+
+    console.log(`Report ${objectKey} successfully stored in S3 bucket.`);
+    return { success: true, message: `Report stored with key: ${objectKey}` };
+  } catch (error) {
+    console.error('Error storing report in S3:', error);
+
+    return {
+      success: false,
+      message: `Failed to store report: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+};
 
 
+/**
+ * Retrieves a report from the S3 bucket.
+ * @param reportId - The ID of the report to retrieve.
+ * @returns The report object or an error message.
+ */
+export const getReportFromS3 = async (
+  reportId: string
+): Promise<{ success: boolean; report?: any; message?: string }> => {
+  const objectKey = `${reportId}.json`;
 
+  try {
+    const command = new GetObjectCommand({
+      Bucket: s3ReportsBucket,
+      Key: objectKey,
+    });
 
+    const response = await s3Client.send(command);
+
+    if (!response.Body) {
+      throw new Error('No content in S3 response');
+    }
+
+    const streamToString = (stream: any): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const chunks: Uint8Array[] = [];
+        stream.on('data', (chunk: Uint8Array) => chunks.push(chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+      });
+
+    const reportContent = await streamToString(response.Body);
+    const report = JSON.parse(reportContent);
+
+    console.log(`Report ${objectKey} successfully retrieved from S3.`);
+    return { success: true, report };
+  } catch (error) {
+    console.error('Error retrieving report from S3:', error);
+    return {
+      success: false,
+      message: `Failed to retrieve report: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+};
 
 

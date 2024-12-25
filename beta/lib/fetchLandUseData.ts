@@ -5,6 +5,8 @@ export async function fetchLandUseData( years: number[], geometry: ee.Geometry) 
   const results: Record<number, { [key: number]: any }> = {};
 
   for (const yr of years) {
+    console.log("Fetching land use data for", yr);
+
     try {
       const year = parseInt(yr)
       // Retrieve the historical land use data for the given year

@@ -316,7 +316,7 @@ export default function RedeemReport() {
             
             <div className="mb-4">
               <strong>Boundary Points:</strong> 
-              <ul className="list-inside list-disc">
+              <ul className="ml-3 list-inside list-disc">
                 {landGeometry.map((point, index) => (
                   <li className="" key={index}>
                     <span className="mr-4">Lat: {point[0].toFixed(8)}</span>
