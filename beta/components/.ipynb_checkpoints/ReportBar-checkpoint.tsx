@@ -29,18 +29,24 @@ interface ReportBarProps {
 
 const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   const router = useRouter();
-  const { setReportId, setLandGeometry, setAddress, setLatitude, setLongitude, setAddressComponents, setStatus } = useReportContext();
+  const { setReportId, setStatus, clearReportContext} = useReportContext();
 
   // Pre-redirect logic for unredeemed reports
   const handleRedeemClick = () => {
-    setReportId(report.id);
-    setAddress(null);
-    setLatitude(null);
-    setLongitude(null);
-    setAddressComponents(null);
-    setLandGeometry([]);
+    clearReportContext();
+    setReportId(report.reportId);
     setStatus(report.status);
     router.push('/redeem-a-report');
+  };
+
+  const handleViewClick = () => {
+    clearReportContext();
+    setReportId(report.reportId);
+    setStatus(report.status);
+
+    // NOTE: This should probably change when merging view-report and view-realtor-report 
+    // using header and sub-header that depend on logged in status
+    router.push('/view-realtor-report');  
   };
 
   if (report.status === ReportStatus.Unredeemed) {
@@ -48,9 +54,9 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
       <div onClick={handleRedeemClick}>
         <Container className="hover:border-black">
           <div className="flex justify-between items-center">
-            <div className="flex text-lg font-semibold">
-              <div className="mr-2">Report ID:</div>
-              <div className={`font-normal ${montserrat.className}`}>{report.id}</div>
+            <div className="flex text-lg">
+              <div className="mr-2 font-semibold">Report ID:</div>
+              <div className={`font-normal ${montserrat.className}`}>{report.reportId}</div>
             </div>
             <div className="flex justify-center items-center">
               <div className="mr-2">Redeem Now</div>
@@ -65,18 +71,21 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   const daysLeft = calculateDaysLeft(report.createdAt);
 
   return (
-    <Container className="flex justify-between items-center p-4 bg-gray-100 rounded-md shadow-md mb-4">
-      <div className="flex flex-col">
-        <span className="text-lg font-semibold">Report ID: {report.reportId}</span>
-        <span className="text-sm text-gray-500">Status: {report.status}</span>
-        <span className="text-sm text-gray-500">
-          Created: {new Date(report.createdAt).toLocaleDateString()}
-        </span>
-      </div>
-      <div className="flex flex-col items-end">
-        <span className="text-lg font-semibold text-dark-green">Days Left: {daysLeft}</span>
-      </div>
-    </Container>
+    <div onClick={handleViewClick}>
+      <Container className="flex justify-between items-center p-4 bg-gray-100 rounded-md shadow-md mb-4 hover:border-black">
+        <div className="flex flex-col">
+          <div className="text-lg"><span className="font-semibold mr-2">Report ID:</span>{report.reportId}</div>
+          <span className="text-sm text-gray-500">Address: {report.address}</span>
+          <span className="text-sm text-gray-500">
+            Created: {new Date(report.redeemedAt).toLocaleDateString()}
+          </span>
+        </div>
+        <div className="flex flex-col items-end text-center">
+          <div className="text-xl flex justify-center items-center p-2">View Now<ArrowRight className="h-6 w-6 ml-2" /></div>
+          <div className="text-md font-semibold text-dark-green w-full">Days Left: {daysLeft}</div>
+        </div>
+      </Container>
+    </div>
   );
 };
 

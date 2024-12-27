@@ -257,12 +257,7 @@ export const getReportIds = async (
     });
 
     const { Items } = await docClient.send(command);
-    const reports = Items?.map((item) => ({
-      id: item.reportId,
-      status: item.status,
-      createdAt: item.createdAt || null,
-      redeemedAt: item.redeemedAt || null,
-    })) || [];
+    const reports = Items;
 
     console.log("Retrieved reports:", reports, "for sessionOrCustomerId:", sessionOrCustomerId);
     return { success: true, reports };
@@ -277,7 +272,7 @@ export const getReportIds = async (
 
 export const getReportAttributesById = async (
   reportId: string
-): Promise<{ success: boolean; report: { id: string; status: string; createdAt: string; redeemedAt: string; }; message?: string; }> => {
+): Promise<{ success: boolean; report: { id: string; status: string; createdAt: string; redeemedAt: string; address: string; }; message?: string; }> => {
   const TABLE_NAME = "Reports";
 
   try {
@@ -301,12 +296,7 @@ export const getReportAttributesById = async (
       };
     }
     
-    const report = {
-      id: Items[0].reportId,
-      status: Items[0].status,
-      createdAt: Items[0].createdAt || null,
-      redeemedAt: Items[0].redeemedAt || null,
-    };
+    const report = Items[0];
 
     console.log("Retrieved report:", report, "for reportId:", reportId);
     return { success: true, report };
@@ -324,7 +314,7 @@ export const getReportAttributesById = async (
  */
 export const updateReportAttributes = async (
   reportId: string,
-  attributes: { status?: string; redeemedAt?: string }
+  attributes: { status?: string; redeemedAt?: string; address?: string; }
 ): Promise<{ success: boolean; message?: string }> => {
   const TABLE_NAME = "Reports";
 
@@ -344,6 +334,12 @@ export const updateReportAttributes = async (
       updateExpressions.push("#redeemedAt = :redeemedAt");
       expressionAttributeValues[":redeemedAt"] = attributes.redeemedAt;
       expressionAttributeNames["#redeemedAt"] = "redeemedAt";
+    }
+
+    if (attributes.address) {
+      updateExpressions.push("#address = :address");
+      expressionAttributeValues[":address"] = attributes.address;
+      expressionAttributeNames["#address"] = "address";
     }
 
     const updateExpression = `SET ${updateExpressions.join(", ")}`;
@@ -367,7 +363,7 @@ export const updateReportAttributes = async (
     }
 
     const report = Items[0];
-    const { sessionOrCustomerId } = report; // Assuming sessionOrCustomerId is the partition key
+    const { sessionOrCustomerId } = report;
 
     // Perform the update
     const updateCommand = new UpdateCommand({

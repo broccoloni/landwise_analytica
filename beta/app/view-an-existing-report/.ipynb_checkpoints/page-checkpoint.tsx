@@ -7,8 +7,10 @@ import Loading from '@/components/Loading';
 import { useReportContext } from '@/contexts/ReportContext';
 import Link from 'next/link';
 import { NotebookText, Check, X, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Terms() {
+  const router = useRouter();
   const [validatingReportId, setValidatingReportId] = useState(false);
   const { 
     reportId, setReportId, 
@@ -63,8 +65,9 @@ export default function Terms() {
 
   const handleSubmit = async () => {
     const status = await fetchReportAttributes(reportId);
-
-    console.log("Submitting report Id:", reportId);
+    if (status === ReportStatus.Redeemed) {
+      router.push('/view-report');
+    }
   };
 
   const ReportStatusDisplay = () => {

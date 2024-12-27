@@ -53,7 +53,7 @@ export default function CheckoutComplete() {
           {reports.length > 0 ? (
             <ul>
               {reports.map((report) => (
-                <li key={report.id} className="my-2 max-w-3xl mx-auto">
+                <li key={report.repordId} className="my-2 max-w-3xl mx-auto">
                   <ReportBar report={report} />
                 </li>
               ))}

@@ -7,8 +7,10 @@ import Loading from '@/components/Loading';
 import Container from '@/components/Container';
 import ViewReports from './viewReports';
 import NewReport from './newReport';
+import { useReportContext } from '@/contexts/ReportContext';
 
 export default function ReportsPage() {
+  const { clearReportContext } = useReportContext();
   const { data: session, status } = useSession();
   const [selectedTab, setSelectedTab] = useState('view-reports');
 
@@ -28,7 +30,7 @@ export default function ReportsPage() {
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
               ${selectedTab === 'new-report' ? 'bg-medium-brown text-white' : ''}`}
-              onClick={() => setSelectedTab('new-report')}
+              onClick={() => {clearReportContext(); setSelectedTab('new-report') }}
             >
               <ClipboardPlus className="h-5 w-5 mr-2" /> Order New Reports
             </li>

@@ -8,10 +8,12 @@ import AddressDisplay from '@/components/AddressDisplay';
 import ProgressBar from '@/components/ProgressBar';
 import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
-
+import { useRouter } from 'next/navigation';
+import { ReportStatus } from '@/types/statuses';
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
 export default function NewReport() {
+  const router = useRouter();
   const { data: session } = useSession();
   const { 
     reportId, setReportId, 
@@ -48,18 +50,47 @@ export default function NewReport() {
       setStep(prevStep => prevStep + 1);
     }
   };
+
+  const createReport = async (sessionOrCustomerId: string) => {
+    try {
+      const response = await fetch('/api/createReport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionOrCustomerId }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+        
+      setReportId(result.reportId);
+      setStatus(ReportStatus.Unredeemed);
+      return result.reportId;
+
+    } catch (error) {
+      console.error('Error creating report:', error);
+      return null;
+    }
+  };
+
     
-  const handleGenerateReport = () => {
-    console.log('Generating report with the following details:');
-    console.log('Address:', address);
-    console.log('Boundary:', landGeometry);
-    // Add actual logic to generate the report here
+  const handleGenerateReport = async () => {
+    console.log("Generating report with id:", session.user.id);
+    const reportId = await createReport(session.user.id);
+    if (reportId) {
+      router.push('/view-realtor-report');
+    }
   };
     
   return (
     <div>
-      <div className="text-2xl mb-4">Order a New Report</div>
-
+      <div className="text-2xl mb-12 text-center">Order a New Report</div>
+      <div className="mb-8 px-10 mx-auto max-w-2xl">
+        <ProgressBar currentStep={step} totalSteps={stepNames.length} stepNames={stepNames} />
+      </div>
+  
         {/* Step 1: Address Search */}
         {step === 1 && (
           <div className="">
@@ -103,7 +134,7 @@ export default function NewReport() {
         {/* Step 2: Define Property Boundary */}
         {step === 2 && latitude !== null && longitude !== null && (
           <div className="">
-            <div className="text-xl text-dark-blue mb-4">Define The Property Boundary</div>
+            <div className="text-xl mb-4">Define The Property Boundary</div>
             <ul className="mb-8 mx-8 space-y-2 text-dark-blue list-disc">
               <li className="">Click to add a boundary point</li>
               <li className="">Double-click to close the boundary</li>
@@ -146,7 +177,7 @@ export default function NewReport() {
         {/* Step 3: Generate Report */}
         {step === 3 && (
           <div>
-            <div className="text-xl text-dark-blue mb-4">Review & Submit</div>
+            <div className="text-xl font-semibold mb-4">Review & Submit</div>
             <div className="mb-2">
               <strong>Address:</strong> {address}
             </div>
@@ -181,7 +212,7 @@ export default function NewReport() {
               <div className="">            
                 <button
                   onClick={handleGenerateReport}
-                  disabled={ !address || !landGeometry }
+                  disabled={ !address || landGeometry.length < 3 }
                   className="mt-4 bg-medium-brown text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Generate Report

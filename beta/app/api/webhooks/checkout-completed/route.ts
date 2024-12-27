@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { createReport, redeemReport } from '@/lib/database';
+import { createReport } from '@/lib/database';
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -55,20 +55,10 @@ export async function POST(request: NextRequest) {
         reportIds.push(createReportResponse.reportId);
       }
 
-      // Redeem report if details were provided
-      // When the redeem report function is fully specified, this will
-      // need to be not awaited since it would take too much time
-      // before sending a response back to stripe.
-      if (details) {
-        const firstReportId = reportIds[0];
-        const redeemResponse = await redeemReport(firstReportId, details);
-
-        if (!redeemResponse.success) {
-          console.error('Error redeeming report.');
-          return new NextResponse('Error redeeming report.', { status: 500 });
-        }
-      }
-          
+      // Note: Details for report redemption are too long to store and pass
+      // through stripe metadata. Instead, We will provide a one click 
+      // report redemption with the provided details on the checkout-complete 
+      // page
       break;
           
     // Handle other event types

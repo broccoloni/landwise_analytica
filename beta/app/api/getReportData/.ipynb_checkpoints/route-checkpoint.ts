@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
       // Update report status in DynamoDB
       const result = await updateReportAttributes(reportId, {
         status: ReportStatus.Redeemed,
+        address,
         redeemedAt,
       });
     
