@@ -4,12 +4,20 @@ import { raleway } from '@/ui/fonts';
 import Link from 'next/link';
 import ListOfLinks from '@/components/ListOfLinks';
 import { useState } from 'react';
+import { useReportContext } from '@/contexts/ReportContext';
 
 const Footer = () => {
+  const { clearReportContext } = useReportContext();
+
   const [currentOpenMenu, setCurrentOpenMenu] = useState<string | null>(null);
 
   const toggleMenu = (menu: string) => {
     setCurrentOpenMenu((prev) => (prev === menu ? null : menu));
+  };
+
+  const handleLinkClick = () => {
+    clearReportContext();
+    setCurrentOpenMenu(null);
   };
 
   const reportLinks = [
@@ -41,21 +49,21 @@ const Footer = () => {
           links={reportLinks}
           isOpen={currentOpenMenu === "reports"}
           onClick={() => toggleMenu("reports")}
-          onLinkClick={() => setCurrentOpenMenu(null)} // Close menu on link click
+          onLinkClick={handleLinkClick}
         />
         <ListOfLinks
           title="Company"
           links={companyLinks}
           isOpen={currentOpenMenu === "company"}
           onClick={() => toggleMenu("company")}
-          onLinkClick={() => setCurrentOpenMenu(null)} // Close menu on link click
+          onLinkClick={handleLinkClick}
         />
         <ListOfLinks
           title="Solutions"
           links={businessLinks}
           isOpen={currentOpenMenu === "solutions"}
           onClick={() => toggleMenu("solutions")}
-          onLinkClick={() => setCurrentOpenMenu(null)} // Close menu on link click
+          onLinkClick={handleLinkClick}
         />
       </div>
 

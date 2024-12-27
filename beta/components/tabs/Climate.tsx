@@ -395,6 +395,7 @@ const Climate = (
                         hoverinfo: 'skip',
                       },
                       // Visible growing season length bars
+                      // 
                       {
                         x: growingSeasonData.x,
                         y: growingSeasonData.y1,

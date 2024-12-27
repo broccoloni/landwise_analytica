@@ -25,6 +25,8 @@ export default function ViewReport() {
     latitude, setLatitude,
     addressComponents, setAddressComponents,
     landGeometry, setLandGeometry,
+    createdAt, setCreatedAt,
+    redeemedAt, setRedeemedAt,
   } = useReportContext();
 
   const [error, setError] = useState('');
@@ -70,12 +72,13 @@ export default function ViewReport() {
       console.log('Fetched data:', data);
         
       // Report Context Info
-      setLatitude(data.latitude | null);
-      setLongitude(data.longitude | null);
-      setAddress(data.address | null);
-      setAddressComponents(data.addressComponents | null);
-      setLandGeometry(data.landGeometry | []);
-      setStatus(data.status | null);
+      setLatitude(data.latitude || null);
+      setLongitude(data.longitude || null);
+      setAddress(data.address || null);
+      setAddressComponents(data.addressComponents || null);
+      setLandGeometry(data.landGeometry || []);
+      setStatus(data.status || null);
+      setRedeemedAt(data.redeemedAt || null);
         
       // Report Data
       setBbox(data.bbox);
@@ -90,7 +93,6 @@ export default function ViewReport() {
       // setProjectedData(demoData.projectedData);
       // setCropHeatMapData(demoData.cropHeatMapData);
         
-      console.log('Fetched data:', data);
       setDataLoaded(true);
 
     } catch (error) {
@@ -100,6 +102,7 @@ export default function ViewReport() {
   };
 
   useEffect(() => {
+    console.log(reportId, status, dataLoaded, landGeometry, address, addressComponents);
     if (reportId && status && !dataLoaded) {
       if (status === ReportStatus.Unredeemed && address && addressComponents && landGeometry.length > 3) {
         fetchData();
@@ -181,7 +184,7 @@ export default function ViewReport() {
       return (
         <div className="flex-row justify-center items-center">
           <Loading className="h-20 w-20 mb-4" />
-          <div className="">Loading Data...</div>
+          <div className="text-center">Loading Data...</div>
         </div>
       );
     }
@@ -207,7 +210,7 @@ export default function ViewReport() {
               Report: {reportId}
             </div>
             <div className="">
-              Date: ADD REPORT DATE TO REPORT CONTEXT
+              Date: {redeemedAt ? redeemedAt.slice(0, 10) : ''}
             </div>
           </div>
           <div className="space-x-4 flex">

@@ -5,10 +5,11 @@ import { ChevronDown } from "lucide-react";
 interface DropdownMenuProps {
   title: string;
   options: { label: string; path: string }[];
+  onLinkClick?: () => void;
   className?: string;
 }
 
-const DropdownMenu: React.FC<DropdownMenuProps> = ({ title, options, className='' }) => {
+const DropdownMenu: React.FC<DropdownMenuProps> = ({ title, options, onLinkClick, className='' }) => {
   return (
     <div className={`relative inline-block group ${className}`}>
       {/* Dropdown Trigger */}
@@ -24,7 +25,13 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ title, options, className='
             key={option.path}
             className="py-2 px-4 text-left cursor-pointer hover:bg-gray-200 hover:text-black"
           >
-            <Link href={option.path}>{option.label}</Link>
+            <Link 
+              href={option.path}
+              onClick={onLinkClick}
+              className=""
+            >
+              {option.label}
+            </Link>
           </li>
         ))}
       </ul>

@@ -319,12 +319,77 @@ export const getReportAttributesById = async (
   }
 };
 
-// Details is a dict with: address, addressComponents, longitude, latitude, landGeometry
-export const redeemReport = async (reportId: string, details: any): Promise<{ success: boolean; message?: string }> => {
-  // Add a redeemed at date
+/**
+ * Updates attributes of a report, such as changing the status and adding a redeemedAt timestamp.
+ */
+export const updateReportAttributes = async (
+  reportId: string,
+  attributes: { status?: string; redeemedAt?: string }
+): Promise<{ success: boolean; message?: string }> => {
+  const TABLE_NAME = "Reports";
 
-  console.log("Redeeming report:", reportId, " with details:", details);
-  return { success: true, message: 'Temporary function to redeem reports' };
+  try {
+    // Dynamically build the update expression and attribute values
+    const updateExpressions: string[] = [];
+    const expressionAttributeValues: Record<string, unknown> = {};
+    const expressionAttributeNames: Record<string, string> = {};
+
+    if (attributes.status) {
+      updateExpressions.push("#status = :status");
+      expressionAttributeValues[":status"] = attributes.status;
+      expressionAttributeNames["#status"] = "status";
+    }
+
+    if (attributes.redeemedAt) {
+      updateExpressions.push("#redeemedAt = :redeemedAt");
+      expressionAttributeValues[":redeemedAt"] = attributes.redeemedAt;
+      expressionAttributeNames["#redeemedAt"] = "redeemedAt";
+    }
+
+    const updateExpression = `SET ${updateExpressions.join(", ")}`;
+
+    // Query to get the primary key (partition and sort keys) using reportId
+    const queryCommand = new QueryCommand({
+      TableName: TABLE_NAME,
+      IndexName: REPORTID_INDEX,
+      KeyConditionExpression: "#reportId = :reportIdValue",
+      ExpressionAttributeNames: {
+        "#reportId": "reportId",
+      },
+      ExpressionAttributeValues: {
+        ":reportIdValue": reportId,
+      },
+    });
+
+    const { Items } = await docClient.send(queryCommand);
+    if (!Items || Items.length === 0) {
+      return { success: false, message: "Report not found" };
+    }
+
+    const report = Items[0];
+    const { sessionOrCustomerId } = report; // Assuming sessionOrCustomerId is the partition key
+
+    // Perform the update
+    const updateCommand = new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { sessionOrCustomerId, reportId },
+      UpdateExpression: updateExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ReturnValues: "UPDATED_NEW",
+    });
+
+    const result = await docClient.send(updateCommand);
+
+    console.log("Updated report attributes:", result);
+    return { success: true, message: "Report updated successfully" };
+  } catch (error) {
+    console.error("Error updating report attributes:", error);
+    return {
+      success: false,
+      message: `Unable to update report: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
 };
 
 
@@ -372,12 +437,14 @@ export const storeReportInS3 = async (
     return { success: true, message: `Report stored with key: ${objectKey}` };
   } catch (error) {
     console.error('Error storing report in S3:', error);
+
     return {
       success: false,
       message: `Failed to store report: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 };
+
 
 /**
  * Retrieves a report from the S3 bucket.

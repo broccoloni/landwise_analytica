@@ -17,6 +17,7 @@ interface ReportContextProps {
   setReportId: (id: string | null) => void;
   status: string | null;
   setStatus: (status: string | null) => void;
+  clearReportContext: () => void;
 }
 
 const ReportContext = createContext<ReportContextProps | undefined>(undefined);
@@ -29,6 +30,20 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
   const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [redeemedAt, setRedeemedAt] = useState<string | null>(null);
+  const [createdAt, setCreatedAt] = useState<string | null>(null);
+
+  const clearReportContext = () => {
+    setReportId(null);
+    setAddress(null);
+    setLatitude(null);
+    setLongitude(null);
+    setLandGeometry([]);
+    setAddressComponents(null);
+    setStatus(null);
+    setRedeemedAt(null);
+    setCreatedAt(null);
+  };
     
   // Load initial values from localStorage once the component is mounted
   useEffect(() => {
@@ -53,6 +68,12 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
 
       const storedStatus = localStorage.getItem('reportStatus');
       if (storedStatus) setStatus(storedStatus);
+
+      const storedRedeemedAt = localStorage.getItem('redeemedAt');
+      if (storedRedeemedAt) setRedeemedAt(storedRedeemedAt);
+
+      const storedCreatedAt = localStorage.getItem('createdAt');
+      if (storedCreatedAt) setCreatedAt(storedCreatedAt);
         
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
@@ -102,6 +123,18 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       : localStorage.removeItem('reportStatus');
   }, [status]);
 
+  useEffect(() => {
+    redeemedAt !== null
+      ? localStorage.setItem('redeemedAt', redeemedAt)
+      : localStorage.removeItem('redeemedAt');
+  }, [redeemedAt]);
+
+  useEffect(() => {
+    createdAt !== null
+      ? localStorage.setItem('createdAt', createdAt)
+      : localStorage.removeItem('createdAt');
+  }, [createdAt]);
+
   const value = useMemo(
     () => ({
       landGeometry,
@@ -118,8 +151,13 @@ export const ReportProvider = ({ children }: { children: ReactNode }) => {
       setReportId,
       status,
       setStatus,
+      redeemedAt,
+      setRedeemedAt,
+      createdAt,
+      setCreatedAt,
+      clearReportContext,
     }),
-    [landGeometry, address, latitude, longitude, addressComponents, reportId, status]
+    [landGeometry, address, latitude, longitude, addressComponents, reportId, status, redeemedAt, createdAt]
   );
 
   return <ReportContext.Provider value={value}>{children}</ReportContext.Provider>;

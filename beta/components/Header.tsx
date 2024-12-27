@@ -7,8 +7,10 @@ import PlantInHandIcon from '@/components/PlantInHandIcon';
 import DropdownMenu from '@/components/DropdownMenu';
 import { Menu } from 'lucide-react';
 import ListOfLinks from '@/components/ListOfLinks';
+import { useReportContext } from '@/contexts/ReportContext';
 
 const Header = () => {
+  const { clearReportContext } = useReportContext();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentOpenMenu, setCurrentOpenMenu] = useState<string | null>(null);
 
@@ -37,16 +39,19 @@ const Header = () => {
     setCurrentOpenMenu((prevMenu) => (prevMenu === menu ? null : menu));
   };
 
+  const handleLinkClick = () => {
+    clearReportContext();
+    setMobileMenuOpen(false);
+    setCurrentOpenMenu(null);
+  };
+
   return (
     <div className={`w-full text-white bg-dark-olive pt-4 md:px-20 lg:px-36 ${raleway.className}`}>
       {/* Desktop Header */}
       <div className="flex justify-between items-center pb-4 px-4">
         <Link 
           href="/"
-          onClick={() => {
-            setMobileMenuOpen(false);
-            setCurrentOpenMenu(null);
-          }}
+          onClick={handleLinkClick}
         >
           <div className="flex items-center">
             <div className="flex justify-center mr-4">
@@ -61,13 +66,13 @@ const Header = () => {
         {/* Desktop Dropdown Menus */}
         <div className="hidden md:flex">
           <div className="min-w-40">
-            <DropdownMenu title="Our Reports" options={reportLinks} />
+            <DropdownMenu title="Our Reports" options={reportLinks} onLinkClick={handleLinkClick} />
           </div>
           <div className="min-w-40">
-            <DropdownMenu title="Our Company" options={companyLinks} />
+            <DropdownMenu title="Our Company" options={companyLinks} onLinkClick={handleLinkClick} />
           </div>
           <div className="min-w-40">
-            <DropdownMenu title="Our Solutions" options={businessLinks} />
+            <DropdownMenu title="Our Solutions" options={businessLinks} onLinkClick={handleLinkClick} />
           </div>
         </div>
 
@@ -91,30 +96,21 @@ const Header = () => {
               links={reportLinks}
               isOpen={currentOpenMenu === "reports"}
               onClick={() => toggleMenu("reports")}
-              onLinkClick={() => {
-                setMobileMenuOpen(false);
-                setCurrentOpenMenu(null);
-              }}
+              onLinkClick={handleLinkClick}
             />
             <ListOfLinks
               title="Company"
               links={companyLinks}
               isOpen={currentOpenMenu === "company"}
               onClick={() => toggleMenu("company")}
-              onLinkClick={() => {
-                setMobileMenuOpen(false);
-                setCurrentOpenMenu(null);
-              }}
+              onLinkClick={handleLinkClick}
             /> 
             <ListOfLinks
               title="Solutions"
               links={businessLinks}
               isOpen={currentOpenMenu === "solutions"}
               onClick={() => toggleMenu("solutions")}
-              onLinkClick={() => {
-                setMobileMenuOpen(false);
-                setCurrentOpenMenu(null);
-              }}
+              onLinkClick={handleLinkClick}
             />
           </div>
         </div>

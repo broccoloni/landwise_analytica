@@ -42,7 +42,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div className={`relative inline-block z-10 ${className}`} ref={dropdownRef}>
+    <div className={`relative inline-block z-20 ${className}`} ref={dropdownRef}>
       <button
         onClick={handleButtonClick}
         className="flex items-center pl-4 pr-2 py-2 bg-gray-200 text-black rounded focus:outline-none"

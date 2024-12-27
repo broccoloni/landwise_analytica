@@ -9,7 +9,7 @@ import { fetchCropData } from '@/lib/fetchCropData';
 import { fetchClimateData } from '@/lib/fetchClimateData';
 import { fetchSoilData } from '@/lib/fetchSoilData';
 import { ReportStatus } from '@/types/statuses'; 
-import { storeReportInS3, getReportFromS3 } from '@/lib/database';
+import { storeReportInS3, getReportFromS3, updateReportAttributes } from '@/lib/database';
 import { 
   processHeatUnitData,
   processGrowingSeasonData,
@@ -31,16 +31,16 @@ export async function POST(req: NextRequest) {
 
     // console.log("Get Report Data Recieved:", reportId, status, address, addressComponents, landGeometry);
       
-    if (!landGeometry || !Array.isArray(landGeometry) || landGeometry.length < 3 || !reportId || !status) {
-      return NextResponse.json({ message: 'Invalid input' }, { status: 400 });
-    }
-
-    if (status === ReportStatus.Unredeemed && (!address || !addressComponents)) {
-      return NextResponse.json({ message: 'Details not provided to redeem report' }, { status: 400 });
+    if ( !status || !reportId ) {
+      return NextResponse.json({ message: 'Invalid request, missing details to get report data' }, { status: 400 });
     }
 
     if (status === ReportStatus.Unredeemed) {
 
+      if (!landGeometry || !Array.isArray(landGeometry) || landGeometry.length < 3 || !address || !addressComponents) {
+        return NextResponse.json({ message: 'Invalid request, missing details to redeem a report' }, { status: 400 });
+      }
+        
       // Reverse landGeometry points for earth engine
       const points = landGeometry.map(([a, b]) => [b, a]);
 
@@ -69,7 +69,8 @@ export async function POST(req: NextRequest) {
       const bounds = await polygon.bounds().getInfo();
       const boundCoordinates = bounds.coordinates[0];
       const centroid = await polygon.centroid().getInfo();
-        
+
+      const redeemedAt = new Date().toISOString();
       // Note that we're switching from longitude first to latitude first for leaflet use here
       const data = { 
         reportId,
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
         addressComponents,
         landGeometry,
         status: ReportStatus.Redeemed,
+        redeemedAt,
         bbox: [
           [boundCoordinates[0][1], boundCoordinates[0][0]],
           [boundCoordinates[2][1], boundCoordinates[2][0]]
@@ -100,19 +102,28 @@ export async function POST(req: NextRequest) {
       // fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
         
       // Save processed data to AWS S3
-      // Update Reports table with new status and redeemedAt
-
       const storeResponse = await storeReportInS3(data)
       if (!storeResponse.success) {
         throw new Error(storeResponse.message);
+      }
+
+      // Update report status in DynamoDB
+      const result = await updateReportAttributes(reportId, {
+        status: ReportStatus.Redeemed,
+        redeemedAt,
+      });
+    
+      if (result.success) {
+        console.log(result.message);
+      } else {
+        console.error(result.message);
       }
         
       return NextResponse.json(data, { status: 200 });
     } 
 
-    else if (status === ReportStatus.Redeemed) {
-      // Retrieve data from AWS S3
-      const getResponse = await getReportFromS3(reportId)
+    else if (status === ReportStatus.Redeemed) {        
+      const getResponse = await getReportFromS3(reportId);        
       if (!getResponse.success) {
         throw new Error(getResponse.message);
       }
@@ -121,6 +132,7 @@ export async function POST(req: NextRequest) {
     }
 
     else {
+      console.log("getReportData api route - this should not be possible");
       return NextResponse.json({ message: "This should not be possible, how did you get here?" }, { status: 400 });
     }
 

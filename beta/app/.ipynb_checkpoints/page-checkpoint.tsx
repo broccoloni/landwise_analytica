@@ -12,7 +12,14 @@ import { useReportContext } from '@/contexts/ReportContext';
 export default function Home() {
 
   const router = useRouter();
-  const { address, setAddress, latitude, setLatitude, longitude, setLongitude, setAddressComponents, setLandGeometry } = useReportContext();
+  const { 
+    address, setAddress, 
+    latitude, setLatitude, 
+    longitude, setLongitude, 
+    setAddressComponents, 
+    setLandGeometry,
+    clearReportContext,
+  } = useReportContext();
     
   const handleAddressSelect = (selectedAddress: string, lat: number, lng: number, components: Record<string, string>) => {      
     setAddress(selectedAddress);
@@ -30,10 +37,7 @@ export default function Home() {
   };
 
   const handleGetReport = () => {
-    setAddress(null);
-    setLatitude(null);
-    setLongitude(null);
-    setAddressComponents(null);
+    clearReportContext();
     router.push('/get-a-report');
   };
 

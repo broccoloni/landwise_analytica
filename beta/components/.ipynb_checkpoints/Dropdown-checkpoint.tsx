@@ -42,13 +42,13 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div className={`relative inline-block z-10 ${className}`} ref={dropdownRef}>
+    <div className={`relative inline-block z-20 ${className}`} ref={dropdownRef}>
       <button
         onClick={handleButtonClick}
         className="flex items-center pl-4 pr-2 py-2 bg-gray-200 text-black rounded focus:outline-none"
       >
         <div className="flex justify-between items-start space-x-4">
-          <span className="">{selected}</span>
+          <span className="whitespace-pre">{selected}</span>
           {(() => {
             const index = options.findIndex((option) => option === selected);
             return index >= 0 && optionsDetails[index] ? (
@@ -78,7 +78,7 @@ const Dropdown: React.FC<DropdownProps> = ({
               }`}
             >
               <div className="flex justify-between items-start w-full space-x-4">
-                <div className="">{option}</div>
+                <div className="whitespace-pre">{option}</div>
                 {optionsDetails.length > 0 && (
                   <>
                     {optionsDetails[index]}

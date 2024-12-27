@@ -5,22 +5,29 @@ import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import ProgressBar from '@/components/ProgressBar';
+import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
+import { useReportContext } from '@/contexts/ReportContext';
 
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
 export default function NewReport() {
   const { data: session } = useSession();
+  const { 
+    reportId, setReportId, 
+    address, setAddress, 
+    latitude, setLatitude, 
+    longitude, setLongitude, 
+    landGeometry, setLandGeometry, 
+    addressComponents, setAddressComponents,
+    status, setStatus,
+  } = useReportContext();
 
-  const [selectedAddress, setSelectedAddress] = useState<string>('');
-  const [addressComponents, setAddressComponents] = useState<Record<string, string> | null>(null);
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-  const [landGeometry, setLandGeometry] = useState<number[][]>([]);
   const [step, setStep] = useState(1);
+  const stepNames = ['Select Address', 'Define Boundary', 'Review & Submit'];
 
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
-    setSelectedAddress(address);
+    setAddress(address);
     setLatitude(lat);
     setLongitude(lng);
     setAddressComponents(components);
@@ -33,14 +40,18 @@ export default function NewReport() {
   };
     
   const handleNextStep = () => {
-    if (step < 3) {
+    if (step === 1) {
+      setLandGeometry([]);
+      setStep(prevStep => prevStep + 1);
+    }
+    else if (step === 2) {
       setStep(prevStep => prevStep + 1);
     }
   };
     
   const handleGenerateReport = () => {
     console.log('Generating report with the following details:');
-    console.log('Address:', selectedAddress);
+    console.log('Address:', address);
     console.log('Boundary:', landGeometry);
     // Add actual logic to generate the report here
   };
@@ -79,7 +90,7 @@ export default function NewReport() {
               <div className="">            
                 <button
                   onClick={handleNextStep}
-                  disabled={!selectedAddress}
+                  disabled={!address}
                   className="flex items-center justify-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
@@ -137,7 +148,7 @@ export default function NewReport() {
           <div>
             <div className="text-xl text-dark-blue mb-4">Review & Submit</div>
             <div className="mb-2">
-              <strong>Address:</strong> {selectedAddress}
+              <strong>Address:</strong> {address}
             </div>
             
             <div className="mb-4">
@@ -170,7 +181,7 @@ export default function NewReport() {
               <div className="">            
                 <button
                   onClick={handleGenerateReport}
-                  disabled={ !selectedAddress || !landGeometry }
+                  disabled={ !address || !landGeometry }
                   className="mt-4 bg-medium-brown text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Generate Report

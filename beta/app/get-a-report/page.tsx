@@ -13,7 +13,7 @@ export default function GetReport() {
   const router = useRouter();
     
   const [numReports, setNumReports] = useState<number>(1);
-  const { address, setAddress, setLatitude, setLongitude, setAddressComponents, setLandGeometry } = useReportContext();
+  const { address, clearReportContext } = useReportContext();
   const { setQuantity, setAutoRedeem } = useCartContext();
 
   const costOne = 1299.95;
@@ -42,11 +42,7 @@ export default function GetReport() {
 
 
   const handleClearAddress = () => {
-    setAddress(null);
-    setLatitude(null);
-    setLongitude(null);
-    setAddressComponents(null);
-    setLandGeometry([]);
+    clearReportContext();
   };
     
   return (
@@ -255,23 +251,6 @@ export default function GetReport() {
         Reports can be redeemed at any time and will be available for 180 days after redemption.
       </div>
         
-      <div className="flex text-lg justify-center">
-        <div className="mr-8 my-auto">Quick Links:</div>
-        <div className="flex space-x-8 w-96">
-          <Link
-            href="/redeem-a-report"
-            className="my-auto text-black hover:text-medium-brown hover:underline"
-          >
-            Redeem a Report
-          </Link>
-          <Link
-            href="/view-an-existing-report"
-            className="my-auto text-black hover:text-medium-brown hover:underline"
-          >
-            View a Redeemed Report
-          </Link>            
-        </div> 
-      </div>
     </div>
   );
 }

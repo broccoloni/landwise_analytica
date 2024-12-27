@@ -87,19 +87,14 @@ export const processLandUseData = (landUseDataDict) => {
       const usableLandPct = cropSum / totalSum;
       const area = totalSum;
 
-      const landUseImageData = getImageLegendUnique({ sampleData: convertedLandUse, width, height }, cropNames, scale);
-      const { imageUrl, legend, uniqueElements } = landUseImageData;
-
+      const { imageUrl, legend, uniqueElements } = getImageLegendUnique({ sampleData: convertedLandUse, width, height }, cropNames, scale);
         
       newLandUseData[year] = {
         imageUrl,
-        landUseData: convertedLandUse,
-        height, 
-        width, 
         legend,
-        usableLandPct,
+        cropArea: Math.round(area * usableLandPct),
         area,
-        majorCommodityCropsGrown,
+        counts
       };
     });
 
@@ -113,27 +108,27 @@ export const processLandUseData = (landUseDataDict) => {
 export const processGrowingSeasonData = (climateData) => {
   try {
     const x = Object.keys(climateData); // years of data
-    const y0 = []; //last frost day ints for each year
-    const y1 = []; //first frost day ints for each year
+    const lastFrostDays = [];
+    const firstFrostDays = [];
     const growingSeasons = [];
     const desc = [];
       
     Object.entries(climateData).forEach(([year, weatherData]) => {
       const { firstFrost, lastFrost, growingSeasonLength } = calculateGrowingSeason(weatherData);
-      y0.push(lastFrost);
-      y1.push(firstFrost);
+      lastFrostDays.push(lastFrost);
+      firstFrostDays.push(firstFrost);
       growingSeasons.push(growingSeasonLength);
       desc.push(`Year: ${year}<br>Growing Season Length: ${growingSeasonLength} days<br>Last Frost Date: ${dayNumToMonthDay(lastFrost, year)}<br>First Frost Date: ${dayNumToMonthDay(firstFrost, year)}`);
     });
 
-    const firstFrosts = getStats(y1);
-    const lastFrosts = getStats(y0);
+    const firstFrosts = getStats(firstFrostDays);
+    const lastFrosts = getStats(lastFrostDays);
     const seasons = getStats(growingSeasons);
       
     return {
       x,
-      y0,
-      y1,
+      y0: lastFrostDays,
+      y1: growingSeasons,
       desc,
       firstFrosts,
       lastFrosts,

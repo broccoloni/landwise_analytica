@@ -1,7 +1,7 @@
 'use client';
 
 import { roboto } from '@/ui/fonts';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
