@@ -183,7 +183,7 @@ export default function SampleReport() {
             <PrintButton />
           </div>
         </div>
-        <Container className="" id="report">
+        <Container className="bg-white" id="report">
           <section id="summary">
             <div className={`${montserrat.className} text-medium-brown text-2xl mb-2 w-full text-center`}>
               THIS IS A SAMPLE REPORT!

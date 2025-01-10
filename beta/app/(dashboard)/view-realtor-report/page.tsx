@@ -222,7 +222,7 @@ export default function ViewReport() {
             <PrintButton />
           </div>
         </div>
-        <Container className="" id="report">
+        <Container className="bg-white" id="report">
           {dataLoaded ? (
             <div>
               <section id="summary">

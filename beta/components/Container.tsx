@@ -5,9 +5,9 @@ type ContainerProps = {
   className?: string;
 };
 
-const Container = ({children, className = ''}: ContainerProps) => {
+const Container = ({children, className = 'bg-white'}: ContainerProps) => {
   return (
-    <div className={`bg-white ${className} rounded-lg border p-8`}>
+    <div className={`${className} rounded-lg border p-8`}>
       {children}
     </div>
   );

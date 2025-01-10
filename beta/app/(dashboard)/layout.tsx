@@ -1,10 +1,8 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { merriweather, raleway } from '@/ui/fonts';
 import { useEffect, useState } from 'react';
-import SubHeader from '@/components/SubHeader';
-// import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
@@ -13,10 +11,16 @@ export default function DashboardLayout({
 }>) {
     
   const {data, status} = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/');
+    }
+  }, [status]);
 
   return (
-    <div className="text-black">
-      <SubHeader />
+    <div className="">
       {children}
     </div>
   );

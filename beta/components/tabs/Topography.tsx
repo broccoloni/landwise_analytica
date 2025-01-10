@@ -51,17 +51,24 @@ const Topography = (
       // Calculate average useable land % and area throughout historical use
       const numYears = Object.keys(landUseData).length;
       const { totalCropArea, totalArea } = Object.values(landUseData).reduce(
-        (acc, yearData: any) => {
-          console.log("years area and crop area:", yearData.area, yearData.cropArea);
-          if (yearData.cropArea) {
-            acc.totalCropArea += yearData.cropArea;
+        (acc, yearData: any) => {         
+          // Check and add to totalArea if yearData.area is valid
+          if (yearData.area !== undefined && yearData.area !== null) {
             acc.totalArea += yearData.area;
           }
+    
+          // Check and add to totalCropArea if yearData.cropArea is valid
+          if (yearData.cropArea !== undefined && yearData.cropArea !== null) {
+            acc.totalCropArea += yearData.cropArea;
+          }
+        
           return acc;
         },
         { totalCropArea: 0, totalArea: 0 }
       );
 
+      console.log("landuse:", landUseData);
+      console.log(numYears, totalCropArea, totalArea);
       
       setAvgCropArea(totalCropArea / numYears * metersPerPixel * metersPerPixel);
       setAvgArea(totalArea / numYears * metersPerPixel * metersPerPixel);

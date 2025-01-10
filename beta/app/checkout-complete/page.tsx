@@ -41,6 +41,10 @@ export default function CheckoutComplete() {
       fetchReports(sessionId);
     }
   }, []);
+
+  useEffect(() => {
+    console.log("report context", reportContext, reports);
+  }, [reportContext]);
     
   return (
     <div className={`${roboto.className} px-10 sm:px-20 md:px-40 py-10 sm:py-20`}>

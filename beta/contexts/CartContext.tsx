@@ -5,27 +5,35 @@ import { createContext, useContext, useState, useEffect, ReactNode, useMemo } fr
 interface CartContextProps {
   quantity: number | null;
   setQuantity: React.Dispatch<React.SetStateAction<number | null>>;
-  autoRedeem: boolean | null;
-  setAutoRedeem: React.Dispatch<React.SetStateAction<boolean | null>>;
+  priceId: string | null;
+  setPriceId: React.Dispatch<React.SetStateAction<string | null>>;
+  customerId: string | null;
+  setCustomerId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [quantity, setQuantity] = useState<number | null>(null);
-  const [autoRedeem, setAutoRedeem] = useState<boolean | null>(null);
-
-  // Load initial values from localStorage once the component is mounted
+  const [priceId, setPriceId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+    
   useEffect(() => {
     const storedQuantity = localStorage.getItem('reportQuantity');
     if (storedQuantity && !isNaN(Number(storedQuantity))) {
       setQuantity(parseInt(storedQuantity));
     }
 
-    const storedAutoRedeem = localStorage.getItem('autoRedeem');
-    if (storedAutoRedeem) {
-      setAutoRedeem(JSON.parse(storedAutoRedeem));
+    const storedPriceId = localStorage.getItem('priceId');
+    if (storedPriceId) {
+      setPriceId(storedPriceId);
     }
+
+    const storedCustomerId = localStorage.getItem('customerId');
+    if (storedCustomerId) {
+      setCustomerId(storedCustomerId);
+    }
+
   }, []);
 
   // Sync state changes with localStorage
@@ -38,20 +46,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [quantity]);
 
   useEffect(() => {
-    if (autoRedeem !== null) {
-      localStorage.setItem('autoRedeem', JSON.stringify(autoRedeem));
+    if (priceId !== null) {
+      localStorage.setItem('priceId', priceId);
     } else {
-      localStorage.removeItem('autoRedeem');
+      localStorage.removeItem('priceId');
     }
-  }, [autoRedeem]);
+  }, [priceId]);
+
+  useEffect(() => {
+    if (customerId !== null) {
+      localStorage.setItem('customerId', customerId);
+    } else {
+      localStorage.removeItem('customerId');
+    }
+  }, [customerId]);
 
   const value = useMemo(
     () => ({ 
       quantity, 
       setQuantity, 
-      autoRedeem, 
-      setAutoRedeem 
-    }), [quantity, autoRedeem]);
+      priceId,
+      setPriceId,
+      customerId,
+      setCustomerId,
+    }), [quantity, priceId, customerId]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };

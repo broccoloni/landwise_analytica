@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { createReport } from '@/lib/database';
-
+import { createReport, updateUser } from '@/lib/database';
+import { SubscriptionStatus } from '@/types/statuses';
+    
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: NextRequest) {
@@ -32,16 +33,18 @@ export async function POST(request: NextRequest) {
     case 'checkout.session.completed':  
       const checkoutSession = event.data.object;
       console.log("Webhook checkout session:", checkoutSession);
-          
-      // Generate report ID
-      const quantity = parseInt(checkoutSession.metadata.quantity);
-      const details = checkoutSession.metadata.details;
 
+      if (checkoutSession.mode === 'subscription') {
+        // Subscription events are handled in other event types below
+        break;
+      }
+
+      const quantity = parseInt(checkoutSession.quantity);
       if (isNaN(quantity) || quantity <= 0) {
         console.error('Invalid quantity in metadata.');
         return new NextResponse('Invalid quantity in metadata.', { status: 400 });
       }
-          
+   
       const reportIds: string[] = [];
       for (let i = 0; i < quantity; i++) {
         const createReportResponse = await createReport(checkoutSession.id);
@@ -58,7 +61,22 @@ export async function POST(request: NextRequest) {
       // Note: Details for report redemption are too long to store and pass
       // through stripe metadata. Instead, We will provide a one click 
       // report redemption with the provided details on the checkout-complete 
-      // page
+      // page 
+      break;
+
+    case 'customer.subscription.created':
+      const subscription = event.data.object;
+      console.log("Webhook subscription:", subscription);
+
+      const customerId = subscription.customer;
+      const subscriptionStatus = SubscriptionStatus.Active;
+
+      const updates = { subscription: subscription.id, subscriptionStatus, subscriptionStart: subscription.created };
+          
+      const updateResponse = await updateUser(subscription.customer, updates);
+      if (!updateResponse.success) {
+        throw new Error(updateResponse.error);
+      }
       break;
           
     // Handle other event types

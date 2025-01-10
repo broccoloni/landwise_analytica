@@ -3,38 +3,42 @@ import { stripe } from '@/lib/stripe';
 
 export async function POST(req: Request) {
   try {
-    // Note: Details is too long to store in stripe metadata
-    // Instead, we will generate the 3 reportIds the user buys,
-    // and on the checkout-complete page, we will allow them to quickly
-    // redeem the report with those details, which are still in the reportContext
     const { quantity } = await req.json();
 
-    console.log("CHECKOUT QUANTITY:", quantity, quantity === 1, quantity === '1');
-      
+    const priceId = process.env.STRIPE_REPORT_PRICE_ID;
+    if (!priceId) {
+      return NextResponse.json(
+        { error: 'Report Price ID not found in environment variables' },
+        { status: 400 }
+      );
+    }
+
+    const couponId = process.env.STRIPE_THREE_REPORT_BUNDLE_COUPON_ID;
+
+    if (!couponId) {
+      return NextResponse.json(
+        { error: 'Report Coupon ID not found in environment variables' },
+        { status: 400 }
+      );
+    }
+
     if (!quantity) {
       return NextResponse.json({ error: 'Missing checkout details' }, { status: 400 });
     }
-      
+
+    // Conditionally add coupon if quantity is 3
+    const discounts = quantity === 3 ? [{ coupon: couponId }] : undefined;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
-          price_data: {
-            currency: 'cad',
-            product_data: {
-              name: `${quantity === 1 ? 'Single Landwise Analytica Report' : 'Three Landwise Analytica Reports'}`,
-            },
-            unit_amount: quantity === 1 ? 129995 : 299995, // In cents
-          },
-          quantity: 1,
+          price: priceId,
+          quantity,
         },
       ],
       mode: 'payment',
-
-      metadata: {
-        quantity,
-      },
-
+      discounts,
       invoice_creation: {
         enabled: true,
       },
@@ -45,8 +49,6 @@ export async function POST(req: Request) {
       ui_mode: 'embedded',
     });
 
-    console.log("Session:", session);
-      
     return NextResponse.json({ clientSecret: session.client_secret });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

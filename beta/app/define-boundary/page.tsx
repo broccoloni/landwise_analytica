@@ -1,12 +1,14 @@
 'use client';
 
 import { roboto } from '@/ui/fonts';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ProgressBar from '@/components/ProgressBar';
 import { useReportContext } from '@/contexts/ReportContext';
+import { calculatePolygonArea } from '@/utils/calculateArea';
+import { ArrowRight } from 'lucide-react';
 
 // Dynamically import MapDrawing for client-side rendering
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
@@ -20,6 +22,12 @@ export default function DefineBounrdary() {
   const handleGetReport = () => {
     router.push('/get-a-report');
   };
+
+
+  // const [area, setArea] = useState<number|null>(null);
+  // useEffect(() => {
+  //   setArea(calculatePolygonArea(landGeometry));
+  // }, [landGeometry]);
 
   return (
     <div className={`${roboto.className} text-black min-h-screen py-10 flex-row justify-between`}>
@@ -36,6 +44,15 @@ export default function DefineBounrdary() {
           <li className="">Use the cursor to move points, if necessary</li>
         </ul>
 
+        {/* <div className="flex">
+          <div className="mr-4">Area:</div>
+            {area ? (
+              <div className="">{area}</div>
+            ) : (
+              <div className="">Not enough points</div>
+            )}
+        </div> */}
+
         <div className="w-full">
           <MapDrawing
             latitude={latitude}
@@ -51,9 +68,10 @@ export default function DefineBounrdary() {
             <button
               onClick={handleGetReport}
               disabled={landGeometry.length < 3}
-              className="mt-4 bg-medium-brown text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+              className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
             >
               Get My Report
+              <ArrowRight className="h-5 w-5 ml-2" />
             </button>
           </div>
         </div>

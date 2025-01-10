@@ -114,7 +114,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             <div className="flex justify-center items-center">
-              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+              <Container className="bg-white w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
                 <div className="font-semibold text-xl mb-2 text-medium-brown">Estimated Yields</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Historic crop production</li>
@@ -125,7 +125,7 @@ export default function Home() {
             </div>
         
             <div className="flex justify-center items-center">
-              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+              <Container className="bg-white w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
                 <div className="font-semibold text-xl mb-2 text-medium-brown">Climate</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Historic precipitation, dew point & temperatures</li>
@@ -136,7 +136,7 @@ export default function Home() {
             </div>
         
             <div className="flex justify-center items-center">
-              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+              <Container className="bg-white w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
                 <div className="font-semibold text-xl mb-2 text-medium-brown">Topography</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Property area & layout</li>
@@ -145,9 +145,9 @@ export default function Home() {
                 </ul>
               </Container>
             </div>
-
+        
             <div className="flex justify-center items-center">
-              <Container className="text-black transition-transform transform hover:scale-105 duration-200 w-80 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
+              <Container className="bg-white w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
                 <div className="font-semibold text-xl mb-2 text-medium-brown">Soil</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Taxonomy & Texture</li>

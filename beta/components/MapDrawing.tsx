@@ -4,6 +4,8 @@ import { MapContainer, TileLayer, Polygon, CircleMarker, useMapEvents, useMap, S
 import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from 'react';
 import { MousePointer, Dot, Undo, Redo, RotateCcw } from 'lucide-react';
+import { calculatePolygonArea } from '@/utils/calculateArea';
+
 
 interface MapDrawingProps {
   latitude: string | null;
@@ -118,18 +120,6 @@ export default function MapDrawing({
     setIsPlacingMode(true);
     setHoverPoint(null);
   };
-
-  // const handleGenerateReport = () => {
-  //   // reverse the order of the points [[lat1,lng1],[lat2,lng2],...]
-  //   // to [[lng1,lat1],[lng2,lat2],...] because google earth engine
-  //   // requires longitude first
-  //   const reversedPoints = points.map(([lat, lng]) => [lng, lat]);
-      
-  //   setLandGeometry(reversedPoints);
-  //   setIsPolygonClosed(true);
-  //   setIsPlacingMode(false);
-  //   setHoverPoint(null);
-  // };
     
   const MapClickHandler = ({ onPointAdd, onPointHover, onPolygonClose, onZoomChange, onCenterChange }) => {
     const map = useMap();
@@ -184,9 +174,23 @@ export default function MapDrawing({
   const polygonPoints = hoverPoint && isPlacingMode ? [...points, hoverPoint] : points;
 
   const cursorStyle = isPlacingMode ? 'crosshair' : 'move';
+
+  // const [area, setArea] = useState<number|null>(null);
+  // useEffect(() => {
+  //   setArea(calculatePolygonArea(polygonPoints));
+  // }, [polygonPoints]);
     
   return (
     <div className="w-full">
+      
+      {/* <div className="flex">
+          <div className="mr-4">hover Area:</div>
+            {area ? (
+              <div className="">{area}</div>
+            ) : (
+              <div className="">Not enough points</div>
+            )}
+      </div> */}
       <div className="flex justify-between">
         <div className="">
           <div className="inline-flex justify-start rounded-md mr-4">
@@ -195,7 +199,7 @@ export default function MapDrawing({
               onClick={() => {
                 setIsPlacingMode(false);
                 if (!isPolygonClosed) {
-                  handlePolygonClose(); // Close the polygon if it's not already closed
+                  handlePolygonClose();
                 }
               }}
             >
@@ -236,14 +240,6 @@ export default function MapDrawing({
             </button>
           </div>
         </div>
-        {/* <div className="">
-          <button
-            className="bg- text-white py-2 px-4 rounded-md border border-white hover:opacity-75"
-            onClick={handleGenerateReport}
-          >
-            Generate Report
-          </button>
-        </div> */}
       </div>
         
       <MapContainer
@@ -276,7 +272,7 @@ export default function MapDrawing({
               pathOptions={{ color: 'black' }}
               eventHandlers={{
                 mousedown: () => setDraggedPointIndex(index),
-                mouseup: () => setDraggedPointIndex(null)  // Stop dragging on mouse up
+                mouseup: () => setDraggedPointIndex(null)
               }}
             />
           ))}

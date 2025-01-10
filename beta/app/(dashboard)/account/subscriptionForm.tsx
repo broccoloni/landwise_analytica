@@ -1,102 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import SubscriptionOption from '@/components/SubscriptionOption';
+import { fetchSubscriptionPrices } from '@/utils/stripe';
+import Loading from '@/components/Loading';
 
 export default function SubscriptionForm() {
   const { data: session } = useSession();
+  const [subscriptions, setSubscriptions] = useState<any>(null);
+  const [selectedSubscription, setSelectedSubscription] = useState<string>('pilot-program');
+  const [basePrice, setBasePrice] = useState(null);
 
-  const [subscriptionType, setSubscriptionType] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  useEffect(() => {
+    const getSubscriptionPrices = async () => {
+      try {
+        const prices = await fetchSubscriptionPrices();
+          
+        // const cancelSubscription = { nickname: 'cancel-subscription' };
+        // setSubscriptions({ ...prices, cancelSubscription });
+        // const { subscription_1 } = prices;
+        // setBasePrice(subscription_1?.tiers[1]['unit_amount']/100);
+          
+        const { subscription_pilot } = prices;
+        setSubscriptions({ subscription_pilot });
+        setBasePrice(1299.95);
+          
+      } catch (err) {
+        console.log(err.message);
+      }
+    };
 
-  const price_1 = 1299.95;
-  const price_5 = 999.95;
-  const price_10 = 849.95;
-  const price_20 = 699.95;
-    
-  const options = [
-    { label: "1+ Reports / Month", 
-      details: 
-        <>
-          <div className="flex justify-between w-56">
-            <div>Rate:</div><div>${price_1.toFixed(2)} / Report</div>
-          </div>
-          <div className="flex justify-between w-56">
-            <div>Min Charge:</div><div>${price_1.toFixed(2)} / Month</div>
-          </div>            
-        </> 
-    },
-    { label: "5+ Reports / Month", 
-      details: 
-        <>
-          <div className="flex justify-between w-56">
-            <div>Rate:</div><div>${price_5.toFixed(2)} / Report</div>
-          </div>
-          <div className="flex justify-between w-56">
-            <div>Min Charge:</div><div>${(price_5 * 5).toFixed(2)} / Month</div>
-          </div>  
-          <div className="flex justify-between w-56">
-            <div>Discount:</div><div>{((price_1 - price_5)/price_1 * 100).toFixed(0)}% off</div>
-          </div>  
-        </> 
-    },
-    { label: "10+ Reports / Month", 
-      details: 
-        <>
-          <div className="flex justify-between w-56">
-            <div>Rate:</div><div>${price_10.toFixed(2)} / Report</div>
-          </div>
-          <div className="flex justify-between w-56">
-            <div>Min Charge:</div><div>${(price_10 * 10).toFixed(2)} / Month</div>
-          </div>  
-          <div className="flex justify-between w-56">
-            <div>Discount:</div><div>{((price_1 - price_10)/price_1 * 100).toFixed(0)}% off</div>
-          </div>  
-        </> 
-    },
-    { label: "20+ Reports / Month", 
-      details: 
-        <>
-          <div className="flex justify-between w-56">
-            <div>Rate:</div><div>${price_20.toFixed(2)} / Report</div>
-          </div>
-          <div className="flex justify-between w-56">
-            <div>Min Charge:</div><div>${(price_20 * 20).toFixed(2)} / Month</div>
-          </div>  
-          <div className="flex justify-between w-56">
-            <div>Discount:</div><div>{((price_1 - price_20)/price_1 * 100).toFixed(0)}% off</div>
-          </div>  
-        </> 
-    },
-  ];
+    getSubscriptionPrices();
+  }, []); 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!subscriptionType) {
-      setSuccessMessage(null);
-      setErrorMessage('Please select a subscription type');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/account/change-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscriptionType }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to change subscription');
-      }
-
-      setSuccessMessage('Subscription changed successfully');
-      setErrorMessage(null);
-    } catch (error: any) {
-      setSuccessMessage(null);
-      setErrorMessage(error.message);
-    }
+    console.log("Subscribing to", selectedSubscription);
   };
 
   return (
@@ -116,49 +56,28 @@ export default function SubscriptionForm() {
         </p>
       </div>
 
-      {/* Success message */}
-      {successMessage && (
-        <div className="bg-green-100 text-green-800 p-4 rounded-md mb-4">
-          {successMessage}
-        </div>
-      )}
-
-      {/* Error message */}
-      {errorMessage && (
-        <div className="bg-red-100 text-red-800 p-4 rounded-md mb-4">
-          {errorMessage}
-        </div>
-      )}
-
       <form onSubmit={handleSubmit}>
-        {/* Radio buttons section */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Subscription Options
           </label>
-          <div className="grid grid-cols-2 gap-4">
-            {options.map((option, index) => (
-              <div 
-                key={index} 
-                className={`flex p-4 items-center rounded-md border transition duration-200 hover:border-gray-500
-                  ${option.label === subscriptionType ? 'border-black' : 'border-gray-300'}`}
-              >
-                <input
-                  type="radio"
-                  id={`subscription-${index}`}
-                  name="subscriptionType"
-                  value={option.label}
-                  checked={subscriptionType === option.label}
-                  onChange={(e) => setSubscriptionType(e.target.value)}
-                  className="h-4 w-4 text-medium-brown focus:ring-medium-brown border-gray-300 mr-4"
+          {subscriptions && basePrice ? (
+            <div className={`grid grid-cols-1 gap-4 
+              ${Object.keys(subscriptions).length > 1 && 'md:grid-cols-2'}`}
+            >
+              {Object.values(subscriptions).map((subscription) => (
+                <SubscriptionOption
+                  key={subscription.nickname}
+                  subscription={subscription}
+                  basePrice={basePrice}
+                  selectedSubscription={selectedSubscription}
+                  setSelectedSubscription={setSelectedSubscription}
                 />
-                <label htmlFor={`subscription-${index}`} className="w-full">
-                  <span className="font-bold text-dark-blue">{option.label}</span>
-                  <div className="text-sm text-gray-500">{option.details}</div>
-                </label>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <Loading />
+          )}
         </div>
 
         {/* Submit Button */}

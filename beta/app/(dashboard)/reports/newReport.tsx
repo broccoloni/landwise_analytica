@@ -213,9 +213,10 @@ export default function NewReport() {
                 <button
                   onClick={handleGenerateReport}
                   disabled={ !address || landGeometry.length < 3 }
-                  className="mt-4 bg-medium-brown text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Generate Report
+                  <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
               </div>
             </div>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
@@ -11,6 +11,7 @@ export default function Form() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,6 +26,7 @@ export default function Form() {
       });
 
       if (result?.error) {
+        setLoading(false);
         setError(result.error);
         return;
       }
@@ -34,6 +36,12 @@ export default function Form() {
     }
   };
 
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.email) {
+      router.push('/dashboard/');
+    }
+  },[session, status]);
+    
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-y-4">
       {error && (

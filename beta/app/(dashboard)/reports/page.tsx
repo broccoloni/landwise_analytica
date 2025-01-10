@@ -15,8 +15,8 @@ export default function ReportsPage() {
   const [selectedTab, setSelectedTab] = useState('view-reports');
 
   return (
-    <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-gray">
-      <Container className="flex bg-gray-50">
+    <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown">
+      <Container className="flex bg-white">
         <div className="w-1/4 px-4 py-8 border-r border-gray-200">
           <div className="text-2xl mb-4">Reports</div>
           <ul className="space-y-2">

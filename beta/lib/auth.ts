@@ -4,6 +4,7 @@ import type { Session, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { createUser, getUserByEmail, loginUser } from '@/lib/database';
 import { stripe } from '@/lib/stripe';
+import { RealtorStatus, SubscriptionStatus } from '@/types/statuses';
 
 export const authOptions: AuthOptions = {
   session: {
@@ -18,35 +19,20 @@ export const authOptions: AuthOptions = {
       return !!user;
     },
     async jwt({ token, user, trigger, session }: { token: JWT; user?: User; trigger?: string }): Promise<JWT> {
-      // Only update the JWT if user data is passed (such as after sign-in or after update)
-
-      console.log("JWT user:", user," trigger:", trigger);
       if (user) {
-        token.email = user.email;
-        token.firstName = user.firstName;
-        token.lastName = user.lastName;
-        token.realtyGroup = user.realtyGroup;
-        token.id = user.id;
+        Object.assign(token, user);
       }
-
+    
       if (trigger === 'update' && session) {
-        token.firstName = session?.firstName;
-        token.lastName = session?.lastName;
-        token.email = session?.email;
-        token.realtyGroup = session?.realtyGroup;
-        token.id = session?.id;
+        Object.assign(token, session);
       }
-
+    
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }): Promise<Session> {
       session.user = {
-        ...session.user,
-        email: token.email,
-        firstName: token.firstName,
-        lastName: token.lastName,
-        realtyGroup: token.realtyGroup,
-        id: token.id,
+        ...session.user, // Retain any existing attributes in session.user
+        ...token,        // Spread all attributes from the token into session.user
       };
       return session;
     },
@@ -80,13 +66,8 @@ export const authOptions: AuthOptions = {
           throw new Error('User not found');
         }
     
-        return {
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          realtyGroup: user.realtyGroup,
-          id: user.id,
-        };
+        const { password: _password, ...otherFields } = user;
+        return { ...otherFields };
       },
     }),
     CredentialsProvider({
@@ -113,6 +94,7 @@ export const authOptions: AuthOptions = {
         }
 
         const stripeCustomer = await stripe.customers.create({ email });
+        const curDate = new Date().toISOString();
         const user = {
           email,
           password,
@@ -120,6 +102,12 @@ export const authOptions: AuthOptions = {
           lastName,
           realtyGroup,
           id: stripeCustomer.id,
+          status: RealtorStatus.New,
+          subscription: null,
+          subscriptionStatus: SubscriptionStatus.Unsubscribed,
+          subscriptionStart: null,
+          createdAt: curDate,
+          lastLogin: curDate,
         };
 
         const createResponse = await createUser(user);
@@ -127,13 +115,8 @@ export const authOptions: AuthOptions = {
           throw new Error(createResponse.error);
         }
 
-        return {
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          realtyGroup: user.realtyGroup,
-          id: user.id,
-        };
+        const { password: _password, ...otherFields } = user;
+        return { ...otherFields };
       },
     }),
   ],

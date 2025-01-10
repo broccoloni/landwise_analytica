@@ -2,41 +2,56 @@
 
 import { montserrat, roboto, merriweather, raleway } from '@/ui/fonts';
 import Container from '@/components/Container';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Check, RotateCcw } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
+import { fetchReportPriceAndCoupon } from '@/utils/stripe';
 
 export default function GetReport() {
   const router = useRouter();
-    
+  const { setQuantity } = useCartContext();
+
   const [numReports, setNumReports] = useState<number>(1);
   const { address, clearReportContext } = useReportContext();
-  const { setQuantity, setAutoRedeem } = useCartContext();
 
-  const costOne = 1299.95;
-  const costThree = 2999.95;
-  const threeCostOne = 3 * costOne;
-  const discountPct = Math.floor((1 - costThree / (3 * costOne)) * 100);
+  const [priceOne, setPriceOne] = useState(1299.95);
+  const [priceThree, setPriceThree] = useState(2999.85);
+  const [discountPct, setDiscountPct] = useState(23);
 
-  const [dollarsOne, centsOne] = costOne.toFixed(2).split('.');
-  const [dollarsThree, centsThree] = costThree.toFixed(2).split('.');
+  const [dollarsOne, centsOne] = priceOne ? priceOne.toFixed(2).split('.') : ['', ''];
+  const [dollarsThree, centsThree] = priceThree ? priceThree.toFixed(2).split('.') : ['', ''];
 
-  const reportContext = useReportContext();
-  console.log("Get a report context:", reportContext);
+  useEffect(() => {
+    const getReportPriceAndCoupon = async () => {
+      try {
+        const { price, coupon } = await fetchReportPriceAndCoupon();
 
+        const costOne = price.unit_amount / 100;
+        const costThree = (3 * price.unit_amount - coupon.amount_off) / 100;
+        const threeCostOne = 3 * costOne;
+        const calculatedDiscountPct = Math.floor((1 - costThree / threeCostOne) * 100);
+
+        setPriceOne(costOne);
+        setPriceThree(costThree);
+        setDiscountPct(calculatedDiscountPct);
+      } catch (err) {
+        console.log(err.message);
+      }
+    };
+
+    getReportPriceAndCoupon();
+  }, []);  
     
   const handleBuyOne = async () => {
     setQuantity(1);
-    setAutoRedeem(!!address);
     router.push('/checkout');
   };
 
   const handleBuyThree = async () => {
     setQuantity(3);
-    setAutoRedeem(!!address);
     router.push('/checkout');
   };
 
@@ -52,9 +67,9 @@ export default function GetReport() {
         <span className={`${raleway.className} ml-2`}>Landwise Analytica</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:mx-10 lg:mx-36 justify-items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 justify-items-stretch">
         {/* Single Report Container */}
-        <div className="flex justify-center items-center min-w-80">
+        <div className="flex flex-col mx-auto md:mx-0 md:ml-auto ">
           <Container className="text-black w-full pt-16 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
             <div className="flex flex-col">
               <div className="font-semibold text-2xl text-center text-dark-blue">Single Report</div>
@@ -109,7 +124,7 @@ export default function GetReport() {
         </div>
      
         {/* Three Reports Container */}
-        <div className="flex flex-col min-w-80">
+        <div className="flex flex-col mx-auto md:mx-0 md:mr-auto ">
           <div className="bg-medium-green w-full rounded-t-lg text-white text-center text-xl flex justify-center items-center h-10">
             Best Deal
           </div>
@@ -137,7 +152,7 @@ export default function GetReport() {
               </div>
               <div className="flex h-8 justify-center items-center text-gray-500">
                 <div className="mr-2 font-bold">{discountPct}% off</div>
-                <div className="line-through">${threeCostOne.toFixed(2)}</div>
+                <div className="line-through">${(3*priceOne).toFixed(2)}</div>
               </div>
               <div className="mx-10 my-4">
                 <div className="mb-2">

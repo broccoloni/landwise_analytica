@@ -95,23 +95,17 @@ export const createUser = async (user: User): Promise<{ success: boolean; messag
 
   try {
     const { password, ...otherFields } = user;
-
-    const curDate = new Date().toISOString();
-    // Hash the password before storing
     const hashedPassword = await generateHash(password);
 
     const command = new PutCommand({
       TableName: TABLE_NAME,
       Item: {
-        ...otherFields, // Spread other user fields into the item
-        password: hashedPassword, // Store the hashed password
-        createdAt: curDate, // Timestamp for when the user was created
-        lastLogin: curDate,
-        status: RealtorStatus.Active,
+        ...otherFields,
+        password: hashedPassword,
       },
     });
 
-    await docClient.send(command); // Assuming this will succeed or throw on failure
+    await docClient.send(command);
     return { success: true, message: "User created successfully", data: { ...user, password: hashedPassword } };
   } catch (error) {
     console.error("Error creating user:", error);

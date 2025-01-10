@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createReport } from '@/lib/database';
 import { ReportStatus } from '@/types/statuses';
+import { stripe } from '@/lib/stripe';
+
+// NOTE: This api route is only for users with an account and a subscription
+// Users who order reports without a subscription have their reports created 
+// through the webhooks/checkout-completed route.
 
 export async function POST(request: NextRequest) {
   try {

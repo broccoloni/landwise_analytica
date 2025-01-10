@@ -12,16 +12,8 @@ export default function AuthLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
-  const router = useRouter();
-    
+}>) {    
   const {data, status} = useSession();
-
-  useEffect(() => {
-    if (status == 'authenticated' && data.user.email) {
-      router.push('/dashboard');
-    }
-  }, [data, status]);
 
   const SignOut = () => {
     if (status == 'unauthenticated') {
@@ -51,8 +43,8 @@ export default function AuthLayout({
 
   return (
     <div className="py-4 sm:py-16">
-      <div className="mx-auto flex max-w-[450px] flex-col gap-6 p-3 sm:gap-6">
-        <Container className="no-scrollbar w-full rounded-xl px-5 py-5 bg-primary text-dark-brown">
+      <div className="flex flex-col gap-6 p-3 sm:gap-6">
+        <Container className="bg-white no-scrollbar mx-auto rounded-xl px-5 py-5 bg-primary text-dark-brown">
           {children}
         </Container>
         <SignOut />
