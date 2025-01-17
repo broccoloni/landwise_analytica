@@ -21,7 +21,8 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client);
 
 const EMAIL_INDEX = "EmailIndex"; // GSI for querying by email
-const REPORTID_INDEX = "ReportIdIndex"; // GSI for querying by reportId
+const SESSIONID_INDEX = "sessionIdIndex"; // for querying reports table by sessionId
+const CUSTOMERID_INDEX = "customerIdIndex"; // for querying reports table by customerId
 
 // ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR REALTORS TABLE ~~~~~~~~~~~~~~~~~~~~~~~~~
 /**
@@ -209,107 +210,145 @@ function generateReportId(): string {
 /**
  * Creates a new report and stores it in the Reports table.
  */
-export const createReport = async (sessionOrCustomerId: string): Promise<{ success: boolean; reportId?: string; message?: string }> => {
+export const createReport = async (
+  sessionId: string,
+  customerId: string | null
+): Promise<{ success: boolean; reportId?: string; message?: string }> => {
   const TABLE_NAME = "Reports";
+
+  if (!sessionId) {
+    return { success: false, message: "Session ID is required to create a report." };
+  }
 
   try {
     const reportId = generateReportId();
+    
+    const item: Record<string, unknown> = {
+      sessionId,
+      reportId,
+      createdAt: new Date().toISOString(),
+      status: ReportStatus.Unredeemed,
+    };
+
+    if (customerId) {
+      item.customerId = customerId;
+    }
+      
     const command = new PutCommand({
       TableName: TABLE_NAME,
-      Item: {
-        sessionOrCustomerId,
-        reportId,
-        createdAt: new Date().toISOString(),
-        status: ReportStatus.Unredeemed,
-      },
+      Item: item,
     });
 
     await docClient.send(command);
+
     console.log("Generated report Id:", reportId);
-    return { success: true, reportId, message: "Report created successfully" };
+    return { success: true, reportId, message: "Report created successfully." };
   } catch (error) {
     console.error("Error creating report:", error);
-    return { success: false, message: "Unable to create report", error: error instanceof Error ? error.message : String(error) };
+    return {
+      success: false,
+      message: "Unable to create report.",
+    };
   }
 };
 
 /**
- * Retrieves all report IDs for a given sessionOrCustomerId.
+ * Retrieves all report IDs for a given sessionId or customerId
  */
-export const getReportIds = async (
-  sessionOrCustomerId: string
-): Promise<{ success: boolean; reports?: { id: string; status: string; createdAt: string; redeemedAt: string; }[]; message?: string }> => {
+export const getReportsById = async (reportId: string): Promise<{
+  success: boolean;
+  reports?: { id: string; status: string; createdAt: string; redeemedAt: string }[];
+  message?: string;
+}> => {
   const TABLE_NAME = "Reports";
 
   try {
     const command = new QueryCommand({
       TableName: TABLE_NAME,
-      KeyConditionExpression: "sessionOrCustomerId = :id",
-      ExpressionAttributeValues: {
-        ":id": sessionOrCustomerId,
-      },
+      KeyConditionExpression: "reportId = :id",
+      ExpressionAttributeValues: { ":id": reportId },
     });
 
     const { Items } = await docClient.send(command);
-    const reports = Items;
-
-    console.log("Retrieved reports:", reports, "for sessionOrCustomerId:", sessionOrCustomerId);
-    return { success: true, reports };
+      
+    console.log("Reports for", reportId, Items);
+      
+    return { success: true, reports: Items };
   } catch (error) {
-    console.error("Error retrieving reports by sessionOrCustomerId:", error);
+    console.error("Error retrieving reports:", error);
     return {
       success: false,
-      message: `Unable to retrieve reports: ${error instanceof Error ? error.message : String(error)}`
+      message: `Unable to retrieve reports: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 };
 
-export const getReportAttributesById = async (
-  reportId: string
-): Promise<{ success: boolean; report: { id: string; status: string; createdAt: string; redeemedAt: string; address: string; }; message?: string; }> => {
+export const getReportsByCustomerId = async (customerId: string): Promise<{
+  success: boolean;
+  reports?: { id: string; status: string; createdAt: string; redeemedAt: string }[];
+  message?: string;
+}> => {
   const TABLE_NAME = "Reports";
 
   try {
     const command = new QueryCommand({
       TableName: TABLE_NAME,
-      IndexName: REPORTID_INDEX,
-      KeyConditionExpression: "#reportId = :reportIdValue",
-      ExpressionAttributeNames: {
-        "#reportId": "reportId",
-      },
-      ExpressionAttributeValues: {
-        ":reportIdValue": reportId,
-      },
+      KeyConditionExpression: "customerId = :id",
+      IndexName: CUSTOMERID_INDEX,
+      ExpressionAttributeValues: { ":id": customerId },
     });
 
     const { Items } = await docClient.send(command);
-    if (!Items || Items.length === 0) {
-      return {
-        success: false,
-        message: "No report found for the provided reportId",
-      };
-    }
-    
-    const report = Items[0];
 
-    console.log("Retrieved report:", report, "for reportId:", reportId);
-    return { success: true, report };
+    console.log("Reports for", customerId, Items);
+      
+    return { success: true, reports: Items };
   } catch (error) {
-    console.error("Error retrieving report by repordId:", error);
+    console.error("Error retrieving reports:", error);
     return {
       success: false,
-      message: `Unable to retrieve report: ${error instanceof Error ? error.message : String(error)}`
+      message: `Unable to retrieve reports: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 };
+
+export const getReportsBySessionId = async (sessionId: string): Promise<{
+  success: boolean;
+  reports?: { id: string; status: string; createdAt: string; redeemedAt: string }[];
+  message?: string;
+}> => {
+  const TABLE_NAME = "Reports";
+
+  try {
+    const command = new QueryCommand({
+      TableName: TABLE_NAME,
+      KeyConditionExpression: "sessionId = :id",
+      IndexName: SESSIONID_INDEX,
+      ExpressionAttributeValues: { ":id": sessionId },
+    });
+
+    const { Items } = await docClient.send(command);
+
+    console.log("Reports for", sessionId, Items);
+      
+    return { success: true, reports: Items };
+  } catch (error) {
+    console.error("Error retrieving reports:", error);
+    return {
+      success: false,
+      message: `Unable to retrieve reports: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+};
+
 
 /**
  * Updates attributes of a report, such as changing the status and adding a redeemedAt timestamp.
  */
 export const updateReportAttributes = async (
   reportId: string,
-  attributes: { status?: string; redeemedAt?: string; address?: string; }
-): Promise<{ success: boolean; message?: string }> => {
+  attributes: { status?: string; redeemedAt?: string; address?: string;  }
+): Promise<{ success: boolean; message?: string; updatedReport?: any }> => {
   const TABLE_NAME = "Reports";
 
   try {
@@ -318,61 +357,40 @@ export const updateReportAttributes = async (
     const expressionAttributeValues: Record<string, unknown> = {};
     const expressionAttributeNames: Record<string, string> = {};
 
-    if (attributes.status) {
-      updateExpressions.push("#status = :status");
-      expressionAttributeValues[":status"] = attributes.status;
-      expressionAttributeNames["#status"] = "status";
-    }
+    // Iterate over the attributes to create the expression and values
+    Object.keys(attributes).forEach((key) => {
+      if (attributes[key]) {
+        const attributeName = `#${key}`;
+        const attributeValue = `:${key}`;
+        updateExpressions.push(`${attributeName} = ${attributeValue}`);
+        expressionAttributeValues[attributeValue] = attributes[key];
+        expressionAttributeNames[attributeName] = key;
+      }
+    });
 
-    if (attributes.redeemedAt) {
-      updateExpressions.push("#redeemedAt = :redeemedAt");
-      expressionAttributeValues[":redeemedAt"] = attributes.redeemedAt;
-      expressionAttributeNames["#redeemedAt"] = "redeemedAt";
-    }
-
-    if (attributes.address) {
-      updateExpressions.push("#address = :address");
-      expressionAttributeValues[":address"] = attributes.address;
-      expressionAttributeNames["#address"] = "address";
+    if (updateExpressions.length === 0) {
+      return { success: false, message: "No attributes provided to update." };
     }
 
     const updateExpression = `SET ${updateExpressions.join(", ")}`;
 
-    // Query to get the primary key (partition and sort keys) using reportId
-    const queryCommand = new QueryCommand({
-      TableName: TABLE_NAME,
-      IndexName: REPORTID_INDEX,
-      KeyConditionExpression: "#reportId = :reportIdValue",
-      ExpressionAttributeNames: {
-        "#reportId": "reportId",
-      },
-      ExpressionAttributeValues: {
-        ":reportIdValue": reportId,
-      },
-    });
-
-    const { Items } = await docClient.send(queryCommand);
-    if (!Items || Items.length === 0) {
-      return { success: false, message: "Report not found" };
-    }
-
-    const report = Items[0];
-    const { sessionOrCustomerId } = report;
-
-    // Perform the update
     const updateCommand = new UpdateCommand({
       TableName: TABLE_NAME,
-      Key: { sessionOrCustomerId, reportId },
+      Key: { reportId }, 
       UpdateExpression: updateExpression,
       ExpressionAttributeValues: expressionAttributeValues,
       ExpressionAttributeNames: expressionAttributeNames,
-      ReturnValues: "UPDATED_NEW",
+      ReturnValues: "ALL_NEW",
     });
 
     const result = await docClient.send(updateCommand);
 
     console.log("Updated report attributes:", result);
-    return { success: true, message: "Report updated successfully" };
+    return {
+      success: true,
+      message: "Report updated successfully",
+      updatedReport: result.Attributes, // Return updated report
+    };
   } catch (error) {
     console.error("Error updating report attributes:", error);
     return {

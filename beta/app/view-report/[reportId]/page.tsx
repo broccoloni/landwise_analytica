@@ -14,6 +14,7 @@ import SummaryScore from '@/components/SummaryScore';
 import PrintButton from '@/components/PrintButton';
 import DownloadPDF from '@/components/DownloadPDF';
 import Loading from '@/components/Loading';
+import { useParams } from "next/navigation";
 
 // import EstimatedYield from '@/components/tabs/EstimatedYield';
 import Climate from '@/components/tabs/Climate';
@@ -21,8 +22,10 @@ import Topography from '@/components/tabs/Topography';
 import Soil from '@/components/tabs/Soil';
 
 export default function ViewReport() {
+  const params = useParams();
+  const urlReportId = params?.reportId as string;
   const { 
-    reportId, 
+    reportId, setReportId,
     status, setStatus,
     address, setAddress,
     longitude, setLongitude,
@@ -32,6 +35,12 @@ export default function ViewReport() {
     createdAt, setCreatedAt,
     redeemedAt, setRedeemedAt,
   } = useReportContext();
+
+  useEffect(() => {
+    if (urlReportId !== reportId) {
+      setReportId(urlReportId);
+    }
+  }, [urlReportId, reportId]);
 
   const [error, setError] = useState('');
     
@@ -69,35 +78,49 @@ export default function ViewReport() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ reportId, status, address, addressComponents, landGeometry }),
+        body: JSON.stringify({ reportId }),
       });
 
-      const data = await response.json();
-      console.log('Fetched data:', data);
+      const result = await response.json();
+
+      if (!result.report) {
+        setStatus(ReportStatus.Invalid);
+      }
+
+      const report = result.report;
+
+      if (report.status !== ReportStatus.Redeemed ) {
+        setStatus(report.status);
+      }
+
+      else {
         
-      // Report Context Info
-      setLatitude(data.latitude || null);
-      setLongitude(data.longitude || null);
-      setAddress(data.address || null);
-      setAddressComponents(data.addressComponents || null);
-      setLandGeometry(data.landGeometry || []);
-      setStatus(data.status || null);
-      setRedeemedAt(data.redeemedAt || null);
+        console.log('Fetched report:', report);
         
-      // Report Data
-      setBbox(data.bbox);
-      setHeatUnitData(data.heatUnitData);
-      setGrowingSeasonData(data.growingSeasonData);
-      setClimateData(data.climateData);
-      setElevationData(data.elevationData);
-      setLandUseData(data.landUseData);
-      setWindData(data.windData);
-      setSoilData(data.soilData);
-      // setHistoricData(demoData.historicData);
-      // setProjectedData(demoData.projectedData);
-      // setCropHeatMapData(demoData.cropHeatMapData);
+        // Report Context Info
+        setLatitude(data.latitude || null);
+        setLongitude(data.longitude || null);
+        setAddress(data.address || null);
+        setAddressComponents(data.addressComponents || null);
+        setLandGeometry(data.landGeometry || []);
+        setStatus(data.status || null);
+        setRedeemedAt(data.redeemedAt || null);
         
-      setDataLoaded(true);
+        // Report Data
+        setBbox(data.bbox);
+        setHeatUnitData(data.heatUnitData);
+        setGrowingSeasonData(data.growingSeasonData);
+        setClimateData(data.climateData);
+        setElevationData(data.elevationData);
+        setLandUseData(data.landUseData);
+        setWindData(data.windData);
+        setSoilData(data.soilData);
+        // setHistoricData(demoData.historicData);
+        // setProjectedData(demoData.projectedData);
+        // setCropHeatMapData(demoData.cropHeatMapData);
+        
+        setDataLoaded(true);
+      }
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -106,19 +129,11 @@ export default function ViewReport() {
   };
 
   useEffect(() => {
-    console.log(reportId, status, dataLoaded, landGeometry, address, addressComponents);
-    if (reportId && status && !dataLoaded) {
-      if (status === ReportStatus.Unredeemed && address && addressComponents && landGeometry.length > 3) {
-        fetchData();
-      }
-      else if (status === ReportStatus.Redeemed) {
-        fetchData();
-      }
-      else {
-       setError("Something went wrong");
-      } 
+    console.log("reportId", reportId);
+    if (reportId && !dataLoaded) {
+      fetchData();
     }
-  }, [reportId, status, dataLoaded, landGeometry, address, addressComponents]);
+  }, [reportId]);
 
   const tabs = [
     // 'EstimatedYield',
@@ -193,12 +208,12 @@ export default function ViewReport() {
       );
     }
 
-    if (status === ReportStatus.Unredeemed) {
+    else {
       return (
         <div className="flex-row justify-center items-center">
           <Loading className="h-20 w-20 mb-4" />
           <div className="text-center">
-            Downloading and processing data. This may take several minutes.
+            {status}...
           </div>
         </div>
       );

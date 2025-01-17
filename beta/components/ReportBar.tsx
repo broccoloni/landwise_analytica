@@ -35,24 +35,18 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   const handleRedeemClick = () => {
     clearReportContext();
     setReportId(report.reportId);
-    setStatus(report.status);
     router.push('/redeem-a-report');
   };
 
   const handleViewClick = () => {
     clearReportContext();
-    setReportId(report.reportId);
-    setStatus(report.status);
-
-    // NOTE: This should probably change when merging view-report and view-realtor-report 
-    // using header and sub-header that depend on logged in status
-    router.push('/view-realtor-report');  
+    router.push(`/view-report/${report.reportId}`);  
   };
 
   if (report.status === ReportStatus.Unredeemed) {
     return (
       <div onClick={handleRedeemClick}>
-        <Container className="hover:border-black">
+        <Container className="bg-white hover:border-black">
           <div className="flex justify-between items-center">
             <div className="flex text-lg">
               <div className="mr-2 font-semibold">Report ID:</div>
@@ -72,7 +66,7 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
 
   return (
     <div onClick={handleViewClick}>
-      <Container className="flex justify-between items-center p-4 bg-gray-100 rounded-md shadow-md mb-4 hover:border-black">
+      <Container className="flex justify-between items-center p-4 bg-white rounded-md shadow-md mb-4 hover:border-gray-800">
         <div className="flex flex-col">
           <div className="text-lg"><span className="font-semibold mr-2">Report ID:</span>{report.reportId}</div>
           <span className="text-sm text-gray-500">Address: {report.address}</span>

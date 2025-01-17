@@ -1,265 +1,150 @@
 'use client';
 
-import { montserrat, roboto, merriweather } from '@/ui/fonts';
+import { useState } from 'react';
+import { montserrat, roboto, merriweather, raleway } from '@/ui/fonts';
 import { ReportStatus } from '@/types/statuses'; 
-import { useReportContext } from '@/contexts/ReportContext';
-import { useState, useEffect } from 'react';
-import Container from '@/components/Container';
-import AddressDisplay from '@/components/AddressDisplay';
-import SummaryScore from '@/components/SummaryScore';
-import PrintButton from '@/components/PrintButton';
-import DownloadPDF from '@/components/DownloadPDF';
 import Loading from '@/components/Loading';
+import { useReportContext } from '@/contexts/ReportContext';
+import Link from 'next/link';
+import { NotebookText, Check, X, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { fetchReportsById } from '@/utils/reports';
 
-// import EstimatedYield from '@/components/tabs/EstimatedYield';
-import Climate from '@/components/tabs/Climate';
-import Topography from '@/components/tabs/Topography';
-import Soil from '@/components/tabs/Soil';
-
-export default function ViewReport() {
+export default function Terms() {
+  const router = useRouter();
+  const [validatingReportId, setValidatingReportId] = useState(false);
   const { 
-    reportId, 
-    status, setStatus,
-    address, setAddress,
-    longitude, setLongitude,
-    latitude, setLatitude,
+    reportId, setReportId, 
+    address, setAddress, 
+    latitude, setLatitude, 
+    longitude, setLongitude, 
+    landGeometry, setLandGeometry, 
     addressComponents, setAddressComponents,
-    landGeometry, setLandGeometry,
-    createdAt, setCreatedAt,
-    redeemedAt, setRedeemedAt,
+    status, setStatus,
   } = useReportContext();
-
-  const [error, setError] = useState('');
     
-  // Data holders
-  const [historicData, setHistoricData] = useState<PerformanceData|null>(null);
-  const [projectedData, setProjectedData] = useState<Record<string, PerformanceData>|null>(null);
-  const [cropHeatMapData, setCropHeatMapData] = useState<Record<string, ImageAndStats>|null>(null);
-  const [heatUnitData, setHeatUnitData] = useState(null);
-  const [growingSeasonData, setGrowingSeasonData] = useState(null);
-  const [climateData, setClimateData] = useState<any>(null);
-  const [elevationData, setElevationData] = useState<Record<string, ImageAndStats>|null>(null);
-  const [windData, setWindData] = useState<Record<string, ImageAndStats>|null>(null);
-  const [cropData, setCropData] = useState<any>(null);
-  const [landUseData, setLandUseData] = useState<Record<number, ImageAndLegend>|null>(null);
-  const [soilData, setSoilData] = useState<any>(null);
-  const [bbox, setBbox] = useState<number[][] | null>(null);
-    
-  // Score trackers
-  // const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
+  const handleReportIdChange = (e) => {
+    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Only allow uppercase letters and numbers
+      
+    // Format the value with dashes after every 4 characters
+    if (value.length > 3 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 4)) {
+      value = value.slice(0, 4) + '-' + value.slice(4);
+    }
+    if (value.length > 8 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 9)) {
+      value = value.slice(0, 9) + '-' + value.slice(9);
+    }
+      
+    setReportId(value);
+    if (status !== null) setStatus(null);
+  };
 
-  const [climateScore, setClimateScore] = useState<number|null>(null);
-  const [topographyScore, setTopographyScore] = useState<number|null>(null);
-  const [soilScore, setSoilScore] = useState<number|null>(null);
-
-  // For managing report tabs and loading states
-  // const [loadingData, setLoadingData] = useState(false);
-  // const [processingData, setProcessingData] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState('Climate');
-
-  const fetchData = async () => {
-    try {
-      const response = await fetch('/api/getReportData', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reportId, status, address, addressComponents, landGeometry }),
-      });
-
-      const data = await response.json();
-      console.log('Fetched data:', data);
-        
-      // Report Context Info
-      setLatitude(data.latitude || null);
-      setLongitude(data.longitude || null);
-      setAddress(data.address || null);
-      setAddressComponents(data.addressComponents || null);
-      setLandGeometry(data.landGeometry || []);
-      setStatus(data.status || null);
-      setRedeemedAt(data.redeemedAt || null);
-        
-      // Report Data
-      setBbox(data.bbox);
-      setHeatUnitData(data.heatUnitData);
-      setGrowingSeasonData(data.growingSeasonData);
-      setClimateData(data.climateData);
-      setElevationData(data.elevationData);
-      setLandUseData(data.landUseData);
-      setWindData(data.windData);
-      setSoilData(data.soilData);
-      // setHistoricData(demoData.historicData);
-      // setProjectedData(demoData.projectedData);
-      // setCropHeatMapData(demoData.cropHeatMapData);
-        
-      setDataLoaded(true);
-
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError(error);
+  const handleSubmit = async () => {
+    setValidatingReportId(true);
+    const reports = await fetchReportsById(reportId);
+    const report = reports[0];
+    setStatus(report?.status || ReportStatus.Invalid);
+    setValidatingReportId(false);
+     
+    if (report?.status === ReportStatus.Redeemed) {
+      router.push(`/view-report/${report?.reportId}`);
     }
   };
 
-  useEffect(() => {
-    console.log(reportId, status, dataLoaded, landGeometry, address, addressComponents);
-    if (reportId && status && !dataLoaded) {
-      if (status === ReportStatus.Unredeemed && address && addressComponents && landGeometry.length > 3) {
-        fetchData();
-      }
-      else if (status === ReportStatus.Redeemed) {
-        fetchData();
-      }
-      else {
-       setError("Something went wrong");
-      } 
-    }
-  }, [reportId, status, dataLoaded, landGeometry, address, addressComponents]);
-
-  const tabs = [
-    // 'EstimatedYield',
-    'Climate',
-    'Topography',
-    'Soil',
-  ];
-    
-  const renderActiveComponent = () => {
-    switch (activeTab) {
-      // case 'EstimatedYield':
-      //   return (
-      //     <EstimatedYield
-      //       lat={latitude}
-      //       lng={longitude}
-      //       historicData={historicData}
-      //       projectedData={projectedData}
-      //       cropHeatMapData={cropHeatMapData}
-      //       bbox = {bbox}
-      //       score={estimatedYieldScore}
-      //       setScore={setEstimatedYieldScore}
-      //     />
-      //   );
-      case 'Climate':
-        return (
-          <Climate
-            lat={latitude}
-            lng={longitude}
-            heatUnitData={heatUnitData}
-            growingSeasonData={growingSeasonData}
-            climateData={climateData}
-            score={climateScore}
-            setScore={setClimateScore}
-          />
-        );      
-      case 'Topography':
-        return (
-          <Topography
-            lat={latitude}
-            lng={longitude}
-            landUseData = {landUseData}
-            elevationData = {elevationData}
-            windData = {windData}
-            bbox = {bbox}
-            score={topographyScore}
-            setScore={setTopographyScore}
-          />
-        );
-      case 'Soil':
-        return (
-          <Soil
-            lat={latitude}
-            lng={longitude}
-            soilData={soilData}
-            bbox = {bbox}
-            score={soilScore}
-            setScore={setSoilScore}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  const LoadingDisplay = () => {
-    if (status === ReportStatus.Redeemed) {
+  const ReportStatusDisplay = () => {
+    if (validatingReportId) {
       return (
-        <div className="flex-row justify-center items-center">
-          <Loading className="h-20 w-20 mb-4" />
-          <div className="text-center">Loading Data...</div>
-        </div>
-      );
-    }
-
-    if (status === ReportStatus.Unredeemed) {
-      return (
-        <div className="flex-row justify-center items-center">
-          <Loading className="h-20 w-20 mb-4" />
-          <div className="text-center">
-            Downloading and processing data. This may take several minutes.
+        <div className="flex justify-center items-center mt-4 p-4 bg-blue-100 rounded-md text-blue-800">
+          <div className="">
+            <Loading className="w-10 h-10 mr-2 text-blue-800" />
+          </div>
+          <div className="">
+            Validating Report ID...
           </div>
         </div>
       );
     }
+      
+    else if (!status) return null;
+      
+    else if (status === ReportStatus.Redeemed) {
+      return (
+        <div className="flex justify-center items-center mt-4 p-4 bg-green-100 rounded-md text-dark-green">
+          <div className="mr-2 rounded-full border-2 border-dark-green">
+            <Check className="w-5 h-5 m-1" />
+          </div>
+          <div className="">
+            Valid Report ID
+          </div>
+        </div>
+      );
+    }
+      
+    else if (status === ReportStatus.Unredeemed) {
+      return (
+        <Link 
+          href='/redeem-a-report'
+          className="flex justify-between mt-4 p-4 bg-yellow-100 rounded-md text-yellow-800 hover:border hover:border-yellow-800"
+        >
+          <div className="flex items-center">
+            <div className="mr-2">
+              <NotebookText className="w-6 h-6 m-1" />
+            </div>
+            <div className="">
+              Report hasn't been redeemed yet.
+            </div>
+          </div>
+          <div className="flex justify-center items-center">
+            <div>Redeem Now</div>
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </div>
+        </Link>
+      );
+    }
+
+    else if (status === ReportStatus.Invalid) {
+      return (
+        <div className="flex justify-center items-center mt-4 p-4 bg-red-100 rounded-md text-red-800">
+          <div className="mr-2 rounded-full border-2 border-red-800">
+            <X className="w-5 h-5 m-1" />
+          </div>
+          <div className="text-red-800">
+            Invalid Report ID
+          </div>
+        </div>
+      );
+    }
+      
+    return null;
   };
     
   return (
-    <div className={`${roboto.className} text-black px-10 sm:px-20 md:px-40 py-10`}>
-      <div className="relative">
-        <div className="flex justify-between mb-4">
-          <div className={`${montserrat.className} text-xl flex justify-center items-center space-x-4`}> 
-            <div className="">
-              Report: {reportId}
-            </div>
-            <div className="">
-              Date: {redeemedAt ? redeemedAt.slice(0, 10) : ''}
-            </div>
-          </div>
-          <div className="space-x-4 flex">
-            <DownloadPDF elementId={'report'} filename={`report-${reportId}.pdf`}/>
-            <PrintButton />
+    <div className={`${roboto.className} min-h-screen px-80 pt-10 flex-row justify-between`}>
+      <div className="pt-10">
+        <div className="font-bold text-4xl mb-8">View an Existing Report</div>
+        <div className="text-2xl font-semibold mb-4">Enter Report ID</div>
+        <input
+          id="reportId"
+          type="text"
+          value={reportId || ''}
+          onChange={handleReportIdChange}
+          maxLength={14}
+          className="mt-1 block w-full px-3 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="XXXX-XXXX-XXXX"
+        />
+
+        <ReportStatusDisplay />
+          
+        <div className="flex justify-center w-full">
+          <div className="">            
+            <button
+              onClick={handleSubmit}
+              disabled={reportId?.length !== 14}
+              className="mt-4 bg-medium-brown text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+            >
+              View Report
+            </button>
           </div>
         </div>
-        <Container className="bg-white" id="report">
-          {dataLoaded ? (
-            <div>
-              <section id="summary">
-                <div className={`${merriweather.className} text-medium-brown text-3xl pb-2`}>
-                  Summary
-                </div>
-                <div className="w-full sm:flex flex-row">
-                  <div className="w-[44%] p-4 mx-12">
-                    <div className={`${montserrat.className} flex justify-between mb-2 text-2xl`}>
-                      Property
-                    </div>
-                    <AddressDisplay 
-                      addressComponents={addressComponents} 
-                      latitude={latitude} 
-                      longitude={longitude} 
-                    />
-                  </div>
-                  <div className="w-[56%] p-4">
-                    <SummaryScore />
-                  </div>
-                </div>
-              </section>
-              <div className="flex justify-center space-x-8 border-b border-medium-brown mb-4 mt-10">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`py-2 px-4 w-48 rounded-t-lg ${
-                      activeTab === tab ? 'bg-medium-brown text-white' : 'bg-white text-black'
-                    } hover:bg-medium-brown hover:opacity-75 hover:text-white`}
-                  >
-                    {tab.replace(/([A-Z])/g, ' $1')}
-                  </button>
-                ))}
-              </div>
-              <div>{renderActiveComponent()}</div>
-            </div>
-          ) : (
-            <LoadingDisplay />
-          )}
-        </Container>
       </div>
     </div>
   );

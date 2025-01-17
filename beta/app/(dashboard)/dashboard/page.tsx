@@ -10,25 +10,11 @@ import InfoButton from '@/components/InfoButton';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
-
-  useEffect(() => {
-    const checkAndRefreshSession = async () => {
-      const queryString = window.location.search;
-      const urlParams = new URLSearchParams(queryString);
-      const sessionId = urlParams.get('session_id');
-      if (sessionId) {
-        await signIn('credentials', { redirect: false }); // Refresh session silently
-      }
-    };
-
-    checkAndRefreshSession();
-  }, []);
-
     
   const notification = "";
 
   if (status === 'loading') {
-    return <div><Loading /></div>;
+    return <div className="m-auto py-20 min-w-lg"><Loading /></div>;
   }
 
   if (status === 'unauthenticated') {

@@ -5,18 +5,21 @@ import { createContext, useContext, useState, useEffect, ReactNode, useMemo } fr
 interface CartContextProps {
   quantity: number | null;
   setQuantity: React.Dispatch<React.SetStateAction<number | null>>;
-  priceId: string | null;
-  setPriceId: React.Dispatch<React.SetStateAction<string | null>>;
+  couponId: string | null;
+  setCouponId: React.Dispatch<React.SetStateAction<string | null>>;
   customerId: string | null;
   setCustomerId: React.Dispatch<React.SetStateAction<string | null>>;
+  sessionId: string | null;
+  setSessionId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [quantity, setQuantity] = useState<number | null>(null);
-  const [priceId, setPriceId] = useState<string | null>(null);
+  const [couponId, setCouponId] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
     
   useEffect(() => {
     const storedQuantity = localStorage.getItem('reportQuantity');
@@ -24,14 +27,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setQuantity(parseInt(storedQuantity));
     }
 
-    const storedPriceId = localStorage.getItem('priceId');
-    if (storedPriceId) {
-      setPriceId(storedPriceId);
+    const storedCouponId = localStorage.getItem('couponId');
+    if (storedCouponId) {
+      setCouponId(storedCouponId);
     }
 
     const storedCustomerId = localStorage.getItem('customerId');
     if (storedCustomerId) {
       setCustomerId(storedCustomerId);
+    }
+
+    const storedSessionId = localStorage.getItem('sessionId');
+    if (storedSessionId) {
+      setSessionId(storedSessionId);
     }
 
   }, []);
@@ -46,12 +54,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [quantity]);
 
   useEffect(() => {
-    if (priceId !== null) {
-      localStorage.setItem('priceId', priceId);
+    if (couponId !== null) {
+      localStorage.setItem('couponId', couponId);
     } else {
-      localStorage.removeItem('priceId');
+      localStorage.removeItem('couponId');
     }
-  }, [priceId]);
+  }, [couponId]);
 
   useEffect(() => {
     if (customerId !== null) {
@@ -61,15 +69,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [customerId]);
 
+  useEffect(() => {
+    if (sessionId !== null) {
+      localStorage.setItem('sessionId', sessionId);
+    } else {
+      localStorage.removeItem('sessionId');
+    }
+  }, [sessionId]);
+
   const value = useMemo(
     () => ({ 
       quantity, 
       setQuantity, 
-      priceId,
-      setPriceId,
+      couponId,
+      setCouponId,
       customerId,
       setCustomerId,
-    }), [quantity, priceId, customerId]);
+      sessionId,
+      setSessionId
+    }), [quantity, couponId, customerId, sessionId]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };

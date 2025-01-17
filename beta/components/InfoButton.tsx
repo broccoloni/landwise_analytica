@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Info } from 'lucide-react';
+import { CircleHelp } from 'lucide-react';
 import clsx from 'clsx';
 
 interface InfoButtonProps {
   children: React.ReactNode;
+  size?: number;
   className?: string; // Optional className for custom styling
 }
 
-const InfoButton: React.FC<InfoButtonProps> = ({ children, className }) => {
+const InfoButton: React.FC<InfoButtonProps> = ({ children, size = 30, className }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [popupPosition, setPopupPosition] = useState<'left' | 'right'>('left');
   const popupRef = useRef<HTMLDivElement | null>(null);
@@ -61,14 +62,14 @@ const InfoButton: React.FC<InfoButtonProps> = ({ children, className }) => {
         onClick={togglePopup}
         className="text-black"
       >
-        <Info className="h-7 w-7" />
+        <CircleHelp className="text-gray-800" size={size} />
       </button>
 
       {isVisible && (
         <div
           ref={popupRef}
           className={clsx(
-            'absolute mt-2 w-64 p-4 bg-white border rounded shadow-lg z-10',
+            'absolute mt-2 w-96 p-4 bg-white border rounded shadow-lg z-10',
             popupPosition === 'left' ? 'left-0' : 'right-0'
           )}
         >

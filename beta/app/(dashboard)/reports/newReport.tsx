@@ -8,8 +8,12 @@ import AddressDisplay from '@/components/AddressDisplay';
 import ProgressBar from '@/components/ProgressBar';
 import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
 import { ReportStatus } from '@/types/statuses';
+import CheckoutSession from '@/components/CheckoutSession';
+import Loading from '@/components/Loading';
+import { fetchReportsBySessionId, redeemReport } from '@/utils/reports';
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
 export default function NewReport() {
@@ -25,8 +29,10 @@ export default function NewReport() {
     status, setStatus,
   } = useReportContext();
 
+  const { setQuantity, setCustomerId, setCouponId, setSessionId, sessionId } = useCartContext();
+    
   const [step, setStep] = useState(1);
-  const stepNames = ['Select Address', 'Define Boundary', 'Review & Submit'];
+  const stepNames = ['Select Address', 'Define Boundary', 'Review', 'Payment'];
 
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
     setAddress(address);
@@ -47,43 +53,65 @@ export default function NewReport() {
       setStep(prevStep => prevStep + 1);
     }
     else if (step === 2) {
+      setQuantity(null);
+      setCustomerId(null);
+      setCouponId(null);
+      setSessionId(null);
+      setStep(prevStep => prevStep + 1);
+    }
+
+    else if (step === 3) {
+      setQuantity(1);
+      setCustomerId(session?.user?.id);
+      setCouponId(null);
       setStep(prevStep => prevStep + 1);
     }
   };
+    
+  const handleComplete = (completedSessionId) => {
+    setQuantity(null);
+    setCouponId(null);
+    setCustomerId(null);
+    setSessionId(completedSessionId);
+  }
 
-  const createReport = async (sessionOrCustomerId: string) => {
+  const fetchReportId = async () => {
     try {
-      const response = await fetch('/api/createReport', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionOrCustomerId }),
-      });
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.message);
-      }
+      const reports = await fetchReportsBySessionId(sessionId);
         
-      setReportId(result.reportId);
-      setStatus(ReportStatus.Unredeemed);
-      return result.reportId;
-
-    } catch (error) {
-      console.error('Error creating report:', error);
-      return null;
-    }
-  };
-
-    
-  const handleGenerateReport = async () => {
-    console.log("Generating report with id:", session.user.id);
-    const reportId = await createReport(session.user.id);
-    if (reportId) {
-      router.push('/view-realtor-report');
-    }
+      if (reports.length > 0) {
+        setReportId(reports[0].reportId);
+        setStatus(reports[0].status);
+      }
+    } catch (err) {
+      console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } 
   };
     
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (!reportId && sessionId) {
+        fetchReportId();
+      } else {
+        clearInterval(intervalId); 
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [reportId, sessionId]);
+    
+  useEffect(() => {
+    if (step === 4 && reportId && address && addressComponents && landGeometry.length > 3 && status === ReportStatus.Unredeemed) {
+      const result = await redeemReport({ reportId, address, addressComponents, landGeometry });
+      if (result.success) {
+        console.log('Report redeemed successfully');
+        router.push(`/view-report/${reportId}`);
+      } else {
+        console.error('Failed to redeem report:', result.message);
+      }
+    }
+  }, [reportId, address, addressComponents, landGeometry, status, step]);
+
   return (
     <div>
       <div className="text-2xl mb-12 text-center">Order a New Report</div>
@@ -211,15 +239,27 @@ export default function NewReport() {
               </div>
               <div className="">            
                 <button
-                  onClick={handleGenerateReport}
+                  onClick={handleNextStep}
                   disabled={ !address || landGeometry.length < 3 }
                   className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
-                  Generate Report
-                  <ArrowRight className="h-5 w-5 ml-2" />
+                  Next <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Step 3: Generate Report */}
+        {step === 4 && (
+          <div className="">
+            {sessionId ? ( 
+              <div className="p-20">
+                <Loading />
+              </div>
+            ) : (
+              <CheckoutSession onComplete={handleComplete} />
+            )}
           </div>
         )}
     </div>

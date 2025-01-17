@@ -11,6 +11,7 @@ import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
 import Loading from '@/components/Loading';
 import { ReportStatus } from '@/types/statuses'; 
+import { fetchReportsById } from '@/utils/reports';
 
 // Dynamically import MapDrawing for client-side rendering
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
@@ -30,31 +31,6 @@ export default function RedeemReport() {
   const stepNames = ['Enter ID', 'Select Address', 'Define Boundary', 'Review & Submit'];
 
   const [validatingReportId, setValidatingReportId] = useState(false);
-  const fetchReportAttributes = async (reportId: string) => {
-    setValidatingReportId(true);
-    setStatus(null);
-    try {
-      const response = await fetch('/api/getReportAttributes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportId }),
-      });
-
-      const result = await response.json();
-      setValidatingReportId(false);
-        
-      if (result.success) {
-        setStatus(result.report.status);
-        return result.report.status;
-      } else {
-        setStatus(ReportStatus.Invalid);
-      }
-    } catch (error) {
-      setValidatingReportId(false);
-      console.error('Error fetching report IDs:', error);
-      return null;
-    }
-  };
 
   const handleReportIdChange = (e) => {
     let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Only allow uppercase letters and numbers
@@ -86,9 +62,13 @@ export default function RedeemReport() {
 
   const handleNextStep = async () => {
     if (step === 1) {
-      const status = await fetchReportAttributes(reportId);
-      if (status === ReportStatus.Unredeemed) {
-        console.log("Valid status, moving to step 2", status, ReportStatus.Unredeemed, status === ReportStatus.Unredeemed);
+      setValidatingReportId(true);
+      const reports = await fetchReportsById(reportId);
+      const report = reports[0];
+      setStatus(report?.status || ReportStatus.Invalid);
+      setValidatingReportId(false);
+        
+      if (report?.status === ReportStatus.Unredeemed) {
         setAddressComponents(null);
         setAddress(null);
         setLatitude(null);
@@ -138,7 +118,7 @@ export default function RedeemReport() {
     else if (status === ReportStatus.Redeemed) {
       return (
         <Link 
-          href='/view-report'
+          href={`/view-report/${reportId}`}
           className="flex justify-between mt-4 p-4 bg-yellow-100 rounded-md text-yellow-800 hover:border hover:border-yellow-800"
         >
           <div className="flex items-center">

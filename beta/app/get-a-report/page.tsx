@@ -10,9 +10,11 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
 import { fetchReportPriceAndCoupon } from '@/utils/stripe';
 
+const threeReportCouponId = process.env.NEXT_PUBLIC_STRIPE_THREE_REPORT_BUNDLE_COUPON_ID;
+
 export default function GetReport() {
   const router = useRouter();
-  const { setQuantity } = useCartContext();
+  const { setQuantity, setCouponId, setCustomerId, setSessionId } = useCartContext();
 
   const [numReports, setNumReports] = useState<number>(1);
   const { address, clearReportContext } = useReportContext();
@@ -47,11 +49,17 @@ export default function GetReport() {
     
   const handleBuyOne = async () => {
     setQuantity(1);
+    setCustomerId(null);
+    setCouponId(null);
+    setSessionId(null);
     router.push('/checkout');
   };
 
   const handleBuyThree = async () => {
     setQuantity(3);
+    setCouponId(threeReportCouponId);
+    setCustomerId(null);
+    setSessionId(null);
     router.push('/checkout');
   };
 

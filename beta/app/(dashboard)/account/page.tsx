@@ -14,7 +14,7 @@ export default function AccountPage() {
   const [selectedTab, setSelectedTab] = useState('edit'); // Default to edit account details
 
   if (status === 'loading') {
-    return <div><Loading /></div>;
+    return <div className="m-auto py-20 min-w-lg"><Loading /></div>;
   }
 
   if (status === 'unauthenticated') {

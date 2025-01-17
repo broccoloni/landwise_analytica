@@ -1,36 +1,29 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 
-export async function POST(req: Request) {
+function getEnvVariable(key, fallback = null) {
+  const value = process.env[key];
+  if (!value && fallback === null) {
+    throw new Error(`${key} not found in environment variables`);
+  }
+  return value || fallback;
+}
+
+export async function POST(req) {
   try {
-    const { quantity } = await req.json();
+    const { quantity, customerId, couponId } = await req.json();
 
-    const priceId = process.env.STRIPE_REPORT_PRICE_ID;
-    if (!priceId) {
-      return NextResponse.json(
-        { error: 'Report Price ID not found in environment variables' },
-        { status: 400 }
-      );
+    if (!quantity || quantity <= 0) {
+      return NextResponse.json({ error: 'Invalid quantity provided' }, { status: 422 });
     }
 
-    const couponId = process.env.STRIPE_THREE_REPORT_BUNDLE_COUPON_ID;
+    const priceId = getEnvVariable('STRIPE_REPORT_PRICE_ID');
 
-    if (!couponId) {
-      return NextResponse.json(
-        { error: 'Report Coupon ID not found in environment variables' },
-        { status: 400 }
-      );
-    }
-
-    if (!quantity) {
-      return NextResponse.json({ error: 'Missing checkout details' }, { status: 400 });
-    }
-
-    // Conditionally add coupon if quantity is 3
-    const discounts = quantity === 3 ? [{ coupon: couponId }] : undefined;
+    const discounts = couponId ? [{ coupon: couponId }] : undefined;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      customer: customerId || undefined,
       line_items: [
         {
           price: priceId,
@@ -42,37 +35,46 @@ export async function POST(req: Request) {
       invoice_creation: {
         enabled: true,
       },
-      automatic_tax: {
-        enabled: true,
+      // automatic_tax: {
+      //   enabled: true,
+      // },
+      metadata: { 
+        quantity, 
+        customerId, 
       },
-      return_url: `${req.headers.get('origin')}/checkout-complete?session_id={CHECKOUT_SESSION_ID}`,
+      redirect_on_completion: 'never',
       ui_mode: 'embedded',
     });
 
-    return NextResponse.json({ clientSecret: session.client_secret });
-  } catch (error: any) {
+    return NextResponse.json({ clientSecret: session.client_secret, sessionId: session.id });
+  } catch (error) {
+    console.error('Error in POST /api/checkout:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get('session_id');
-    
+
     if (!sessionId) {
-      return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Session ID is required' }, { status: 422 });
     }
 
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
+    if (!session) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
     return NextResponse.json({
       status: session.status,
+      paymentIntent: session.payment_intent,
+      customer: session.customer,
     });
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: (error as any).statusCode || 500 });
-    }
-    return NextResponse.json({ error: 'An unknown error occurred' }, { status: 500 });
+    console.error('Error in GET /api/checkout:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
