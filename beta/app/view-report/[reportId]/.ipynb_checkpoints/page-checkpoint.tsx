@@ -98,26 +98,26 @@ export default function ViewReport() {
         console.log('Fetched report:', report);
         
         // Report Context Info
-        setLatitude(data.latitude || null);
-        setLongitude(data.longitude || null);
-        setAddress(data.address || null);
-        setAddressComponents(data.addressComponents || null);
-        setLandGeometry(data.landGeometry || []);
-        setStatus(data.status || null);
-        setRedeemedAt(data.redeemedAt || null);
+        setLatitude(report.latitude || null);
+        setLongitude(report.longitude || null);
+        setAddress(report.address || null);
+        setAddressComponents(report.addressComponents || null);
+        setLandGeometry(report.landGeometry || []);
+        setStatus(report.status || null);
+        setRedeemedAt(report.redeemedAt || null);
         
         // Report Data
-        setBbox(data.bbox);
-        setHeatUnitData(data.heatUnitData);
-        setGrowingSeasonData(data.growingSeasonData);
-        setClimateData(data.climateData);
-        setElevationData(data.elevationData);
-        setLandUseData(data.landUseData);
-        setWindData(data.windData);
-        setSoilData(data.soilData);
-        // setHistoricData(demoData.historicData);
-        // setProjectedData(demoData.projectedData);
-        // setCropHeatMapData(demoData.cropHeatMapData);
+        setBbox(report.bbox);
+        setHeatUnitData(report.heatUnitData);
+        setGrowingSeasonData(report.growingSeasonData);
+        setClimateData(report.climateData);
+        setElevationData(report.elevationData);
+        setLandUseData(report.landUseData);
+        setWindData(report.windData);
+        setSoilData(report.soilData);
+        // setHistoricData(report.historicData);
+        // setProjectedData(report.projectedData);
+        // setCropHeatMapData(report.cropHeatMapData);
         
         setDataLoaded(true);
       }
@@ -129,11 +129,16 @@ export default function ViewReport() {
   };
 
   useEffect(() => {
-    console.log("reportId", reportId);
-    if (reportId && !dataLoaded) {
-      fetchData();
-    }
-  }, [reportId]);
+    const intervalId = setInterval(() => {
+      if (reportId && !dataLoaded) {
+        fetchData();
+      } else {
+        clearInterval(intervalId); 
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [reportId, dataLoaded]);
 
   const tabs = [
     // 'EstimatedYield',

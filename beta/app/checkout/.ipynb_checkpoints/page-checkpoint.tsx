@@ -84,7 +84,7 @@ export default function Checkout() {
           <div className="mb-8 max-w-2xl mx-auto">You will be sent an email with these report IDs to be redeemed at any time. After being redeemed, you will have 180 days to view and download your report.</div>
           <div>
             <div className="text-xl">
-              {reports.length > 0 || !loadingReports ? (
+              {reports.length > 0 ? (
                 <ul key='report-list'>
                   {reports.map((report) => (
                     <li key={report.repordId} className="my-2 max-w-3xl mx-auto">
