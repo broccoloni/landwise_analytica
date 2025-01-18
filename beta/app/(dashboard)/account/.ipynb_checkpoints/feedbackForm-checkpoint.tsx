@@ -5,6 +5,8 @@ import Container from '@/components/Container';
 import NotificationBanner from '@/components/NotificationBanner';
 import { useSession } from 'next-auth/react';
 
+const ourEmail = process.env.NEXT_PUBLIC_EMAIL_ADDRESS;
+
 export default function FeedbackForm() {
   const { data: session, update } = useSession();
 
@@ -29,8 +31,8 @@ export default function FeedbackForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: 'lgraham@landwiseanalytica.com',
-          subject: `Feedback from ${name}`,
+          to: ourEmail,
+          subject: `Customer Feedback from ${name}`,
           text: `
             Name: ${name}
             Email: ${email}

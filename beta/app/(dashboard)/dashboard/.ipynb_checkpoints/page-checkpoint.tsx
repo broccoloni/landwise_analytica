@@ -101,7 +101,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center mb-4">
             <User className="h-5 w-5 mx-4" />
-            You can view and change your account and subscription information under the 
+            You can view and change your account information and settings as well as submit feedback under the
             <Link
               href="account"
               className="underline hover:text-medium-brown ml-1"
@@ -111,7 +111,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center mb-4">
             <NotebookText className="h-5 w-5 mx-4" />
-            You can view and order reports under the 
+            You can view the reports you've ordered and order new ones from the
             <Link
               href="/reports"
               className="underline hover:text-medium-brown ml-1"
@@ -121,7 +121,9 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center">
             <Handshake className="h-5 w-5 mx-4" />
-            Reports for the pilot program are currently 
+            The  
+            <span className="mx-1 font-bold">First 3 Reports</span>
+            of the pilot program are 
             <span className="ml-1 font-bold">Free</span>
           </div>
         </div>

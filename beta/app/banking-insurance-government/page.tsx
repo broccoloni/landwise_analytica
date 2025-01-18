@@ -5,6 +5,8 @@ import Container from '@/components/Container';
 import Dropdown from '@/components/Dropdown';
 import NotificationBanner from '@/components/NotificationBanner';
 
+const ourEmail = process.env.NEXT_PUBLIC_EMAIL_ADDRESS;
+
 export default function BankInsuranceGovernment() {
   const [industry, setIndustry] = useState('Please Specify');
   const [otherIndustry, setOtherIndustry] = useState('');
@@ -31,7 +33,7 @@ export default function BankInsuranceGovernment() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: 'lgraham@landwiseanalytica.com',
+          to: ourEmail,
           subject: 'New Inquiry - Banking, Insurance, Government',
           text: `
             First Name: ${firstName}

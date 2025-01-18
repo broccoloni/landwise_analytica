@@ -6,7 +6,6 @@ import InfoForm from './infoForm';
 import PasswordForm from './passwordForm';
 import SettingsForm from './settingsForm';
 import FeedbackForm from './feedbackForm';
-import Faqs from './faqs';
 import { Pencil, LogOut, Lock, Settings, MessageSquareMore, CircleHelp } from 'lucide-react';
 import Loading from '@/components/Loading';
 import Container from '@/components/Container';
@@ -57,13 +56,6 @@ export default function AccountPage() {
             >
               <MessageSquareMore className="h-5 w-5 mr-2" /> Feedback
             </li>
-            <li
-              className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'faqs' ? 'bg-medium-brown text-white' : ''}`}
-              onClick={() => setSelectedTab('faqs')}
-            >
-              <CircleHelp className="h-5 w-5 mr-2" /> FAQs
-            </li>
             <li 
               className="flex items-center cursor-pointer px-4 py-2 rounded-md hover:bg-medium-brown hover:opacity-75 hover:text-white"
               onClick={() => signOut()}
@@ -77,7 +69,6 @@ export default function AccountPage() {
           {selectedTab === 'password' && <PasswordForm />}
           {selectedTab === 'settings' && <SettingsForm />}
           {selectedTab === 'feedback' && <FeedbackForm />}
-          {selectedTab === 'faqs' && <Faqs />}            
         </div>
       </Container>
     </div>
