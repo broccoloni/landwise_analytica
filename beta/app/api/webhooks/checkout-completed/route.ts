@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       const text = `Thank you for your purchase! Your report IDs are: ${reportIds.join(', ')}. You can use these IDs to redeem your reports.`;
 
       const html = `
-        <div style="background-color: #FAF8F0; margin: 10px;">
+        <div style="background-color: #FAF8F0; padding: 10px;">
           <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #FFFFFF;">
             <h1 style="color: #4CAF50; text-align: center;">Thank You for Your Purchase!</h1>
             <p>Below are your report IDs:</p>

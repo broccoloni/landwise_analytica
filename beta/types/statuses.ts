@@ -4,7 +4,7 @@ export enum RealtorStatus {
   Suspended = "SUSPENDED",
   Banned = "BANNED",
   Archived = "ARCHIVED",
-  New = "NEW",
+  Unverified = "UNVERIFIED",
 }
 
 export enum ReportStatus {

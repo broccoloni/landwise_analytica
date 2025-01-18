@@ -7,12 +7,23 @@ import Container from '@/components/Container';
 import { PartyPopper, CircleAlert, User, NotebookText, LayoutDashboard, Handshake, Infinity } from 'lucide-react';
 import Link from 'next/link';
 import InfoButton from '@/components/InfoButton';
+import NotificationBanner from '@/components/NotificationBanner';
+import { RealtorStatus } from '@/types/statuses';
+import MonthlyReportsWidget from '@/components/MonthlyReportsWidget';
+import ExpiringReportsWidget from '@/components/ExpiringReportsWidget';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
     
-  const notification = "";
+  const [notification, setNotification] = useState('');
+  const [notificationType, setNotificationType] = useState('info');
+  useEffect(() => {
+    if (session?.user?.status === RealtorStatus.Unverified) {
+      setNotification("Please verify your email to purchase reports using this account");
+    }
+  }, [session?.user?.status]);
 
+    
   if (status === 'loading') {
     return <div className="m-auto py-20 min-w-lg"><Loading /></div>;
   }
@@ -21,15 +32,61 @@ export default function Dashboard() {
     return <div className="text-center">You need to log in to view this page.</div>;
   }
 
+  const handleNewVerificationEmail = async () => {
+    if (!session?.user?.email || !session?.user?.id) {
+      console.error("User email or ID is missing.");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/sendVerificationEmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: session.user.email,
+          userId: session.user.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Error sending verification email:", data.message);
+        setNotification(`Failed to send verification email: ${data.message}`);
+        setNotificationType('error');
+      } else {
+        console.log("Verification email sent successfully:", data.message);
+        setNotification("Verification email sent successfully!");
+        setNotificationType('success');
+      }
+    } catch (error) {
+      console.error("An error occurred while sending the verification email:", error);
+      setNotification("An error occurred. Please try again later.");
+      setNotificationType('error');
+    }
+  };
+
+    
   return (
     <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown">
       {notification && (
-        <Container className="mb-4 bg-blue-50 text-blue-800">
-          <div className="flex justify-start items-center">
-            <CircleAlert className="h-10 w-10 mr-8" />
-            <div className="">{notification}</div>
-          </div>
-        </Container>
+        <div className="mb-4">
+          <NotificationBanner type={notificationType}>
+            <div className="flex justify-between items-center mr-4">
+              <div className="">{notification}</div>
+              {notification === 'Please verify your email to purchase reports using this account' && (
+                <button 
+                  className="hover:underline px-4 py-2 rounded-md border border-blue-800"
+                  onClick={handleNewVerificationEmail}
+                >
+                  Send New Link
+                </button>
+              )}
+            </div>
+          </NotificationBanner>
+        </div>
       )}
       <Container className="bg-white">
         <div className="text-4xl mb-8 text-center">Dashboard</div>
@@ -70,38 +127,8 @@ export default function Dashboard() {
         </div>
       </Container>
       <div className="flex mt-8 space-x-8">
-        <Container className="bg-white w-full">
-          <div className="flex justify-between items-center text-xl">
-            Reports Ordered This Cycle
-            <InfoButton>
-              <div className="text-center text-lg">Reports Ordered</div>
-              <div className="text-sm">
-                Once the Pilot Program has ended, we will implement a subscription-based system. Subscriptions at different price-points will be offered featuring varying numbers of reports included per subscription-cycle, with additional reports charged at the same rate.
-              </div>
-            </InfoButton>
-          </div>          <div className="flex text-4xl justify-center items-center p-4">
-            <div className="mb-4 mr-2">0</div> 
-            <div className="my-2">/</div>
-            <Infinity className="h-10 w-10 ml-1 mt-4" />
-          </div>
-        </Container>
-        <Container className="bg-white w-full">
-          <div className="flex justify-between items-center text-xl">
-            Reports Expiring Soon
-            <InfoButton>
-              <div className="text-center text-lg">Report Expiration</div>
-              <div className="text-sm">
-                Once ordered, reports expire after 180 days. To continue viewing your report, you can download a PDF. If you prefer the dynamic display provided on our website, you can also download the report in JSON format, and upload the data for viewing 
-                <span className="underline hover:text-medium-brown ml-1">here</span>.
-              </div>
-            </InfoButton>
-          </div>
-          <div className="flex text-4xl justify-center items-center p-4">
-            <div className="mb-4 mr-2">0</div> 
-            <div className="my-2">/</div>
-            <div className="mt-4 ml-2">0</div>
-          </div>
-        </Container>
+        <MonthlyReportsWidget />
+        <ExpiringReportsWidget />
       </div>
         
     </div>

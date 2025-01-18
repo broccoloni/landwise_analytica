@@ -13,6 +13,7 @@ import Loading from '@/components/Loading';
 import { ReportStatus } from '@/types/statuses'; 
 import { fetchReportsById, redeemReport } from '@/utils/reports';
 import { useRouter } from 'next/navigation';
+import NotificationBanner from '@/components/NotificationBanner';
 
 // Dynamically import MapDrawing for client-side rendering
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
@@ -91,13 +92,11 @@ export default function RedeemReport() {
   const ReportStatusDisplay = () => {
     if (validatingReportId) {
       return (
-        <div className="flex justify-center items-center mt-4 p-4 bg-blue-100 rounded-md text-blue-800">
-          <div className="">
-            <Loading className="w-10 h-10 mr-2 text-blue-800" />
-          </div>
-          <div className="">
-            Validating Report ID...
-          </div>
+        <div className="mb-4">
+          <NotificationBanner
+            type="loading"
+            notification="Validating Report ID..."
+          />
         </div>
       );
     }
@@ -106,13 +105,11 @@ export default function RedeemReport() {
       
     else if (status === ReportStatus.Unredeemed) {
       return (
-        <div className="flex justify-center items-center mt-4 p-4 bg-green-100 rounded-md text-dark-green">
-          <div className="mr-2 rounded-full border-2 border-dark-green">
-            <Check className="w-5 h-5 m-1" />
-          </div>
-          <div className="">
-            Valid Report ID
-          </div>
+        <div className="mb-4">
+          <NotificationBanner
+            type="success"
+            notification="Valid Report ID"
+          />
         </div>
       );
     }
@@ -141,13 +138,11 @@ export default function RedeemReport() {
 
     else if (status === ReportStatus.Invalid) {
       return (
-        <div className="flex justify-center items-center mt-4 p-4 bg-red-100 rounded-md text-red-800">
-          <div className="mr-2 rounded-full border-2 border-red-800">
-            <X className="w-5 h-5 m-1" />
-          </div>
-          <div className="text-red-800">
-            Invalid Report ID
-          </div>
+        <div className="mb-4">
+          <NotificationBanner
+            type="error"
+            notification="Invalid Report ID"
+          />
         </div>
       );
     }

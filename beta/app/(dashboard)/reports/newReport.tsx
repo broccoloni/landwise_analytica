@@ -10,10 +10,12 @@ import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
-import { ReportStatus } from '@/types/statuses';
+import { ReportStatus, RealtorStatus } from '@/types/statuses';
 import CheckoutSession from '@/components/CheckoutSession';
 import Loading from '@/components/Loading';
 import { fetchReportsBySessionId, redeemReport } from '@/utils/reports';
+import NotificationBanner from '@/components/NotificationBanner';
+
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
 export default function NewReport() {
@@ -116,8 +118,67 @@ export default function NewReport() {
     }
   }, [reportId, address, addressComponents, landGeometry, status, step]);
 
+  const [notification, setNotification] = useState('');
+  const [notificationType, setNotificationType] = useState('info');
+  useEffect(() => {
+    if (!session?.user?.status === RealtorStatus.Unverified) {
+      setNotification("Please verify your email to purchase reports using this account");
+    }
+  }, [session?.user?.status]);
+
+  const handleNewVerificationEmail = async () => {
+    if (!session?.user?.email || !session?.user?.id) {
+      console.error("User email or ID is missing.");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/sendVerificationEmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: session.user.email,
+          userId: session.user.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Error sending verification email:", data.message);
+        setNotification(`Failed to send verification email: ${data.message}`);
+        setNotificationType('error');
+      } else {
+        console.log("Verification email sent successfully:", data.message);
+        setNotification("Verification email sent successfully!");
+        setNotificationType('success');
+      }
+    } catch (error) {
+      console.error("An error occurred while sending the verification email:", error);
+      setNotification("An error occurred. Please try again later.");
+      setNotificationType('error');
+    }
+  };
+    
   return (
     <div>
+      {notification && (
+        <div className="mb-4">
+          <NotificationBanner type={notificationType}>
+            <div className="flex justify-between items-center mr-4">
+              <div className="">Please verify your email address before purchasing a report</div>
+              <button 
+                className="hover:underline px-4 py-2 rounded-md border border-blue-800"
+                onClick={handleNewVerificationEmail}
+              >
+                Send New Link
+              </button>
+            </div>
+          </NotificationBanner>
+        </div>
+      )}
       <div className="text-2xl mb-12 text-center">Order a New Report</div>
       <div className="mb-8 px-10 mx-auto max-w-2xl">
         <ProgressBar currentStep={step} totalSteps={stepNames.length} stepNames={stepNames} />
@@ -261,8 +322,10 @@ export default function NewReport() {
               <div className="p-20">
                 <Loading />
               </div>
-            ) : (
+            ) : session?.user?.status && session?.user?.status === RealtorStatus.Active ? (
               <CheckoutSession onComplete={handleComplete} />
+            ) : (
+              <NotificationBanner type='error'>Something went wrong. Please try again later.</NotificationBanner>
             )}
           </div>
         )}

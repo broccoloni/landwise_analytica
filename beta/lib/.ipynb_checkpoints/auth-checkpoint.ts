@@ -5,6 +5,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { createUser, getUserByEmail, loginUser } from '@/lib/database';
 import { stripe } from '@/lib/stripe';
 import { RealtorStatus } from '@/types/statuses';
+import { sendVerificationEmail } from '@/utils/sendEmail';
 
 export const authOptions: AuthOptions = {
   session: {
@@ -97,7 +98,7 @@ export const authOptions: AuthOptions = {
           email,
           name: `${firstName} ${lastName}`,
         });
-          
+
         const curDate = new Date().toISOString();
         const user = {
           email,
@@ -106,7 +107,7 @@ export const authOptions: AuthOptions = {
           lastName,
           realtyGroup,
           id: stripeCustomer.id,
-          status: RealtorStatus.New,
+          status: RealtorStatus.Unverified,
           createdAt: curDate,
           lastLogin: curDate,
         };
@@ -114,6 +115,12 @@ export const authOptions: AuthOptions = {
         const createResponse = await createUser(user);
         if (!createResponse.success) {
           throw new Error(createResponse.error);
+        }
+          
+        const emailResult = await sendVerificationEmail(stripeCustomer.id, email);
+
+        if (!emailResult.success) {
+          return { success: false, error: 'Failed to send verification email.' };
         }
 
         const { password: _password, ...otherFields } = user;

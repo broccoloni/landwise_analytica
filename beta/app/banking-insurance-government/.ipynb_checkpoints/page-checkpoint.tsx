@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Container from '@/components/Container';
 import Dropdown from '@/components/Dropdown';
-import { CircleAlert, CircleCheck } from 'lucide-react';
+import NotificationBanner from '@/components/NotificationBanner';
 
 export default function BankInsuranceGovernment() {
   const [industry, setIndustry] = useState('Please Specify');
@@ -72,20 +72,14 @@ export default function BankInsuranceGovernment() {
   return (
     <div className="mx-auto max-w-2xl my-10">
       {error && (
-        <Container className="mb-4 bg-red-50 text-red-800 py-2">
-          <div className="flex justify-start items-center">
-            <CircleAlert className="h-10 w-10 mr-8" />
-            <div className="">{error}</div>
-          </div>
-        </Container>
+        <div className="mb-4">
+          <NotificationBanner type='error'>{error}</NotificationBanner>
+        </div>
       )}
       {success && (
-        <Container className="mb-4 bg-green-50 text-green-800 py-2">
-          <div className="flex justify-start items-center">
-            <CircleCheck className="h-10 w-10 mr-8" />
-            <div className="">{success}</div>
-          </div>
-        </Container>
+        <div className="mb-4">
+          <NotificationBanner type='success'>{success}</NotificationBanner>
+        </div>
       )}
       <Container className="flex flex-col py-8 space-y-8 bg-white">
         <div className="text-4xl font-bold">Banks, Insurance, and Government</div>
