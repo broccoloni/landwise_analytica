@@ -1,7 +1,3 @@
-// NOTE: This is a copy of the view-report page but for realtors
-// This likely won't be necessary once changing the header to be specific
-// to when a user is logged in or not.
-
 'use client';
 
 import { montserrat, roboto, merriweather } from '@/ui/fonts';
@@ -15,6 +11,7 @@ import PrintButton from '@/components/PrintButton';
 import DownloadPDF from '@/components/DownloadPDF';
 import Loading from '@/components/Loading';
 import { useParams } from "next/navigation";
+import { ImageAndStats, ImageAndLegend, PerformanceData } from '@/types/dataTypes';
 
 // import EstimatedYield from '@/components/tabs/EstimatedYield';
 import Climate from '@/components/tabs/Climate';
@@ -123,8 +120,11 @@ export default function ViewReport() {
       }
 
     } catch (error) {
-      console.error('Error fetching data:', error);
-      setError(error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
 
@@ -238,11 +238,11 @@ export default function ViewReport() {
             </div>
           </div>
           <div className="space-x-4 flex">
-            <DownloadPDF elementId={'report'} filename={`report-${reportId}.pdf`}/>
+            <DownloadPDF elementId={'report'} fileName={`report-${reportId}.pdf`}/>
             <PrintButton />
           </div>
         </div>
-        <Container className="bg-white" id="report">
+        <Container className="bg-white">
           {dataLoaded ? (
             <div>
               <section id="summary">

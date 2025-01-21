@@ -55,7 +55,11 @@ export default function FeedbackForm() {
         throw new Error(result.message || 'Failed to send feedback');
       }
     } catch (err) {
-      setError(err.message);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }

@@ -19,7 +19,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Invalid reportId" }, { status: 400 });
     }
 
-    const report = result.reports[0];
+    const reports = result.reports;
+
+    if (!reports || reports.length === 0) {
+      return NextResponse.json({ message: "No reports found" }, { status: 400 });
+    }
+
+    const report = reports[0];
 
     if (report.status !== ReportStatus.Redeemed) { 
       return NextResponse.json({ message: "Report is not in a redeemed state - cannot fetch report data", report }, { status: 400 });

@@ -14,12 +14,12 @@ export default function InfoForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (e: React.FormEvent<HTMLInputElement>) => {
+    const { name, value } = e.currentTarget;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const response = await fetch('/api/updateUser', {
@@ -39,7 +39,7 @@ export default function InfoForm() {
       setSuccessMessage('User details updated successfully!');
       setErrorMessage(null);
 
-      if (update) {
+      if (update && session?.user) {
         const newSession = { ...session.user, ...formData };
         update(newSession);
       }

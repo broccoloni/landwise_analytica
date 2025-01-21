@@ -85,12 +85,14 @@ export async function redeemReport({
     if (response.ok) {
       return { success: true };
     } else {
-      console.error('Error redeeming report:', response.message);
-      return { success: false, message: response.message };
+      const errorData = await response.json();
+      console.error('Error redeeming report:', errorData.message);
+      return { success: false, message: errorData.message };
     }
   } catch (error) {
     console.error('Error redeeming report:', error);
     return { success: false, message: error instanceof Error ? error.message : String(error) };
   }
 }
+
 

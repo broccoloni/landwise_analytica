@@ -35,26 +35,27 @@ export default function RedeemReport() {
 
   const [validatingReportId, setValidatingReportId] = useState(false);
 
-  const handleReportIdChange = (e) => {
-    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Only allow uppercase letters and numbers
-      
+  const handleReportIdChange = (e: React.FormEvent<HTMLInputElement>) => {
+    const inputEvent = e.nativeEvent as InputEvent;
+    let value = e.currentTarget.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Only allow uppercase letters and numbers
+
     // Format the value with dashes after every 4 characters
-    if (value.length > 3 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 4)) {
+    if (value.length > 3 && !(inputEvent.inputType === 'deleteContentBackward' && value.length === 4)) {
       value = value.slice(0, 4) + '-' + value.slice(4);
     }
-    if (value.length > 8 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 9)) {
+    if (value.length > 8 && !(inputEvent.inputType === 'deleteContentBackward' && value.length === 9)) {
       value = value.slice(0, 9) + '-' + value.slice(9);
     }
-      
+    
     setReportId(value);
     if (status !== null) setStatus(null);
   };
 
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
-    setAddress(address); // Set the selected address
-    setLatitude(lat); // Set the latitude
-    setLongitude(lng); // Set the longitude
-    setAddressComponents(components); // Set address components
+    setAddress(address);
+    setLatitude(lat);
+    setLongitude(lng);
+    setAddressComponents(components);
   };
 
   const handleBackStep = () => {
@@ -65,6 +66,11 @@ export default function RedeemReport() {
 
   const handleNextStep = async () => {
     if (step === 1) {
+      if (reportId === null) {
+        console.error('Report ID is null');
+        return;
+      }
+        
       setValidatingReportId(true);
       const reports = await fetchReportsById(reportId);
       const report = reports[0];
@@ -93,10 +99,7 @@ export default function RedeemReport() {
     if (validatingReportId) {
       return (
         <div className="mb-4">
-          <NotificationBanner
-            type="loading"
-            notification="Validating Report ID..."
-          />
+          <NotificationBanner type="loading">Validating Report ID...</NotificationBanner>
         </div>
       );
     }
@@ -106,10 +109,7 @@ export default function RedeemReport() {
     else if (status === ReportStatus.Unredeemed) {
       return (
         <div className="mb-4">
-          <NotificationBanner
-            type="success"
-            notification="Valid Report ID"
-          />
+          <NotificationBanner type="success">Valid Report ID</NotificationBanner>
         </div>
       );
     }
@@ -139,10 +139,7 @@ export default function RedeemReport() {
     else if (status === ReportStatus.Invalid) {
       return (
         <div className="mb-4">
-          <NotificationBanner
-            type="error"
-            notification="Invalid Report ID"
-          />
+          <NotificationBanner type="error">Invalid Report ID</NotificationBanner>
         </div>
       );
     }
@@ -151,6 +148,11 @@ export default function RedeemReport() {
   };
 
   const handleRedeem = async () => {
+    if (!reportId || !address || !addressComponents || landGeometry.length <= 3) {
+      console.error('Required fields are missing or invalid.');
+      return;
+    }
+      
     const result = await redeemReport({ reportId, address, addressComponents, landGeometry });
     if (result.success) {
       console.log('Report redeemed successfully');

@@ -64,13 +64,13 @@ export default function NewReport() {
 
     else if (step === 3) {
       setQuantity(1);
-      setCustomerId(session?.user?.id);
+      setCustomerId(session?.user?.id || null);
       setCouponId(null);
       setStep(prevStep => prevStep + 1);
     }
   };
     
-  const handleComplete = (completedSessionId) => {
+  const handleComplete = (completedSessionId: string) => {
     setQuantity(null);
     setCouponId(null);
     setCustomerId(null);
@@ -78,6 +78,11 @@ export default function NewReport() {
   }
 
   const fetchReportId = async () => {
+    if (!sessionId) {
+      console.error("Session ID is null or undefined.");
+      return;
+    }
+      
     try {
       const reports = await fetchReportsBySessionId(sessionId);
         
@@ -103,6 +108,11 @@ export default function NewReport() {
   }, [reportId, sessionId]);
 
   const handleRedeem = async () => {
+    if (!reportId || !address || !addressComponents || landGeometry.length <= 3) {
+      console.error('Required fields are missing or invalid.');
+      return;
+    }
+      
     const result = await redeemReport({ reportId, address, addressComponents, landGeometry });
     if (result.success) {
       console.log('Report redeemed successfully');
@@ -119,9 +129,9 @@ export default function NewReport() {
   }, [reportId, address, addressComponents, landGeometry, status, step]);
 
   const [notification, setNotification] = useState('');
-  const [notificationType, setNotificationType] = useState('info');
+  const [notificationType, setNotificationType] = useState<'error' | 'loading' | 'info' | 'success' | undefined>('info');
   useEffect(() => {
-    if (!session?.user?.status === RealtorStatus.Unverified) {
+    if (session?.user?.status === RealtorStatus.Unverified) {
       setNotification("Please verify your email to purchase reports using this account");
     }
   }, [session?.user?.status]);

@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { updateUser } from '@/lib/database';
 import crypto from 'crypto';
 
-export const sendEmail = async ({ to, subject, text, html }) => {
+export const sendEmail = async ({ to, subject, text, html }: { to: string, subject: string, text: string, html: string }) => {
   try {
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
@@ -27,7 +27,12 @@ export const sendEmail = async ({ to, subject, text, html }) => {
     return { success: true };
   } catch (error) {
     console.error('Error sending email:', error);
-    return { success: false, error: error.message };
+
+    if (error instanceof Error) {
+      return { success: false, error: error.message };
+    } else {
+      return { success: false, error: 'An unexpected error occured' };
+    }      
   }
 };
 
@@ -61,15 +66,16 @@ export async function sendVerificationEmail(userId: string, email: string) {
   const emailResult = await sendEmail({
     to: email,
     subject: 'Verify Your Email Address',
+    text: `Thank you for signing up, here's your verification link: ${verificationLink}`,
     html: `
         <div style="background-color: #FAF8F0; padding: 10px;">
           <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #FFFFFF;">
             <h2 style="text-align: center;">Email Verification</h2>
             <p style="text-align: center;">Thank you for signing up! Click the button below to verify your email address:</p>
-            <p style="text-align: center; margin-top: 10px;">
+            <p style="text-align: center; margin: 30px;">
               <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
             </p>
-            <p style="text-align: center; margin-top: 10px;">If you did not sign up, you can safely ignore this email.</p>
+            <p style="text-align: center; margin-top: 20px;">If you did not sign up, you can safely ignore this email.</p>
           </div>
         </div>
     `,

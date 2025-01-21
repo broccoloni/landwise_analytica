@@ -21,6 +21,10 @@ interface Report {
   reportId: string;
   status: string;
   createdAt: string;
+  address: string | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
+  redeemedAt: string | null;
 }
 
 interface ReportBarProps {
@@ -29,7 +33,7 @@ interface ReportBarProps {
 
 const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   const router = useRouter();
-  const { setReportId, setStatus, clearReportContext} = useReportContext();
+  const { setReportId, setStatus, clearReportContext } = useReportContext();
 
   // Pre-redirect logic for unredeemed reports
   const handleRedeemClick = () => {
@@ -71,7 +75,7 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
           <div className="text-lg"><span className="font-semibold mr-2">Report ID:</span>{report.reportId}</div>
           <span className="text-sm text-gray-500">Address: {report.address}</span>
           <span className="text-sm text-gray-500">
-            Created: {new Date(report.redeemedAt).toLocaleDateString()}
+            Created: {report.redeemedAt ? new Date(report.redeemedAt).toLocaleDateString() : 'N/A'}
           </span>
         </div>
         <div className="flex flex-col items-end text-center">

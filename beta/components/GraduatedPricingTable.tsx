@@ -1,10 +1,9 @@
+// Note: This file is no longer used, but is being kept as reference for a 
+// pricing table later
+
 import InfoButton from '@/components/InfoButton';
 
-interface GraduatedPricingTableProps {
-  subscription: any
-}
-
-export default function GraduatedPricingTable({ subscription }: LoadingProps) {
+export default function GraduatedPricingTable({ subscription }: { subscription: any }) {
   return (
     <>
       <div className="flex justify-between">
@@ -42,7 +41,7 @@ export default function GraduatedPricingTable({ subscription }: LoadingProps) {
       </div>
       <div className="mt-2">
         {subscription?.tiers && subscription.tiers.length > 0 ? (
-          subscription.tiers.map((tier, index) => (
+          subscription.tiers.map((tier: { up_to: number, unit_amount: number }, index: number) => (
             <div
               key={index}
               className="flex justify-between text-sm text-gray-700 border-b py-2"

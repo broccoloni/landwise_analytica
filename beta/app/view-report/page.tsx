@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { NotebookText, Check, X, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { fetchReportsById } from '@/utils/reports';
+import NotificationBanner from '@/components/NotificationBanner';
 
 export default function Terms() {
   const router = useRouter();
@@ -23,22 +24,29 @@ export default function Terms() {
     status, setStatus,
   } = useReportContext();
     
-  const handleReportIdChange = (e) => {
+  const handleReportIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Only allow uppercase letters and numbers
-      
-    // Format the value with dashes after every 4 characters
-    if (value.length > 3 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 4)) {
+
+    const inputEvent = e.nativeEvent as InputEvent;
+
+    if (value.length > 3 && !(inputEvent.inputType === 'deleteContentBackward' && value.length === 4)) {
       value = value.slice(0, 4) + '-' + value.slice(4);
     }
-    if (value.length > 8 && !(e.nativeEvent.inputType === 'deleteContentBackward' && value.length === 9)) {
+    if (value.length > 8 && !(inputEvent.inputType === 'deleteContentBackward' && value.length === 9)) {
       value = value.slice(0, 9) + '-' + value.slice(9);
     }
-      
+
     setReportId(value);
     if (status !== null) setStatus(null);
   };
 
+
   const handleSubmit = async () => {
+    if (reportId === null) {
+      console.error('Report ID is null');
+      return;
+    }
+      
     setValidatingReportId(true);
     const reports = await fetchReportsById(reportId);
     const report = reports[0];
@@ -53,11 +61,8 @@ export default function Terms() {
   const ReportStatusDisplay = () => {
     if (validatingReportId) {
       return (
-        <div className="mb-4">
-          <NotificationBanner
-            type="loading"
-            notification="Validating Report ID..."
-          />
+        <div className="my-4">
+          <NotificationBanner type="loading">Validating Report ID...</NotificationBanner>
         </div>
       );
     }
@@ -66,11 +71,8 @@ export default function Terms() {
       
     else if (status === ReportStatus.Redeemed) {
       return (
-        <div className="mb-4">
-          <NotificationBanner
-            type="success"
-            notification="Valid Report ID"
-          />
+        <div className="my-4">
+          <NotificationBanner type="success">Valid Report ID</NotificationBanner>
         </div>
       );
     }
@@ -99,11 +101,8 @@ export default function Terms() {
 
     else if (status === ReportStatus.Invalid) {
       return (
-        <div className="mb-4">
-          <NotificationBanner
-            type="error"
-            notification="Invalid Report ID"
-          />
+        <div className="my-4">
+          <NotificationBanner type="error">Invalid Report ID</NotificationBanner>
         </div>
       );
     }

@@ -15,8 +15,8 @@ import ExpiringReportsWidget from '@/components/ExpiringReportsWidget';
 export default function Dashboard() {
   const { data: session, status } = useSession();
     
-  const [notification, setNotification] = useState('');
-  const [notificationType, setNotificationType] = useState('info');
+  const [notification, setNotification] = useState<string | null>('');
+  const [notificationType, setNotificationType] = useState<'error' | 'loading' | 'info' | 'success' | undefined>('info');
   useEffect(() => {
     if (session?.user?.status === RealtorStatus.Unverified) {
       setNotification("Please verify your email to purchase reports using this account");

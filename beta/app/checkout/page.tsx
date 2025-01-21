@@ -20,9 +20,9 @@ export default function Checkout() {
   const reportContext = useReportContext();
   const { setQuantity, setCouponId, setCustomerId, sessionId, setSessionId } = useCartContext();
 
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState<any[]>([]);
 
-  const handleComplete = (completedSessionId) => {
+  const handleComplete = (completedSessionId: string) => {
     console.log("(checkout) complete", completedSessionId);
     setQuantity(null);
     setCouponId(null);
@@ -31,6 +31,11 @@ export default function Checkout() {
   }
 
   const fetchReports = async () => {
+    if (!sessionId) {
+      console.error("Session ID is null or undefined.");
+      return;
+    }
+      
     try {
       const reports = await fetchReportsBySessionId(sessionId);
         
@@ -60,15 +65,20 @@ export default function Checkout() {
   }, [reports[0]?.reportId, reportContext?.address]);
 
   const handleRedeem = async () => {
+    if (!reports[0]?.reportId || !reportContext.address || !reportContext.addressComponents || reportContext.landGeometry.length < 3) {
+      console.error('Required fields are missing or invalid.');
+      return;
+    }
+      
     const result = await redeemReport({ 
-      reportId: reports[0]?.reportId, 
-      address: reportContext?.address, 
-      addressComponents: reportContext?.addressComponents, 
-      landGeometry: reportContext?.landGeometry,
+      reportId: reports[0].reportId, 
+      address: reportContext.address, 
+      addressComponents: reportContext.addressComponents, 
+      landGeometry: reportContext.landGeometry,
     });
     if (result.success) {
       console.log('Report redeemed successfully');
-      router.push(`/view-report/${reports[0]?.reportId}`);
+      router.push(`/view-report/${reports[0].reportId}`);
     } else {
       console.error('Failed to redeem report:', result.message);
     }

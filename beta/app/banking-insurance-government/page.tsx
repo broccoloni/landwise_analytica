@@ -65,7 +65,11 @@ export default function BankInsuranceGovernment() {
         throw new Error(result.message || 'Failed to send email');
       }
     } catch (err) {
-      setError(err.message);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -154,8 +158,6 @@ export default function BankInsuranceGovernment() {
               Industry
             </label>
             <Dropdown
-              id="industry"
-              name="industry"
               options={['Credit Union', 'Bank', 'Insurance Provider', 'Government', 'Other']}
               selected={industry}
               onSelect={(selected) => setIndustry(selected)}

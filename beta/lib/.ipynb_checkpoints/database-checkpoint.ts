@@ -6,18 +6,22 @@ import { User } from "next-auth";
 import { customAlphabet } from 'nanoid';
 import { RealtorStatus, ReportStatus } from "@/types/statuses";
 
-
 const accessKeyId = process.env.DYNAMODB_ACCESS_KEY_ID;
 const secretAccessKey = process.env.DYNAMODB_SECRET_ACCESS_KEY;
 const region = process.env.AWS_REGION;
 
+if (!accessKeyId || !secretAccessKey || !region) {
+  throw new Error("AWS credentials or region are not defined in the environment variables.");
+}
+
 const client = new DynamoDBClient({
   credentials: {
-    accessKeyId: accessKeyId,
-    secretAccessKey: secretAccessKey,
+    accessKeyId: accessKeyId!,
+    secretAccessKey: secretAccessKey!,
   },
   region: region,
 });
+
 const docClient = DynamoDBDocumentClient.from(client);
 
 const EMAIL_INDEX = "EmailIndex"; // GSI for querying by email
@@ -70,6 +74,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 /**
  * Retrieves a user by ID.
  */
+
 export const getUserById = async (id: string): Promise<User | null> => {
   const TABLE_NAME = "Realtors";
 
@@ -80,7 +85,15 @@ export const getUserById = async (id: string): Promise<User | null> => {
     });
 
     const { Item } = await docClient.send(command);
-    return Item || null;
+
+    if (!Item) {
+      return null;
+    }
+
+    const user = Item as User;
+
+    return user;
+
   } catch (error) {
     console.error("Error retrieving user by ID:", error);
     throw new Error("Unable to retrieve user by ID");
@@ -96,6 +109,11 @@ export const createUser = async (user: User): Promise<{ success: boolean; messag
 
   try {
     const { password, ...otherFields } = user;
+
+    if (!password) {
+      throw new Error("Password not provided");
+    }
+      
     const hashedPassword = await generateHash(password);
 
     const command = new PutCommand({
@@ -110,7 +128,7 @@ export const createUser = async (user: User): Promise<{ success: boolean; messag
     return { success: true, message: "User created successfully", data: { ...user, password: hashedPassword } };
   } catch (error) {
     console.error("Error creating user:", error);
-    return { success: false, message: "Unable to create user", error: error instanceof Error ? error.message : String(error) };
+    return { success: false, message: error instanceof Error ? error.message : String(error) };
   }
 };
 
@@ -126,8 +144,9 @@ export const updateUser = async (id: string, updates: Partial<User>): Promise<{ 
     const expressionAttributeValues: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(updates)) {
-      if (key === "password") {
-        const hashedPassword = await generateHash(value);
+      if (key === "password" && typeof value === "string") {
+        const password = value as string;
+        const hashedPassword = await generateHash(password);
         updateExpressions.push(`#${key} = :${key}`);
         expressionAttributeNames[`#${key}`] = key;
         expressionAttributeValues[":" + key] = hashedPassword;
@@ -150,10 +169,10 @@ export const updateUser = async (id: string, updates: Partial<User>): Promise<{ 
 
     // Retrieve the updated user to return
     const updatedUser = await getUserById(id);
-    return { success: true, message: "User updated successfully", data: updatedUser };
+    return { success: true, message: "User updated successfully", data: updatedUser as User };
   } catch (error) {
     console.error("Error updating user:", error);
-    return { success: false, message: "Unable to update user", error: error instanceof Error ? error.message : String(error) };
+    return { success: false, message: error instanceof Error ? error.message : String(error) };
   }
 };
 
@@ -168,6 +187,10 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
       return { success: false, message: "Invalid email or password" };
     }
 
+    if (!user?.password) {
+      return { success: false, message: "Invalid email or password" };
+    }
+      
     const isPasswordValid = verifyHash(password, user.password);
     if (!isPasswordValid) {
       return { success: false, message: "Invalid email or password" };
@@ -186,7 +209,7 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
     return { success: true, data: user };
   } catch (error) {
     console.error("Error logging in user:", error);
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return { success: false, message: error instanceof Error ? error.message : String(error) };
   }
 };
 
@@ -257,7 +280,7 @@ export const createReport = async (
  */
 export const getReportsById = async (reportId: string): Promise<{
   success: boolean;
-  reports?: { id: string; status: string; createdAt: string; redeemedAt: string }[];
+  reports?: { reportId: string; status: string; createdAt: string; redeemedAt: string; address: string; latitude: number; longitude: number; }[];
   message?: string;
 }> => {
   const TABLE_NAME = "Reports";
@@ -270,10 +293,23 @@ export const getReportsById = async (reportId: string): Promise<{
     });
 
     const { Items } = await docClient.send(command);
-      
-    console.log("Reports for", reportId, Items);
-      
-    return { success: true, reports: Items };
+    
+    if (Items) {
+      const reports = Items.map((item: Record<string, any>) => ({
+        reportId: item.reportId as string,
+        status: item.status as string,
+        createdAt: item.createdAt as string,
+        redeemedAt: item.redeemedAt as string,
+        address: item.address as string,
+        latitude: item.latitude as number,
+        longitude: item.longitude as number,
+      }));
+
+      console.log("Reports for", reportId, reports);
+      return { success: true, reports };
+    } else {
+      return { success: false, message: "No reports found" };
+    }
   } catch (error) {
     console.error("Error retrieving reports:", error);
     return {
@@ -283,9 +319,10 @@ export const getReportsById = async (reportId: string): Promise<{
   }
 };
 
+
 export const getReportsByCustomerId = async (customerId: string): Promise<{
   success: boolean;
-  reports?: { id: string; status: string; createdAt: string; redeemedAt: string }[];
+  reports?: { reportId: string; status: string; createdAt: string; redeemedAt: string; address: string; latitude: number; longitude: number; }[];
   message?: string;
 }> => {
   const TABLE_NAME = "Reports";
@@ -300,9 +337,22 @@ export const getReportsByCustomerId = async (customerId: string): Promise<{
 
     const { Items } = await docClient.send(command);
 
-    console.log("Reports for", customerId, Items);
-      
-    return { success: true, reports: Items };
+    if (Items) {
+      const reports = Items.map((item: Record<string, any>) => ({
+        reportId: item.reportId as string,
+        status: item.status as string,
+        createdAt: item.createdAt as string,
+        redeemedAt: item.redeemedAt as string,
+        address: item.address as string,
+        latitude: item.latitude as number,
+        longitude: item.longitude as number,
+      }));
+
+      console.log("Reports for", customerId, reports);
+      return { success: true, reports };
+    } else {
+      return { success: false, message: "No reports found" };
+    }
   } catch (error) {
     console.error("Error retrieving reports:", error);
     return {
@@ -314,7 +364,7 @@ export const getReportsByCustomerId = async (customerId: string): Promise<{
 
 export const getReportsBySessionId = async (sessionId: string): Promise<{
   success: boolean;
-  reports?: { id: string; status: string; createdAt: string; redeemedAt: string }[];
+  reports?: { reportId: string; status: string; createdAt: string; redeemedAt: string; address: string; latitude: number; longitude: number; }[];
   message?: string;
 }> => {
   const TABLE_NAME = "Reports";
@@ -329,9 +379,22 @@ export const getReportsBySessionId = async (sessionId: string): Promise<{
 
     const { Items } = await docClient.send(command);
 
-    console.log("Reports for", sessionId, Items);
-      
-    return { success: true, reports: Items };
+    if (Items) {
+      const reports = Items.map((item: Record<string, any>) => ({
+        reportId: item.reportId as string,
+        status: item.status as string,
+        createdAt: item.createdAt as string,
+        redeemedAt: item.redeemedAt as string,
+        address: item.address as string,
+        latitude: item.latitude as number,
+        longitude: item.longitude as number,
+      }));
+
+      console.log("Reports for", sessionId, reports);
+      return { success: true, reports };
+    } else {
+      return { success: false, message: "No reports found" };
+    }
   } catch (error) {
     console.error("Error retrieving reports:", error);
     return {
@@ -347,7 +410,7 @@ export const getReportsBySessionId = async (sessionId: string): Promise<{
  */
 export const updateReportAttributes = async (
   reportId: string,
-  attributes: { status?: string; redeemedAt?: string; address?: string;  }
+  attributes: { status?: string; redeemedAt?: string; address?: string; latitude?: number; longitude?: number; }
 ): Promise<{ success: boolean; message?: string; updatedReport?: any }> => {
   const TABLE_NAME = "Reports";
 
@@ -359,11 +422,12 @@ export const updateReportAttributes = async (
 
     // Iterate over the attributes to create the expression and values
     Object.keys(attributes).forEach((key) => {
-      if (attributes[key]) {
+      // Type assertion to indicate that key is a valid key in the attributes object
+      if (attributes[key as keyof typeof attributes]) {
         const attributeName = `#${key}`;
         const attributeValue = `:${key}`;
         updateExpressions.push(`${attributeName} = ${attributeValue}`);
-        expressionAttributeValues[attributeValue] = attributes[key];
+        expressionAttributeValues[attributeValue] = attributes[key as keyof typeof attributes];
         expressionAttributeNames[attributeName] = key;
       }
     });
@@ -399,6 +463,7 @@ export const updateReportAttributes = async (
     };
   }
 };
+
 
 
 // ~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS FOR AWS S3 REPORT STORAGE ~~~~~~~~~~~~~~~~~~~~~~~~~

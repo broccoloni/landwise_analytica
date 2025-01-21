@@ -17,12 +17,12 @@ export default function PasswordForm() {
     confirmPassword: '',
   });
     
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (e: React.FormEvent<HTMLInputElement>) => {
+    const { name, value } = e.currentTarget;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
       setSuccessMessage(null);
@@ -59,7 +59,11 @@ export default function PasswordForm() {
       setErrorMessage(null);
     } catch (error) {
       setSuccessMessage(null);
-      setErrorMessage(error.message);
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage('An unexpected error occurred');
+      }
     }
   };
 

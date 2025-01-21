@@ -1,7 +1,7 @@
 import { sendEmail } from '@/utils/sendEmail';
 import { NextResponse } from 'next/server';
 
-export async function POST(req) {
+export async function POST(req: Request) {
   const { to, subject, text, html } = await req.json();
 
   if (!to || !subject || (!text && !html)) {

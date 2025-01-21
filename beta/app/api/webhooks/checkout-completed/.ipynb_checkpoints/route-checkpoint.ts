@@ -17,10 +17,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
-  } catch (err) {
-    console.error(`Webhook Error: ${err.message}`);
-    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error(`Webhook Error: ${err.message}`);
+      return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+    } else {
+      console.error('Webhook Error: An unknown error occurred');
+      return new NextResponse('Webhook Error: An unknown error occurred', { status: 400 });
+    }
   }
+
 
   // Handle the event
   switch (event.type) {
@@ -28,6 +34,11 @@ export async function POST(request: NextRequest) {
       const checkoutSession = event.data.object;
       console.log('Webhook checkout session completed:', checkoutSession);
 
+      if (!checkoutSession.metadata) {
+        console.error('Metadata is missing in checkout session.');
+        return new NextResponse('Metadata is missing in checkout session.', { status: 400 });
+      }
+          
       const quantity = parseInt(checkoutSession.metadata.quantity);
       const customerId = checkoutSession.metadata.customerId || null;
       const customerEmail =
@@ -41,6 +52,7 @@ export async function POST(request: NextRequest) {
       const reportIds: string[] = [];
       for (let i = 0; i < quantity; i++) {
         const createReportResponse = await createReport(checkoutSession.id, customerId);
+    
         if (!createReportResponse.success) {
           console.error(`Error creating report for checkout session ${checkoutSession.id}`);
           return new NextResponse(
@@ -48,7 +60,14 @@ export async function POST(request: NextRequest) {
             { status: 500 }
           );
         }
-        reportIds.push(createReportResponse.reportId);
+    
+        // Ensure that reportId is a string before pushing
+        if (createReportResponse.reportId) {
+          reportIds.push(createReportResponse.reportId);
+        } else {
+          console.error(`Missing reportId for checkout session ${checkoutSession.id}`);
+          return new NextResponse('Missing reportId.', { status: 500 });
+        }
       }
 
       const reportLink = customerId ? `${process.env.NEXTAUTH_URL}/view-report/` : `${process.env.NEXTAUTH_URL}/redeem-a-report?reportId=`;
@@ -101,17 +120,18 @@ export async function POST(request: NextRequest) {
         </div>
       `;
 
+      if (customerEmail) {
+        const emailResult = await sendEmail({
+          to: customerEmail,
+          subject,
+          text,
+          html,
+        });
 
-      const emailResult = await sendEmail({
-        to: customerEmail,
-        subject,
-        text,
-        html,
-      });
-
-      if (!emailResult.success) {
-        console.error('Failed to send email:', emailResult.error);
-        return new NextResponse('Failed to send email.', { status: 500 });
+        if (!emailResult.success) {
+          console.error('Failed to send email:', emailResult.error);
+          return new NextResponse('Failed to send email.', { status: 500 });
+        }
       }
       break;
 

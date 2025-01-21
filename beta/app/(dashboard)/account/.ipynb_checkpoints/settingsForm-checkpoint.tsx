@@ -13,7 +13,7 @@ const SettingsForm = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(session?.user?.notificationsEnabled);
   const [theme, setTheme] = useState(session?.user?.theme);
 
-  const handleSaveSettings = async (e) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const response = await fetch('/api/updateUser', {
@@ -33,7 +33,7 @@ const SettingsForm = () => {
       setSuccessMessage('Settings updated successfully!');
       setErrorMessage(null);
 
-      if (update) {
+      if (update && session?.user) {
         const newSession = { ...session.user, emailReportIds, notificationsEnabled, theme };
         update(newSession);
       }
@@ -46,6 +46,7 @@ const SettingsForm = () => {
   // Handle account deletion
   const handleDeleteAccount = () => {
     if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      alert("This feature has not been implemented yet. Please contact us if you wish to delete your account.");
       console.log('Account deletion requested');
     }
   };
@@ -99,7 +100,7 @@ const SettingsForm = () => {
           <span>Theme</span>
           <Dropdown
             options={['Light','Dark']}
-            selected={theme}
+            selected={theme || 'Light'}
             onSelect={setTheme}
           />
         </div>

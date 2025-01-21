@@ -1,66 +1,84 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Container from '@/components/Container';
 import NotificationBanner from '@/components/NotificationBanner';
 import { useSession } from 'next-auth/react';
 import { RealtorStatus } from '@/types/statuses';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const { data: session, update, status } = useSession();
-    
   const searchParams = useSearchParams();
   const [notification, setNotification] = useState('Verifying...');
-  const [notificationType, setNotificationType] = useState('loading');
-    
+  const [notificationType, setNotificationType] =
+    useState<"error" | "loading" | "info" | "success">('loading');
+
   const userId = searchParams.get('userId');
   const token = searchParams.get('token');
 
   useEffect(() => {
     const verifyToken = async () => {
       if (!userId || !token) {
-        setMessage('Invalid verification link.');
+        setNotification('Invalid verification link.');
+        setNotificationType('error');
         return;
       }
 
-      const response = await fetch(`/api/verifyEmail?userId=${userId}&token=${token}`);
+      try {
+        const response = await fetch(
+          `/api/verifyEmail?userId=${userId}&token=${token}`
+        );
 
-      if (response.ok) {
-        setNotificationType('success');
-        // 200 - email verified, 201 - email already verified (doesn't actually use token)
-        if (update && session?.user?.status === RealtorStatus.Unverified && response.status === 200) {
-          console.log("Updating session with verified status");
-          const newSession = { 
-            ...session.user, 
-            status: RealtorStatus.Active,
-            emailVerificationToken: '',
-            emailVerificationTokenExpires: '',
-          };
-          update(newSession);
+        if (response.ok) {
+          setNotificationType('success');
+
+          // 200 - email verified, 201 - email already verified
+          if (
+            update &&
+            session?.user?.status === RealtorStatus.Unverified &&
+            response.status === 200
+          ) {
+            console.log('Updating session with verified status');
+            const newSession = {
+              ...session.user,
+              status: RealtorStatus.Active,
+              emailVerificationToken: '',
+              emailVerificationTokenExpires: '',
+            };
+            await update(newSession);
+          }
+        } else {
+          setNotificationType('error');
         }
-          
-      }
-      else {
+
+        const data = await response.json();
+        setNotification(data.message || 'Verification failed.');
+      } catch (error) {
+        setNotification('An error occurred. Please try again.');
         setNotificationType('error');
       }
-        
-      const data = await response.json();
-      setNotification(data.message || 'Verification failed.');
     };
 
     if (status !== 'loading') {
       verifyToken();
     }
-  }, [userId, token, status]);
-
-
+  }, [userId, token, status, session, update]);
 
   return (
     <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown">
       <div className="max-w-sm mx-auto">
-        <NotificationBanner type={notificationType}>{notification}</NotificationBanner>
+        <NotificationBanner type={notificationType}>
+          {notification}
+        </NotificationBanner>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

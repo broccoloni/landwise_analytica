@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   // Check if the token matches and is not expired
   if (
     user.emailVerificationToken !== token ||
-    user.emailVerificationTokenExpires < new Date()
+    new Date(user.emailVerificationTokenExpires) < new Date()
   ) {
     return NextResponse.json({ message: 'Invalid or expired token.' }, { status: 400 });
   }
