@@ -1,7 +1,7 @@
 'use client';
 
 import { roboto } from '@/ui/fonts';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
@@ -12,7 +12,7 @@ import { useReportContext } from '@/contexts/ReportContext';
 import Loading from '@/components/Loading';
 import { ReportStatus } from '@/types/statuses'; 
 import { fetchReportsById, redeemReport } from '@/utils/reports';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import NotificationBanner from '@/components/NotificationBanner';
 
 // Dynamically import MapDrawing for client-side rendering
@@ -30,6 +30,17 @@ export default function RedeemReport() {
     status, setStatus,
   } = useReportContext();
 
+  const searchParams = useSearchParams();
+  const queryReportId = searchParams.get('reportId');
+    
+  useEffect(() => {
+    console.log("Query reportId from search params:", queryReportId);
+    if (queryReportId) {
+      setReportId(queryReportId);
+      setStatus(null);
+    }
+  }, [queryReportId]);
+    
   const [step, setStep] = useState(1);
   const stepNames = ['Enter ID', 'Select Address', 'Define Boundary', 'Review & Submit'];
 
@@ -58,9 +69,12 @@ export default function RedeemReport() {
     setAddressComponents(components);
   };
 
+  const topRef = useRef(null);
+    
   const handleBackStep = () => {
     if (step > 1) {
       setStep(prevStep => prevStep - 1);
+      topRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -93,6 +107,7 @@ export default function RedeemReport() {
     else if (step === 3) {
       setStep(prevStep => prevStep + 1);
     }
+    topRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
   const ReportStatusDisplay = () => {
@@ -163,7 +178,7 @@ export default function RedeemReport() {
   };
 
   return (
-    <div className={`${roboto.className} text-black min-h-screen flex-row justify-between`}>
+    <div className={`${roboto.className} text-black min-h-screen flex-row justify-between`} ref={topRef}>
       <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20 mx-auto">
         <div className="text-4xl font-bold mb-8 text-center">Redeem a Report</div>
         <div className="mb-8 px-10 mx-auto max-w-2xl">

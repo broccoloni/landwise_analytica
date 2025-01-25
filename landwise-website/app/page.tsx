@@ -93,8 +93,9 @@ export default function Home() {
                 src={'/satelliteToHeatmap.png'}
                 width={400}
                 height={600}
-                className="rounded-xl"
+                className="rounded-xl w-auto h-auto"
                 alt="Farm with crop heatmap"
+                priority
               />
             </div>
           </div>
