@@ -36,7 +36,7 @@ const Topography = (
   const [windExposureType, setWindExposureType] = useState<'Wind' | 'Gust'>('Wind');
   const [curWindExposure, setCurWindExposure] = useState<ImageAndStats|null>(null);
   
-  const metersPerPixel = 30;
+  // const metersPerPixel = 30; // area is now true area, not pixel count when coming from backend
   const sqMetersPerAcre = 4046.8565;
 
   useEffect(() => {
@@ -68,10 +68,10 @@ const Topography = (
       );
 
       console.log("landuse:", landUseData);
-      console.log(numYears, totalCropArea, totalArea);
+      console.log(numYears, totalCropArea / numYears, totalArea / numYears);
       
-      setAvgCropArea(totalCropArea / numYears * metersPerPixel * metersPerPixel);
-      setAvgArea(totalArea / numYears * metersPerPixel * metersPerPixel);
+      setAvgCropArea(totalCropArea / numYears);
+      setAvgArea(totalArea / numYears);
     }
   }, [landUseData]);
 
@@ -138,19 +138,19 @@ const Topography = (
                   { 
                     a: 'Total Property',
                     p: '100', 
-                    a1: `${avgArea?.toFixed(2) ?? ''}`, 
+                    a1: `${avgArea?.toFixed(0) ?? ''}`, 
                     a2: `${((avgArea ?? 0) / sqMetersPerAcre).toFixed(2)}`,
                   },
                   { 
                     a: 'Historical Cropland',
                     p: `${((avgCropArea ?? 0) / (avgArea ?? 1) * 100)?.toFixed(2)}`, 
-                    a1: `${avgCropArea?.toFixed(2)}`, 
+                    a1: `${avgCropArea?.toFixed(0)}`, 
                     a2: `${((avgCropArea ?? 0) / sqMetersPerAcre).toFixed(2)}`,
                   },
                   { 
                     a: 'Other',
                     p: `${(((avgArea ?? 0 ) - (avgCropArea ?? 0)) / (avgArea ?? 1) * 100)?.toFixed(2)}`, 
-                    a1: `${((avgArea ?? 0 ) - (avgCropArea ?? 0))?.toFixed(2)}`, 
+                    a1: `${((avgArea ?? 0 ) - (avgCropArea ?? 0))?.toFixed(0)}`, 
                     a2: `${(((avgArea ?? 0 ) - (avgCropArea ?? 0)) / sqMetersPerAcre).toFixed(2)}`,
                   },
                 ]}

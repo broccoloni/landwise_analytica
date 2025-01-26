@@ -98,7 +98,12 @@ const redeemReport = async (reportId: string, address: string, addressComponents
       }
       
       const result6 = await updateReportAttributes(reportId, { status: 'Processing Data' });
-      const landUseData = processLandUseData(unprocessedLandUseData);
+      
+      // Calculate area with ESPG that is equal area to get accurate area measurement
+      // For the US: EPSG 5070, 
+      const area = Math.round(polygon.area(0.1,'EPSG:5070').getInfo());
+      
+      const landUseData = processLandUseData(unprocessedLandUseData, area);
       const climateData = processClimateData(unprocessedClimateData);
       const elevationData = processElevationData(unprocessedElevationData); 
       const windData = processWindData(unprocessedElevationData, unprocessedClimateData);
@@ -111,6 +116,8 @@ const redeemReport = async (reportId: string, address: string, addressComponents
       const bounds = await polygon.bounds().getInfo();
       const boundCoordinates = bounds.coordinates[0];
       const centroid = await polygon.centroid().getInfo();
+
+
     
       const redeemedAt = new Date().toISOString();
       const data = { 
@@ -175,7 +182,7 @@ const redeemReport = async (reportId: string, address: string, addressComponents
       }
   } catch (error) {
     console.error('Error redeeming report:', error);
-    const result8 = await updateReportAttributes(reportId, { status: 'Redemption Failed' });
+    const result8 = await updateReportAttributes(reportId, { status: ReportStatus.Error });
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 };

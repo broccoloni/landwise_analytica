@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "geographiclib": "^1.52.2"
+  }
+}
