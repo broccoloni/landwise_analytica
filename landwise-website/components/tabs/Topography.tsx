@@ -12,6 +12,7 @@ import PlainTable from '@/components/PlainTable';
 import WindDirectionDisplay from "@/components/WindDirectionDisplay";
 import { ImageAndLegend, ImageAndStats, PerformanceData} from '@/types/dataTypes';
 import { rangeColors } from '@/types/colorPalettes';
+import { sqMetersPerAcre } from '@/utils/reports';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
@@ -37,7 +38,6 @@ const Topography = (
   const [curWindExposure, setCurWindExposure] = useState<ImageAndStats|null>(null);
   
   // const metersPerPixel = 30; // area is now true area, not pixel count when coming from backend
-  const sqMetersPerAcre = 4046.8565;
 
   useEffect(() => {
     if (landUseData) {

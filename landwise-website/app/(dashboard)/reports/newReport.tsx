@@ -13,8 +13,9 @@ import { useRouter } from 'next/navigation';
 import { ReportStatus, RealtorStatus } from '@/types/statuses';
 import CheckoutSession from '@/components/CheckoutSession';
 import Loading from '@/components/Loading';
-import { fetchReportsBySessionId, redeemReport } from '@/utils/reports';
+import { fetchReportsBySessionId, redeemReport, sqMetersPerAcre } from '@/utils/reports';
 import NotificationBanner from '@/components/NotificationBanner';
+import { toTitleCase } from '@/utils/string';
 
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
@@ -29,9 +30,10 @@ export default function NewReport() {
     landGeometry, setLandGeometry, 
     addressComponents, setAddressComponents,
     status, setStatus,
+    reportSize, setReportSize,
   } = useReportContext();
 
-  const { setQuantity, setCustomerId, setCouponId, setSessionId, sessionId } = useCartContext();
+  const { setQuantity, setCustomerId, setCouponId, setSessionId, sessionId, size, setSize } = useCartContext();
     
   const [step, setStep] = useState(1);
   const stepNames = ['Select Address', 'Define Boundary', 'Review', 'Payment'];
@@ -256,6 +258,8 @@ export default function NewReport() {
                 zoom={15}
                 points={landGeometry}
                 setPoints={setLandGeometry}
+                size={size}
+                setSize={setSize}
               />
             </div>
 
@@ -287,7 +291,8 @@ export default function NewReport() {
           <div>
             <div className="text-xl font-semibold mb-4">Review & Submit</div>
             <div className="mb-2">
-              <strong>Address:</strong> {address}
+              <strong>Address:</strong>
+              <span className="ml-4">{address}</span>
             </div>
             
             <div className="mb-4">
@@ -306,6 +311,11 @@ export default function NewReport() {
                 )}
               </div>
             </div>
+
+            <div className="mb-4">
+              <strong>Property Size:</strong>
+              <span className="ml-4">{toTitleCase(size)}</span>
+              </div>
 
             <div className="flex justify-between w-full">
               <div className="">            

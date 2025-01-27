@@ -11,7 +11,7 @@ import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
 import Loading from '@/components/Loading';
 import { ReportStatus } from '@/types/statuses'; 
-import { fetchReportsById, redeemReport } from '@/utils/reports';
+import { fetchReportsById, redeemReport, isValidSize, getAcresFromSize, sqMetersPerAcre } from '@/utils/reports';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NotificationBanner from '@/components/NotificationBanner';
 
@@ -28,6 +28,7 @@ export default function RedeemReport() {
     landGeometry, setLandGeometry, 
     addressComponents, setAddressComponents,
     status, setStatus,
+    reportSize, setReportSize,
   } = useReportContext();
 
   const searchParams = useSearchParams();
@@ -89,6 +90,7 @@ export default function RedeemReport() {
       const reports = await fetchReportsById(reportId);
       const report = reports[0];
       setStatus(report?.status || ReportStatus.Invalid);
+      setReportSize(report?.size);
       setValidatingReportId(false);
         
       if (report?.status === ReportStatus.Unredeemed) {
@@ -110,6 +112,8 @@ export default function RedeemReport() {
     topRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
+
+    
   const ReportStatusDisplay = () => {
     if (validatingReportId) {
       return (
@@ -163,7 +167,7 @@ export default function RedeemReport() {
   };
 
   const handleRedeem = async () => {
-    if (!reportId || !address || !addressComponents || landGeometry.length <= 3) {
+    if (!reportId || !address || !addressComponents || landGeometry.length <= 3 || !validSize) {
       console.error('Required fields are missing or invalid.');
       return;
     }
@@ -176,6 +180,17 @@ export default function RedeemReport() {
       console.error('Failed to redeem report:', result.message);
     }
   };
+
+  const [drawingSize, setDrawingSize] = useState<string | null>(null);
+  const [validSize, setValidSize] = useState(true);
+  useEffect(() => {
+    if (reportSize && drawingSize && !isValidSize(reportSize, drawingSize) && validSize) {
+      setValidSize(false);
+    }
+    else if (reportSize && drawingSize && isValidSize(reportSize, drawingSize) && !validSize) {
+      setValidSize(true);
+    }
+  }, [drawingSize, reportSize, validSize]);
 
   return (
     <div className={`${roboto.className} text-black min-h-screen flex-row justify-between`} ref={topRef}>
@@ -273,7 +288,7 @@ export default function RedeemReport() {
               <li className="">Double-click to close the boundary</li>
               <li className="">Use the cursor to move points, if necessary</li>
             </ul>
-
+              
             <div className="w-full">
               <MapDrawing
                 latitude={latitude}
@@ -281,8 +296,25 @@ export default function RedeemReport() {
                 zoom={15}
                 points={landGeometry}
                 setPoints={setLandGeometry}
+                size={drawingSize}
+                setSize={setDrawingSize}
               />
             </div>
+
+            {!validSize && (
+              <div className="mt-4">
+                <NotificationBanner type='info'>
+                  <div className="">
+                    <span className="font-bold">Invalid Property Size:</span> 
+                    The report ID you're trying to redeem is for a 
+                    <span className="font-bold ml-1">{reportSize}</span>-sized property, 
+                    and must have an area less than or equal to 
+                    <span className="font-bold ml-1">{`${Math.round(getAcresFromSize(reportSize)*sqMetersPerAcre)} m\u00B2`}</span> or
+                    <span className="font-bold ml-1">{`${Math.round(getAcresFromSize(reportSize))} ac`}</span>.     
+                  </div>
+                </NotificationBanner>
+              </div>
+            )}
 
             <div className="flex justify-between w-full">
               <div className="">            
@@ -297,7 +329,7 @@ export default function RedeemReport() {
               <div className="">            
                 <button
                   onClick={handleNextStep}
-                  disabled={landGeometry.length < 3}
+                  disabled={landGeometry.length < 3 || !validSize}
                   className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
@@ -342,7 +374,7 @@ export default function RedeemReport() {
               <div className="">   
                 <button
                   onClick={handleRedeem}
-                  disabled={ !reportId || !address || !addressComponents || landGeometry.length < 3 }
+                  disabled={ !reportId || !address || !addressComponents || landGeometry.length < 3 || !validSize}
                   className="flex justify-center items-center mt-4 bg-medium-brown text-white px-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Redeem Report

@@ -8,7 +8,8 @@ import ReportBar from '@/components/ReportBar';
 import { useReportContext } from '@/contexts/ReportContext';
 import { roboto, montserrat } from '@/ui/fonts';
 import { useCartContext } from '@/contexts/CartContext';
-import { fetchReportsBySessionId, redeemReport } from '@/utils/reports';
+import { fetchReportsBySessionId, redeemReport, isValidSize } from '@/utils/reports';
+import { reportSizeLabels } from '@/types/reportSizes';
 
 export default function Checkout() {
   // Note: Report details is too long to store in stripe metadata
@@ -17,7 +18,7 @@ export default function Checkout() {
   // redeem the report with those details, which are still in the reportContext
   const router = useRouter();
   const [loadingReports, setLoadingReports] = useState(true);
-  const reportContext = useReportContext();
+  const { address, addressComponents, landGeometry, reportSize } = useReportContext();
   const { setQuantity, setCouponId, setCustomerId, sessionId, setSessionId } = useCartContext();
 
   const [reports, setReports] = useState<any[]>([]);
@@ -63,20 +64,20 @@ export default function Checkout() {
   }, [reports, sessionId]);
 
   useEffect(() => {
-    console.log(reports[0]?.reportId, reportContext?.address);
-  }, [reports[0]?.reportId, reportContext?.address]);
+    console.log(reports[0]?.reportId, address);
+  }, [reports[0]?.reportId, address]);
 
   const handleRedeem = async () => {
-    if (!reports[0]?.reportId || !reportContext.address || !reportContext.addressComponents || reportContext.landGeometry.length < 3) {
+    if (!reports[0]?.reportId || !address || !addressComponents || landGeometry.length < 3) {
       console.error('Required fields are missing or invalid.');
       return;
     }
       
     const result = await redeemReport({ 
       reportId: reports[0].reportId, 
-      address: reportContext.address, 
-      addressComponents: reportContext.addressComponents, 
-      landGeometry: reportContext.landGeometry,
+      address: address, 
+      addressComponents: addressComponents, 
+      landGeometry: landGeometry,
     });
     if (result.success) {
       console.log('Report redeemed successfully');
@@ -110,11 +111,11 @@ export default function Checkout() {
                 </div>
               )}
             </div>
-            {reports[0]?.reportId && reportContext?.address && reportContext?.addressComponents && reportContext?.landGeometry.length >= 3 && (
+            {reports[0]?.reportId && address && addressComponents && landGeometry.length >= 3 && isValidSize(reportSize, reports[0]?.size) && (
               <div className="my-8 text-md max-w-2xl mx-auto">
                 Redeem 
                 <span className={`mx-2 ${montserrat.className}`}>{reports[0]?.reportId}</span> 
-                with <strong className="mr-2">{reportContext?.address}</strong> 
+                with <strong className="mr-2">{address}</strong> 
 
                 <span>
                   <button

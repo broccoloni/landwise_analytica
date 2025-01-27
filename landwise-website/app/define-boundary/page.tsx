@@ -15,19 +15,13 @@ const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false
 
 export default function DefineBounrdary() {
   const router = useRouter();
-  const { latitude, longitude, landGeometry, setLandGeometry } = useReportContext();
+  const { latitude, longitude, landGeometry, setLandGeometry, reportSize, setReportSize } = useReportContext();
 
   const stepNames = ['Select Address', 'Define Boundary', 'Purchase Report'];
 
   const handleGetReport = () => {
-    router.push('/get-a-report');
+    router.push(`/get-a-report?size=${reportSize}`);
   };
-
-
-  // const [area, setArea] = useState<number|null>(null);
-  // useEffect(() => {
-  //   setArea(calculatePolygonArea(landGeometry));
-  // }, [landGeometry]);
 
   return (
     <div className={`${roboto.className} text-black min-h-screen py-10 flex-row justify-between`}>
@@ -44,15 +38,6 @@ export default function DefineBounrdary() {
           <li className="">Use the cursor to move points, if necessary</li>
         </ul>
 
-        {/* <div className="flex">
-          <div className="mr-4">Area:</div>
-            {area ? (
-              <div className="">{area}</div>
-            ) : (
-              <div className="">Not enough points</div>
-            )}
-        </div> */}
-
         <div className="w-full">
           <MapDrawing
             latitude={latitude}
@@ -60,6 +45,8 @@ export default function DefineBounrdary() {
             zoom={15}
             points={landGeometry}
             setPoints={setLandGeometry}
+            size={reportSize}
+            setSize={setReportSize}
           />
         </div>
 

@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 import { MousePointer, Dot, Undo, Redo, RotateCcw } from 'lucide-react';
 import { calculatePolygonArea } from '@/utils/calculateArea';
 import { LatLngTuple } from 'leaflet';
+import { sqMetersPerAcre, getSizeFromSqM } from '@/utils/reports';
+import { toTitleCase } from '@/utils/string';
 
 interface MapDrawingProps {
   latitude: string | number | null;
@@ -13,6 +15,8 @@ interface MapDrawingProps {
   zoom: number;
   points: number[][];
   setPoints: React.Dispatch<React.SetStateAction<number[][]>>;
+  size: string;
+  setSize: React.Dispatch<React.SetStateAction<string>>;
 }
 
 interface MapClickHandlerProps {
@@ -42,6 +46,8 @@ export default function MapDrawing({
   zoom: initialZoom,
   points,
   setPoints,
+  size,
+  setSize,
 }: MapDrawingProps) {
   const [hoverPoint, setHoverPoint] = useState<number[] | null>(null);
   const [isPolygonClosed, setIsPolygonClosed] = useState(false);
@@ -193,23 +199,18 @@ export default function MapDrawing({
 
   const cursorStyle = isPlacingMode ? 'crosshair' : 'move';
 
-  const sqMetersPerAcre = 4046.8565;
+  const area = calculatePolygonArea(polygonPoints);
 
-  const [area, setArea] = useState<number|null>(null);
   useEffect(() => {
-    setArea(calculatePolygonArea(polygonPoints));
-  }, [polygonPoints]);
-
-  const size = area === null 
-    ? null 
-    : (() => {
-        const acres = Math.round(area / sqMetersPerAcre);
-        return acres < 50 ? 'Small' 
-             : acres < 250 ? 'Medium' 
-             : acres < 500 ? 'Large' 
-             : acres < 2000 ? 'X-Large' 
-             : 'Jumbo';
-      })();
+    if (area !== null) {
+      const newSize = getSizeFromSqM(area);
+      if (newSize !== size) {
+        setSize(newSize);
+      }
+    } else if (area === null && size) {
+        setSize(null);
+    } 
+  }, [area, size]);
 
   return (
     <div className="w-full">
@@ -266,8 +267,8 @@ export default function MapDrawing({
 
       <div className="flex space-x-2">
         <div className="w-[50%] flex justify-between text-center">
-          <div className="w-44 bg-medium-brown text-white rounded-tl border border-gray-800 px-4 py-2">Area </div>
-          <div className="w-full px-4 py-2 bg-white text-black rounded-tr border border-gray-800">
+          <div className="w-44 bg-medium-brown text-white rounded-tl border-t border-l border-r border-gray-800 px-4 py-2">Area </div>
+          <div className="w-full px-4 py-2 bg-white text-black rounded-tr border-t border-r border-gray-800">
             {area ? (
               <div className="flex">
                 <div className="mr-2">{`${area} m\u00B2`},</div>
@@ -279,10 +280,10 @@ export default function MapDrawing({
           </div>
         </div>
         <div className="w-[50%] flex justify-between text-center">
-          <div className="w-44 bg-medium-brown text-white rounded-tl border border-gray-800 px-4 py-2">Report Size </div>
-          <div className="w-full px-4 py-2 bg-white text-black rounded-tr border border-gray-800">
+          <div className="w-44 bg-medium-brown text-white rounded-tl border-t border-l border-r border-gray-800 px-4 py-2">Property Size </div>
+          <div className="w-full px-4 py-2 bg-white text-black rounded-tr border-t border-r border-gray-800">
             {size ? (
-              <div className="">{size}</div>
+              <div className="">{toTitleCase(size)}</div>
             ) : (
               <div className="">Not enough points</div>
             )}
