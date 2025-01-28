@@ -7,6 +7,7 @@ import InfoButton from "@/components/InfoButton";
 import Loading from "@/components/Loading";
 import { useSession } from "next-auth/react";
 import { useReportsByCustomerId } from "@/hooks/useReports";
+import Link from 'next/link';
 
 const MonthlyReportsWidget: React.FC = () => {
   const { data: session, status } = useSession();
@@ -35,8 +36,17 @@ const MonthlyReportsWidget: React.FC = () => {
         <span>Reports Ordered This Month</span>
         <InfoButton>
           <div className="text-center text-lg">Reports Ordered</div>
-          <div className="text-sm">
+          <div className="text-sm mt-2">
             Once the Pilot Program has ended, the more reports you buy in a month, the better the discount!
+          </div>
+          <div className="text-sm mt-2">
+            Check out our prices 
+            <Link
+              href='/reports?tab=pricing'
+              className="font-bold text-medium-green hover:underline ml-2"
+            >
+              here
+            </Link>                        
           </div>
         </InfoButton>
       </div>

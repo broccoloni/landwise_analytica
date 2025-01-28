@@ -6,6 +6,7 @@ import InfoButton from "@/components/InfoButton";
 import Loading from "@/components/Loading";
 import { useSession } from "next-auth/react";
 import { useReportsByCustomerId } from "@/hooks/useReports";
+import Link from 'next/link';
 
 const ExpiringReportsWidget: React.FC = () => {
   const { data: session, status } = useSession();
@@ -42,8 +43,14 @@ const ExpiringReportsWidget: React.FC = () => {
         <span>Reports Expiring This Week</span>
         <InfoButton>
           <div className="text-center text-lg">Report Expiration</div>
-          <div className="text-sm">
-            Once ordered, reports expire after 180 days. To continue viewing your report, you can download a PDF. If you prefer the dynamic display provided on our website, you can also download the report in JSON format and upload the data for viewing.
+          <div className="text-sm mt-2">
+            Once ordered, reports expire after 180 days. To continue viewing your report, you can download the data in JSON format, and reupload it 
+            <Link
+              href='/upload'
+              className="font-bold text-medium-green hover:underline ml-2"
+            >
+              here
+            </Link> 
           </div>
         </InfoButton>
       </div>

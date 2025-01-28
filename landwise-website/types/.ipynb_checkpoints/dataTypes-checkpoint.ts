@@ -1,4 +1,11 @@
 export interface DemoData {
+  reportId: string,
+  address: string,
+  addressComponents: any;
+  landGeometry: number[][];
+  redeemedAt: string;
+  createdAt: string;
+  status: string;
   latitude: number;
   longitude: number;
   bbox: number[][];

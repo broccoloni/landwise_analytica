@@ -8,7 +8,7 @@ import Container from '@/components/Container';
 import AddressDisplay from '@/components/AddressDisplay';
 import SummaryScore from '@/components/SummaryScore';
 import PrintButton from '@/components/PrintButton';
-import DownloadPDF from '@/components/DownloadPDF';
+import DownloadButton from '@/components/DownloadButton';
 import Loading from '@/components/Loading';
 import { useParams } from "next/navigation";
 import Link from 'next/link';
@@ -55,6 +55,7 @@ export default function ViewReport() {
   const [landUseData, setLandUseData] = useState<Record<number, ImageAndLegend>|null>(null);
   const [soilData, setSoilData] = useState<any>(null);
   const [bbox, setBbox] = useState<number[][] | null>(null);
+  const [allData, setAllData] = useState<any>(null);
     
   // Score trackers
   // const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
@@ -97,7 +98,7 @@ export default function ViewReport() {
       else {
         
         console.log('Fetched report:', report);
-        
+          
         // Report Context Info
         setLatitude(report.latitude || null);
         setLongitude(report.longitude || null);
@@ -106,6 +107,7 @@ export default function ViewReport() {
         setLandGeometry(report.landGeometry || []);
         setStatus(report.status);
         setRedeemedAt(report.redeemedAt || null);
+        setCreatedAt(report.createdAt || null);
         
         // Report Data
         setBbox(report.bbox);
@@ -116,9 +118,9 @@ export default function ViewReport() {
         setLandUseData(report.landUseData);
         setWindData(report.windData);
         setSoilData(report.soilData);
-        // setHistoricData(report.historicData);
-        // setProjectedData(report.projectedData);
-        // setCropHeatMapData(report.cropHeatMapData);
+        setHistoricData(report.historicData);
+        setProjectedData(report.projectedData);
+        setCropHeatMapData(report.cropHeatMapData);
         
         setDataLoaded(true);
       }
@@ -288,8 +290,28 @@ export default function ViewReport() {
             </div>
           </div>
           <div className="space-x-4 flex">
-            <DownloadPDF elementId={'report'} fileName={`report-${reportId}.pdf`}/>
-            <PrintButton />
+            <DownloadButton 
+              reportId = {reportId}
+              latitude = {latitude} 
+              longitude = {longitude}
+              address = {address}
+              addressComponents = {addressComponents}
+              landGeometry = {landGeometry}
+              status = {status}
+              redeemedAt = {redeemedAt}
+              createdAt = {createdAt}
+              bbox = {bbox}
+              heatUnitData = {heatUnitData}
+              growingSeasonData = {growingSeasonData}
+              climateData = {climateData}
+              elevationData = {elevationData}
+              landUseData = {landUseData}
+              soilData = {soilData}
+              historicData = {historicData}
+              projectedData = {projectedData}
+              cropHeatMapData = {cropHeatMapData}
+            />
+            {/* <PrintButton /> */}
           </div>
         </div>
         <Container className="bg-white">

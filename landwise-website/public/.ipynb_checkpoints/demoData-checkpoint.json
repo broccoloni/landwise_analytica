@@ -1,6 +1,28 @@
 {
+  "reportId": "XXXX-XXXX-XXXX",
   "latitude": 43.69280456809216,
   "longitude": -80.30353424380063,
+  "address": "8159 Side Road 30, Wellington County, Ontario, N0B 2K0, Canada",
+  "addressComponents": {
+    "street_number": "8159",
+    "route": "Side Road 30",
+    "locality": "Rockwood",
+    "administrative_area_level_3": "Centre Wellington",
+    "administrative_area_level_2": "Wellington County",
+    "administrative_area_level_1": "ON",
+    "country": "CA",
+    "postal_code": "N0B 2K0"
+  },
+  "status": "DOWNLOADED",
+  "redeemedAt": "01-01-2025",
+  "createdAt": "01-01-2025",
+  "landGeometry": [
+    [-80.31498045591154, 43.69656167853627],
+    [-80.29888151989009, 43.69587904839524], 
+    [-80.30274526453523, 43.68709724956653],
+    [-80.31867247857245, 43.68830753851859],
+    [-80.31154610745378, 43.68805151789220]
+  ],
   "bbox": [
     [
       43.68843130567386,

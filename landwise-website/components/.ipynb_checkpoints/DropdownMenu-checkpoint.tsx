@@ -23,7 +23,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ title, options, onLinkClick
         {options.map((option) => (
           <li
             key={option.path}
-            className="py-2 px-4 text-left cursor-pointer hover:bg-gray-200 hover:text-black"
+            className="py-2 px-4 text-left cursor-pointer hover:bg-gray-200 hover:text-black border-b border-gray-200"
           >
             <Link 
               href={option.path}

@@ -72,12 +72,12 @@ export default function CheckoutSession({ onComplete }:{ onComplete: (sessionId:
           <Loading />
         </div>
       ) : options.clientSecret ? (
-        <EmbeddedCheckoutProvider 
-          stripe={stripePromise} 
+        <EmbeddedCheckoutProvider
+          stripe={stripePromise}
           options={{
-            ...options,
-            onComplete: handleComplete
-          }} 
+            clientSecret: options.clientSecret,
+            onComplete: handleComplete,
+          }}
         >
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>

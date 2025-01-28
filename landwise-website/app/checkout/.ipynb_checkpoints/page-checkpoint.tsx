@@ -119,7 +119,7 @@ export default function Checkout() {
 
                 <span>
                   <button
-                    className="hover:underline hover:text-medium-brown"
+                    className="hover:underline text-medium-green font-bold"
                     onClick={handleRedeem}
                   >
                     here
