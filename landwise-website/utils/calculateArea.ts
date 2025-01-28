@@ -54,13 +54,14 @@
 // };
 
 import * as turf from "@turf/turf";
+import { LatLngTuple } from 'leaflet';
 
 /**
  * Calculates the area of a polygon in square meters.
  * @param coordinates - An array of coordinates in [latitude, longitude] format.
  * @returns The area of the polygon in square meters.
  */
-export const calculatePolygonArea = (coordinates: number[][]): number|null => {
+export const calculatePolygonArea = (coordinates: LatLngTuple[]): number|null => {
   // Ensure there are enough points to form a polygon
   if (coordinates.length < 3) {
     return null;
@@ -77,7 +78,7 @@ export const calculatePolygonArea = (coordinates: number[][]): number|null => {
 
   // Convert coordinates to [longitude, latitude] and create a GeoJSON polygon
   const polygon = turf.polygon([
-    closedCoordinates.map(([lat, lng]) => [lng, lat]),
+    closedCoordinates.map(([lat, lng]: LatLngTuple) => [lng, lat] as number[]),
   ]);
 
   // Calculate area in square meters

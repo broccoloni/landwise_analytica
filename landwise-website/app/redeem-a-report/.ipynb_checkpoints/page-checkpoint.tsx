@@ -1,7 +1,7 @@
 'use client';
 
 import { roboto } from '@/ui/fonts';
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
@@ -12,8 +12,10 @@ import { useReportContext } from '@/contexts/ReportContext';
 import Loading from '@/components/Loading';
 import { ReportStatus } from '@/types/statuses'; 
 import { fetchReportsById, redeemReport, isValidSize, getAcresFromSize, sqMetersPerAcre } from '@/utils/reports';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { ReportSize } from '@/types/reportSizes';
 import NotificationBanner from '@/components/NotificationBanner';
+import { toTitleCase } from '@/utils/string';
 
 // Dynamically import MapDrawing for client-side rendering
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
@@ -31,16 +33,15 @@ export default function RedeemReport() {
     reportSize, setReportSize,
   } = useReportContext();
 
-  const searchParams = useSearchParams();
-  const queryReportId = searchParams.get('reportId');
-    
   useEffect(() => {
-    console.log("Query reportId from search params:", queryReportId);
+    const params = new URLSearchParams(window.location.search);
+    const queryReportId = params.get('reportId') as string;
+
     if (queryReportId) {
       setReportId(queryReportId);
       setStatus(null);
     }
-  }, [queryReportId]);
+  }, []);
     
   const [step, setStep] = useState(1);
   const stepNames = ['Enter ID', 'Select Address', 'Define Boundary', 'Review & Submit'];
@@ -70,7 +71,7 @@ export default function RedeemReport() {
     setAddressComponents(components);
   };
 
-  const topRef = useRef(null);
+  const topRef = useRef<HTMLDivElement>(null);
     
   const handleBackStep = () => {
     if (step > 1) {
@@ -192,7 +193,7 @@ export default function RedeemReport() {
     }
   }, [drawingSize, reportSize, validSize]);
 
-  return (
+  return (      
     <div className={`${roboto.className} text-black min-h-screen flex-row justify-between`} ref={topRef}>
       <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20 mx-auto">
         <div className="text-4xl font-bold mb-8 text-center">Redeem a Report</div>
@@ -309,8 +310,8 @@ export default function RedeemReport() {
                     The report ID you're trying to redeem is for a 
                     <span className="font-bold ml-1">{reportSize}</span>-sized property, 
                     and must have an area less than or equal to 
-                    <span className="font-bold ml-1">{`${Math.round(getAcresFromSize(reportSize)*sqMetersPerAcre)} m\u00B2`}</span> or
-                    <span className="font-bold ml-1">{`${Math.round(getAcresFromSize(reportSize))} ac`}</span>.     
+                    <span className="font-bold ml-1">{`${Math.round(getAcresFromSize(reportSize as ReportSize)*sqMetersPerAcre)} m\u00B2`}</span> or
+                    <span className="font-bold ml-1">{`${Math.round(getAcresFromSize(reportSize as ReportSize))} ac`}</span>.     
                   </div>
                 </NotificationBanner>
               </div>
@@ -360,6 +361,11 @@ export default function RedeemReport() {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            <div className="mb-4">
+              <strong>Property Size:</strong>
+              <span className="ml-4">{toTitleCase(reportSize)}</span>
             </div>
 
             <div className="flex justify-between w-full">

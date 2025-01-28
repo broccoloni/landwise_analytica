@@ -7,32 +7,35 @@ import Link from 'next/link';
 import { Check, RotateCcw } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
 import { useCartContext } from '@/contexts/CartContext';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { fetchReportPricesAndCoupons } from '@/utils/stripe';
+import { useRouter } from 'next/navigation';
 import { ReportSize, reportSizeLabels, reportSizeAcres } from '@/types/reportSizes';
 import { toTitleCase } from '@/utils/string';
 import InfoButton from '@/components/InfoButton';
 import { sqMetersPerAcre, isValidSize } from '@/utils/reports';
 import NotificationBanner from '@/components/NotificationBanner';
+import Loading from '@/components/Loading';
 
 export default function GetReport() {
   const router = useRouter();
   const { setQuantity, setCouponId, setCustomerId, setSessionId, setSize, size, setPriceId } = useCartContext();
   const { address, clearReportContext, reportSize } = useReportContext();
 
-  const searchParams = useSearchParams();
-    
-  const handleSizeChange = (selectedSize: string) => {
-    setSize(selectedSize);
-    router.replace(`?size=${selectedSize}`);
-  };
-
   useEffect(() => {
-    const currentSize = searchParams.get('size');
-    if (currentSize && currentSize !== size) {
-      setSize(currentSize);
+    const params = new URLSearchParams(window.location.search);
+    const urlSize = params.get('size') as ReportSize;
+
+    if (urlSize) {
+      setSize(urlSize);
     }
-  }, [searchParams]);
+  }, []);
+
+  const handleSizeChange = (selectedSize: ReportSize) => {
+    setSize(selectedSize);
+    const params = new URLSearchParams(window.location.search);
+    params.set('size', selectedSize || 'medium');
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  };
     
   const [prices, setPrices] = useState<any[]>([]);
   const [coupon, setCoupon] = useState<any>(null);
@@ -54,7 +57,7 @@ export default function GetReport() {
         console.log("Fetched Prices:", prices);
         console.log("Fetched Coupons:", coupons);
 
-        const twentyOffCoupon = coupons.data.find((coupon) => coupon.name === "20% off");
+        const twentyOffCoupon = coupons.data.find((coupon: any) => coupon.name === "20% off");
           
         setPrices(prices.data);
         setCoupon(twentyOffCoupon);
@@ -82,7 +85,7 @@ export default function GetReport() {
     if (prices && coupon && size !== 'jumbo') {
       
       const curSize = size || 'medium';
-      const curPrice = prices.find((price) => price.lookup_key === curSize);
+      const curPrice = prices.find((price: any) => price.lookup_key === curSize);
         
       setPriceOne(curPrice.unit_amount / 100);
       setPriceThree(3 * curPrice.unit_amount / 100 * (100 - coupon.percent_off) / 100);
@@ -106,7 +109,7 @@ export default function GetReport() {
     
   const handleBuyOne = async () => {
     const curSize = size || 'medium';
-    const curPrice = prices.find((price) => price.lookup_key === curSize);
+    const curPrice = prices.find((price: any) => price.lookup_key === curSize);
       
     setQuantity(1);
     setCustomerId(null);
@@ -118,7 +121,7 @@ export default function GetReport() {
 
   const handleBuyThree = async () => {
     const curSize = size || 'medium';
-    const curPrice = prices.find((price) => price.lookup_key === curSize);
+    const curPrice = prices.find((price: any) => price.lookup_key === curSize);
       
     setQuantity(3);
     setCouponId(coupon.id || null);
@@ -207,12 +210,14 @@ export default function GetReport() {
           <Container className="text-black  bg-white border border-gray-300 rounded-lg shadow-lg max-w-sm">
             <div className="font-semibold text-2xl text-center text-dark-blue mb-8">{toTitleCase(size)} Report</div>
 
-            <div className="mb-8">To purchase a <span className="font-bold">{toTitleCase(size)}</span> report, please request a quote using the button below</div>
+            <div className="mb-8">To purchase a <span className="font-bold">{toTitleCase(size)}</span> report, please contact us to request a quote using the button below</div>
 
             <div className="flex justify-center items-center mb-8">
               <Link
-                 href={`mailto:${process.env.NEXT_PUBLIC_EMAIL_ADDRESS}`}
+                 href={`/contact`}
                  className="px-4 py-2 bg-medium-brown hover:opacity-75 text-white rounded"
+                 target="_blank"
+                 rel="noopener noreferrer"
               >
                 Request a Quote
               </Link>
@@ -317,7 +322,7 @@ export default function GetReport() {
               </div>
               <div className="flex h-8 justify-center items-center text-gray-500">
                 <div className="mr-2 font-bold">{discountPct}% off</div>
-                <div className="line-through">${(3*priceOne).toFixed(2)}</div>
+                <div className="line-through">{priceOne ? `$${(3*priceOne).toFixed(2)}` : <Loading className="h-5 w-5" />}</div>
               </div>
               <div className="mx-10 my-4">
                 <div className="mb-2">

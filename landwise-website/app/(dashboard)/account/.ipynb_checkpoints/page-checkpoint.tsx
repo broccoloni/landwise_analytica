@@ -1,8 +1,7 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import InfoForm from './infoForm';
 import PasswordForm from './passwordForm';
 import SettingsForm from './settingsForm';
@@ -13,22 +12,24 @@ import Container from '@/components/Container';
 
 export default function AccountPage() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || 'edit');
-
-  const handleTabChange = (tab: string) => {
-    setSelectedTab(tab);
-    router.replace(`?tab=${tab}`);
-  };
-
+  const [selectedTab, setSelectedTab] = useState<'edit' | 'password' | 'settings' | 'feedback'>('edit');
   useEffect(() => {
-    const currentTab = searchParams.get('tab');
-    if (currentTab && currentTab !== selectedTab) {
-      setSelectedTab(currentTab);
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab') as 'edit' | 'password' | 'settings' | 'feedback';
+
+    if (tab) {
+      setSelectedTab(tab);
     }
-  }, [searchParams]);
+  }, []);
+
+  const handleTabChange = (tab: 'edit' | 'password' | 'settings' | 'feedback') => {
+    setSelectedTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  };
 
   if (status === 'loading') {
     return <div className="m-auto py-20 min-w-lg"><Loading /></div>;

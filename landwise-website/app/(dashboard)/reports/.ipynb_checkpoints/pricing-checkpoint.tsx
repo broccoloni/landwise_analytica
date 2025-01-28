@@ -116,7 +116,7 @@ export default function Pricing() {
       <div className="mt-8">
         {tiers.map((tier, index) => {
         const discountPct = couponNames[index]
-          ? coupons?.find((coupon) => coupon.name === couponNames[index])?.percent_off || 0
+          ? coupons?.find((coupon: any) => coupon.name === couponNames[index])?.percent_off || 0
           : 0;
     
         const discountedPrice = ((curPrice?.unit_amount / 100) * (100 - discountPct)) / 100;

@@ -16,6 +16,7 @@ import Loading from '@/components/Loading';
 import { fetchReportsBySessionId, redeemReport, sqMetersPerAcre } from '@/utils/reports';
 import NotificationBanner from '@/components/NotificationBanner';
 import { toTitleCase } from '@/utils/string';
+import Link from 'next/link';
 
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
@@ -45,7 +46,7 @@ export default function NewReport() {
     setAddressComponents(components);
   };
 
-  const topRef = useRef(null);
+  const topRef = useRef<HTMLDivElement>(null);
 
   const handleBackStep = () => {
     if (step > 1) {
@@ -315,7 +316,7 @@ export default function NewReport() {
             <div className="mb-4">
               <strong>Property Size:</strong>
               <span className="ml-4">{toTitleCase(size)}</span>
-              </div>
+            </div>
 
             <div className="flex justify-between w-full">
               <div className="">            
@@ -347,8 +348,35 @@ export default function NewReport() {
               <div className="p-20">
                 <Loading />
               </div>
-            ) : session?.user?.status && session?.user?.status === RealtorStatus.Active ? (
+            ) : session?.user?.status && session?.user?.status === RealtorStatus.Active && size && size !== 'jumbo' ? (
               <CheckoutSession onComplete={handleComplete} />
+            ) : session?.user?.status && session?.user?.status === RealtorStatus.Active && size && size === 'jumbo' ? (
+              <div>
+                <div className="font-semibold text-2xl text-center text-dark-blue mb-8">{toTitleCase(size)} Report</div>
+                <div className="mb-8">To purchase a <span className="font-bold">{toTitleCase(size)}</span> report, please contact us to request a quote using the button below</div>
+    
+                <div className="flex justify-center items-center mb-8">
+                  <Link
+                     href={`/contact`}
+                     className="px-4 py-2 bg-medium-brown hover:opacity-75 text-white rounded"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                  >
+                    Request a Quote
+                  </Link>
+                </div>
+    
+                  
+                <div className="mb-4">
+                  <div className="mb-2">We do this to</div>
+                  <ul className="list-disc ml-5">
+                    <li>Ensure the authenticity of {size} report requests</li>
+                    <li>Verify the intended property boundary</li>
+                    <li>Prevent processing from interfering with our other operations</li>
+                  </ul>
+                </div>
+                <div className="">Thank you for your understanding.</div>
+              </div>
             ) : (
               <NotificationBanner type='error'>Something went wrong. Please try again later.</NotificationBanner>
             )}

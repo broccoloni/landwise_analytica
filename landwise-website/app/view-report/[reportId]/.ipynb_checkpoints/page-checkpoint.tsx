@@ -230,7 +230,16 @@ export default function ViewReport() {
       return (
         <div className="flex-row justify-center items-center my-10">
           <div className="text-center">An unexpected error occured.</div>
-          <div className="text-center">Please try again to redeem your report, or contact us if you have further issues</div>
+          <div className="text-center">
+            Please try again to redeem your report, or 
+            <Link
+              href='/contact'
+              className="hover:underline text-medium-green"
+            >  
+              contact us 
+            </Link>
+            if you have further issues
+          </div>
         </div>
       );
     }

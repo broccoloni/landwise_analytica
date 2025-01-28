@@ -3,7 +3,8 @@
  * @param str - The string to convert.
  * @returns The string in title case.
  */
-export function toTitleCase(str: string): string {
+export function toTitleCase(str: string | null): string | null {
+  if (str === null) return null;
   return str
     .toLowerCase()
     .split(' ')

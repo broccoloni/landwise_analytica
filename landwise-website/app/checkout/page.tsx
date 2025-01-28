@@ -22,7 +22,7 @@ export default function Checkout() {
   const { setQuantity, setCouponId, setCustomerId, sessionId, setSessionId } = useCartContext();
 
   const [reports, setReports] = useState<any[]>([]);
-  const topRef = useRef(null);
+  const topRef = useRef<HTMLDivElement>(null);
     
   const handleComplete = (completedSessionId: string) => {
     console.log("(checkout) complete", completedSessionId);

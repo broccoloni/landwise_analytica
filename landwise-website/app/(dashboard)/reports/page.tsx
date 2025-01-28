@@ -1,7 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useSearchParams, useRouter } from 'next/navigation';
 import { NotebookText, ClipboardPlus, DollarSign } from 'lucide-react';
 import Container from '@/components/Container';
 import ViewReports from './viewReports';
@@ -14,21 +14,27 @@ export default function ReportsPage() {
   const { clearReportContext } = useReportContext();
   const { data: session, status } = useSession();
   const { setSessionId } = useCartContext();
-  const searchParams = useSearchParams();
-  const router = useRouter();
 
-  const selectedTab = searchParams.get('tab') || 'view-reports';
+  const [selectedTab, setSelectedTab] = useState<'view-reports' | 'new-report' | 'pricing'>('view-reports');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab') as 'view-reports' | 'new-report' | 'pricing';
 
-  const handleTabChange = (tab) => {
-    router.push(`?tab=${tab}`);
-    if (tab === 'view-reports') {
-      setSessionId(null);
-    } else if (tab === 'new-report') {
-      clearReportContext();
+    if (tab) {
+      setSelectedTab(tab);
     }
+  }, []);
+
+  const handleTabChange = (tab: 'view-reports' | 'new-report' | 'pricing') => {
+    setSelectedTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+    clearReportContext();
   };
 
-  return (
+  return (      
     <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown min-h-lg">
       <Container className="flex bg-white">
         {/* Sidebar Navigation */}

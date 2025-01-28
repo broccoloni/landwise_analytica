@@ -101,7 +101,7 @@ const redeemReport = async (reportId: string, address: string, addressComponents
       
       // Calculate area with ESPG that is equal area to get accurate area measurement
       // For the US: EPSG 5070, 
-      const area = Math.round(polygon.area(0.1,'EPSG:5070').getInfo());
+      const area = Math.round((polygon as any).area(0.1,'EPSG:5070').getInfo());
       
       const landUseData = processLandUseData(unprocessedLandUseData, area);
       const climateData = processClimateData(unprocessedClimateData);

@@ -15,8 +15,8 @@ interface MapDrawingProps {
   zoom: number;
   points: number[][];
   setPoints: React.Dispatch<React.SetStateAction<number[][]>>;
-  size: string;
-  setSize: React.Dispatch<React.SetStateAction<string>>;
+  size: string | null;
+  setSize: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 interface MapClickHandlerProps {

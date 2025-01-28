@@ -25,13 +25,10 @@ export const getAcresFromSize = (size: ReportSize): number => {
   return reportSizeAcres[labelIndex];
 };
 
-export const isValidSize = (reportSize: string | null, propertySize: string | null) => {
-  console.log('(isValidSize)', reportSize, propertySize);
-    
+export const isValidSize = (reportSize: string | null, propertySize: string | null) => {    
   if (reportSize === null || propertySize === null) return false;
-
-  console.log('(isValidSize)', reportSizeLabels.indexOf(propertySize), '<=', reportSizeLabels.indexOf(reportSize));
-  return reportSizeLabels.indexOf(propertySize) <= reportSizeLabels.indexOf(reportSize);
+  if (!reportSizeLabels.includes(propertySize as ReportSize) || !reportSizeLabels.includes(reportSize as ReportSize)) return false;
+  return reportSizeLabels.indexOf(propertySize as ReportSize) <= reportSizeLabels.indexOf(reportSize as ReportSize);
 }
 
 export const fetchReportsBySessionId = async (sessionId: string) => {
