@@ -55,8 +55,7 @@ export interface PerformanceData {
   years: number[];       // For projectedData
 }
 
-// Unprocessed - not used in demo
-export interface Data {
+export interface ImageData {
   sampleData: DataArray;
   width: number;
   height: number;

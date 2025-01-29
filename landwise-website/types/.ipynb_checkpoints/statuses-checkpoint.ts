@@ -14,4 +14,5 @@ export enum ReportStatus {
   Expired = "EXPIRED",
   Invalid = "INVALID",
   Error = 'ERROR',
+  Downloaded = "DOWNLOADED",
 }

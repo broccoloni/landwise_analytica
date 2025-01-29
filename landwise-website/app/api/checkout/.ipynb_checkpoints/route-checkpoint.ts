@@ -45,8 +45,11 @@ export async function POST(req: Request) {
     if (customerId) {
       sessionDetails.customer = customerId;
     }
+      
     if (couponId) {
       sessionDetails.discounts = [{ coupon: couponId }];
+    } else {
+      sessionDetails.allow_promotion_codes = true;
     }
         
     const session = await stripe.checkout.sessions.create(sessionDetails);

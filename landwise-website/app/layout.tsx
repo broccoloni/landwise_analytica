@@ -1,3 +1,4 @@
+import { GoogleTagManager } from '@next/third-parties/google'
 import { ReactNode } from 'react';
 import { Metadata } from 'next';
 import Header from '@/components/Header';
@@ -21,6 +22,8 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   return (
     <html lang="en">
+      <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || ''} />
+
       <head>
         <link rel="icon" href="/favicon.svg" />
       </head>

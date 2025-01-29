@@ -32,9 +32,9 @@ const Footer = () => {
     { label: "Why Buy a Report", path: "/why-buy-a-report" },
     { label: "Get a Report", path: "/get-a-report" },
     { label: "Redeem a Report", path: "/redeem-a-report" },
-    { label: "View a Report", path: "/view-report" },
+    { label: "View a Redeemed Report", path: "/view-report" },
     { label: "View a Sample Report", path: "/view-sample-report" },
-
+    { label: "View a Downloaded Report", path: "/view-downloaded-report" },
   ];
 
   const companyLinks = [

@@ -101,23 +101,27 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center mb-4">
             <User className="h-5 w-5 mx-4 text-dark-brown" />
-            You can view and change your account information and settings as well as submit feedback under the
-            <Link
-              href="account"
-              className="font-bold text-medium-green hover:underline ml-2"
-            >
-              Account tab
-            </Link>
+            <span>
+              You can view and change your account information and settings as well as submit feedback under the
+              <Link
+                href="account"
+                className="font-bold text-medium-green hover:underline ml-1"
+              >
+                Account tab
+              </Link>
+            </span>
           </div>
           <div className="flex items-center mb-4">
             <NotebookText className="h-5 w-5 mx-4 text-dark-brown" />
-            You can view the reports you've ordered, order new ones, and view report pricing from the
-            <Link
-              href="/reports"
-              className="font-bold text-medium-green hover:underline ml-2"
-            >
-              Reports tab
-            </Link>
+            <span>
+              You can view the reports you've ordered, order new ones, and view report pricing from the
+              <Link
+                href="/reports"
+                className="font-bold text-medium-green hover:underline ml-1"
+              >
+                Reports tab
+              </Link>
+            </span>
           </div>
           <div className="flex items-center">
             <Handshake className="h-5 w-5 mx-4 text-dark-brown" />

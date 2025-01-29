@@ -46,7 +46,7 @@ const ExpiringReportsWidget: React.FC = () => {
           <div className="text-sm mt-2">
             Once ordered, reports expire after 180 days. To continue viewing your report, you can download the data in JSON format, and reupload it 
             <Link
-              href='/upload'
+              href='/view-downloaded-report'
               className="font-bold text-medium-green hover:underline ml-2"
             >
               here

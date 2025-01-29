@@ -11,7 +11,7 @@ import { Slider } from "@mui/material";
 import PlainTable from '@/components/PlainTable';
 import WindDirectionDisplay from "@/components/WindDirectionDisplay";
 import { ImageAndLegend, ImageAndStats, PerformanceData} from '@/types/dataTypes';
-import { rangeColors } from '@/types/colorPalettes';
+import { rangeColors } from '@/utils/colorPalettes';
 import { sqMetersPerAcre } from '@/utils/reports';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
@@ -66,9 +66,6 @@ const Topography = (
         },
         { totalCropArea: 0, totalArea: 0 }
       );
-
-      console.log("landuse:", landUseData);
-      console.log(numYears, totalCropArea / numYears, totalArea / numYears);
       
       setAvgCropArea(totalCropArea / numYears);
       setAvgArea(totalArea / numYears);

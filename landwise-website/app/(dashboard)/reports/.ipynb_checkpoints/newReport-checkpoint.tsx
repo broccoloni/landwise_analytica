@@ -17,6 +17,8 @@ import { fetchReportsBySessionId, redeemReport, sqMetersPerAcre } from '@/utils/
 import NotificationBanner from '@/components/NotificationBanner';
 import { toTitleCase } from '@/utils/string';
 import Link from 'next/link';
+import { getCouponName } from '@/utils/pricingTiers';
+import { useReportsByCustomerId } from "@/hooks/useReports";
 
 const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false });
 
@@ -34,7 +36,67 @@ export default function NewReport() {
     reportSize, setReportSize,
   } = useReportContext();
 
-  const { setQuantity, setCustomerId, setCouponId, setSessionId, sessionId, size, setSize } = useCartContext();
+  const { setQuantity, setCustomerId, setCouponId, setSessionId, sessionId, size, setSize, setPriceId } = useCartContext();
+
+  // Calculate discount based off of reports ordered this month
+  const [prices, setPrices] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any>(null);
+
+  useEffect(() => {
+    const getReportPricesAndCoupons = async () => {
+      try {
+        const response = await fetch('/api/getReportPricesAndCoupons', {
+          method: 'GET',
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch prices');
+        }
+    
+        const { prices, coupons } = await response.json();
+
+        console.log("Fetched Prices:", prices);
+        console.log("Fetched Coupons:", coupons);
+          
+        setPrices(prices.data);
+        setCoupons(coupons.data);
+          
+      } catch (err) {
+        if (err instanceof Error) {
+          console.error(err.message);
+        } else {
+          console.error('An unexpected error occurred');
+        }
+      }
+    };
+
+    getReportPricesAndCoupons();
+  }, []);  
+
+  const { reports, isLoading, error } = useReportsByCustomerId(session?.user?.id || null);
+  useEffect(() => {
+    if (reports && !isLoading && prices && coupons) {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      // Filter reports created this month
+      const reportsThisMonth = reports.filter((report) => {
+        const createdAt = new Date(report.createdAt);
+        return createdAt.getMonth() === currentMonth && createdAt.getFullYear() === currentYear;
+      });
+
+      const couponName = getCouponName(reportsThisMonth.length);
+      if (couponName) {
+        const coupon = coupons.find((coupon: any) => coupon.name === couponName);
+
+        if (coupon) {
+          setCouponId(coupon.id);
+        }
+      }
+    }
+  }, [reports, isLoading, coupons]);
     
   const [step, setStep] = useState(1);
   const stepNames = ['Select Address', 'Define Boundary', 'Review', 'Payment'];
@@ -63,7 +125,6 @@ export default function NewReport() {
     else if (step === 2) {
       setQuantity(null);
       setCustomerId(null);
-      setCouponId(null);
       setSessionId(null);
       setStep(prevStep => prevStep + 1);
     }
@@ -71,7 +132,18 @@ export default function NewReport() {
     else if (step === 3) {
       setQuantity(1);
       setCustomerId(session?.user?.id || null);
-      setCouponId(null);
+
+      if (!prices) {
+        return;
+      }
+
+      const curPrice = prices.find((price: any) => price.lookup_key === size);
+      if (!curPrice) {
+        return;
+      }
+
+      setPriceId(curPrice.id);
+        
       setStep(prevStep => prevStep + 1);
     }
     topRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,6 +153,7 @@ export default function NewReport() {
     setQuantity(null);
     setCouponId(null);
     setCustomerId(null);
+    setCouponId(null);
     setSessionId(completedSessionId);
     topRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
@@ -349,7 +422,19 @@ export default function NewReport() {
                 <Loading />
               </div>
             ) : session?.user?.status && session?.user?.status === RealtorStatus.Active && size && size !== 'jumbo' ? (
-              <CheckoutSession onComplete={handleComplete} />
+              <div className="flex justify-center">
+                <div className="mr-4 w-32">
+                  <button
+                    onClick={handleBackStep}
+                    disabled={step < 2}
+                    className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  >
+                    <ArrowLeft className="h-5 w-5 mr-2" /> Back
+                  </button>
+                </div>
+                <CheckoutSession onComplete={handleComplete} />
+                <div className="w-32" />
+              </div>
             ) : session?.user?.status && session?.user?.status === RealtorStatus.Active && size && size === 'jumbo' ? (
               <div>
                 <div className="font-semibold text-2xl text-center text-dark-blue mb-8">{toTitleCase(size)} Report</div>

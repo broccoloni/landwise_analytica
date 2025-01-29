@@ -5,19 +5,14 @@ import { ReportStatus } from '@/types/statuses';
 import { useReportContext } from '@/contexts/ReportContext';
 import { useState, useEffect } from 'react';
 import Container from '@/components/Container';
-import AddressDisplay from '@/components/AddressDisplay';
-import SummaryScore from '@/components/SummaryScore';
 import PrintButton from '@/components/PrintButton';
 import DownloadButton from '@/components/DownloadButton';
 import Loading from '@/components/Loading';
 import { useParams } from "next/navigation";
 import Link from 'next/link';
-import { ImageAndStats, ImageAndLegend, PerformanceData } from '@/types/dataTypes';
-
-// import EstimatedYield from '@/components/tabs/EstimatedYield';
-import Climate from '@/components/tabs/Climate';
-import Topography from '@/components/tabs/Topography';
-import Soil from '@/components/tabs/Soil';
+import Report from '@/components/Report';
+import ScrollToTop from '@/components/ScrollToTop';
+import processReportData from '@/utils/frontendDataProcessing';
 
 export default function ViewReport() {
   const params = useParams();
@@ -56,19 +51,11 @@ export default function ViewReport() {
   const [soilData, setSoilData] = useState<any>(null);
   const [bbox, setBbox] = useState<number[][] | null>(null);
   const [allData, setAllData] = useState<any>(null);
-    
-  // Score trackers
-  // const [estimatedYieldScore, setEstimatedYieldScore] = useState<number|null>(null);
-
-  const [climateScore, setClimateScore] = useState<number|null>(null);
-  const [topographyScore, setTopographyScore] = useState<number|null>(null);
-  const [soilScore, setSoilScore] = useState<number|null>(null);
 
   // For managing report tabs and loading states
   // const [loadingData, setLoadingData] = useState(false);
   // const [processingData, setProcessingData] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState('Climate');
 
   const fetchData = async () => {
     try {
@@ -98,6 +85,7 @@ export default function ViewReport() {
       else {
         
         console.log('Fetched report:', report);
+        processReportData(report);
           
         // Report Context Info
         setLatitude(report.latitude || null);
@@ -146,69 +134,6 @@ export default function ViewReport() {
 
     return () => clearInterval(intervalId);
   }, [reportId, dataLoaded]);
-
-  const tabs = [
-    // 'EstimatedYield',
-    'Climate',
-    'Topography',
-    'Soil',
-  ];
-    
-  const renderActiveComponent = () => {
-    switch (activeTab) {
-      // case 'EstimatedYield':
-      //   return (
-      //     <EstimatedYield
-      //       lat={latitude}
-      //       lng={longitude}
-      //       historicData={historicData}
-      //       projectedData={projectedData}
-      //       cropHeatMapData={cropHeatMapData}
-      //       bbox = {bbox}
-      //       score={estimatedYieldScore}
-      //       setScore={setEstimatedYieldScore}
-      //     />
-      //   );
-      case 'Climate':
-        return (
-          <Climate
-            lat={latitude}
-            lng={longitude}
-            heatUnitData={heatUnitData}
-            growingSeasonData={growingSeasonData}
-            climateData={climateData}
-            score={climateScore}
-            setScore={setClimateScore}
-          />
-        );      
-      case 'Topography':
-        return (
-          <Topography
-            lat={latitude}
-            lng={longitude}
-            landUseData = {landUseData}
-            elevationData = {elevationData}
-            windData = {windData}
-            bbox = {bbox}
-            score={topographyScore}
-            setScore={setTopographyScore}
-          />
-        );
-      case 'Soil':
-        return (
-          <Soil
-            lat={latitude}
-            lng={longitude}
-            soilData={soilData}
-            bbox = {bbox}
-            score={soilScore}
-            setScore={setSoilScore}
-          />
-        );
-      default:
-        return null;
-    }
-  };
 
   const LoadingDisplay = () => {
     if (status === ReportStatus.Redeemed) {
@@ -310,53 +235,41 @@ export default function ViewReport() {
               historicData = {historicData}
               projectedData = {projectedData}
               cropHeatMapData = {cropHeatMapData}
+              windData = {windData}
             />
             {/* <PrintButton /> */}
           </div>
         </div>
         <Container className="bg-white">
           {dataLoaded && status === ReportStatus.Redeemed ? (
-            <div>
-              <section id="summary">
-                <div className={`${merriweather.className} text-medium-brown text-3xl pb-2`}>
-                  Summary
-                </div>
-                <div className="w-full sm:flex flex-row">
-                  <div className="w-[44%] p-4 mx-12">
-                    <div className={`${montserrat.className} flex justify-between mb-2 text-2xl`}>
-                      Property
-                    </div>
-                    <AddressDisplay 
-                      addressComponents={addressComponents} 
-                      latitude={latitude} 
-                      longitude={longitude} 
-                    />
-                  </div>
-                  <div className="w-[56%] p-4">
-                    <SummaryScore />
-                  </div>
-                </div>
-              </section>
-              <div className="flex justify-center space-x-8 border-b border-medium-brown mb-4 mt-10">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`py-2 px-4 w-48 rounded-t-lg ${
-                      activeTab === tab ? 'bg-medium-brown text-white' : 'bg-white text-black'
-                    } hover:bg-medium-brown hover:opacity-75 hover:text-white`}
-                  >
-                    {tab.replace(/([A-Z])/g, ' $1')}
-                  </button>
-                ))}
-              </div>
-              <div>{renderActiveComponent()}</div>
-            </div>
+            <Report 
+              reportId = {reportId}
+              latitude = {latitude} 
+              longitude = {longitude}
+              address = {address}
+              addressComponents = {addressComponents}
+              landGeometry = {landGeometry}
+              status = {status}
+              redeemedAt = {redeemedAt}
+              createdAt = {createdAt}
+              bbox = {bbox}
+              heatUnitData = {heatUnitData}
+              growingSeasonData = {growingSeasonData}
+              climateData = {climateData}
+              elevationData = {elevationData}
+              landUseData = {landUseData}
+              soilData = {soilData}
+              historicData = {historicData}
+              projectedData = {projectedData}
+              cropHeatMapData = {cropHeatMapData}
+              windData = {windData}
+            /> 
           ) : (
             <LoadingDisplay />
           )}
         </Container>
       </div>
+      <ScrollToTop />
     </div>
   );
 }

@@ -101,18 +101,18 @@ export default function Contact() {
       `}
     >        
 
-      <div className={`${roboto.className} text-3xl grid grid-cols-2 text-center space-x-4 mx-auto`}>
+      <div className={`${roboto.className} text-2xl grid grid-cols-2 text-center space-x-4 mx-auto`}>
         <button 
-          className={`rounded-t-xl px-4 py-2 border-t border-l border-r hover:bg-gray-100
-            ${tab === 'form' ? 'bg-white' : 'bg-gray-200'}
+          className={`rounded-t-xl px-4 py-2 border-t border-l border-r hover:opacity-75
+            ${tab === 'form' ? 'bg-white text-black' : 'bg-medium-brown text-white'}
           `}
           onClick={() => setTab('form')}
         >
             Contact Form
         </button>
         <button 
-          className={`rounded-t-xl px-4 py-2 border-t border-l border-r hover:bg-gray-100
-            ${tab === 'direct' ? 'bg-white' : 'bg-gray-200'}
+          className={`rounded-t-xl px-4 py-2 border-t border-l border-r hover:opacity-75
+            ${tab === 'direct' ? 'bg-white text-black' : 'bg-medium-brown text-white'}
           `}
           onClick={() => setTab('direct')}
         >

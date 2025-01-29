@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getAvg, getStd, getStats } from '@/utils/stats';
 import { DemoData } from '@/types/dataTypes';
 
-export const useFetchDemoData = (basePath: string) => {
+export const useDemoData = () => {
   const [demoData, setDemoData] = useState<DemoData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,7 +11,7 @@ export const useFetchDemoData = (basePath: string) => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`${basePath}/demoData.json`);
+        const response = await fetch(`/demoData.json`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch data');
@@ -28,7 +28,7 @@ export const useFetchDemoData = (basePath: string) => {
     };
 
     fetchData();
-  }, [basePath]);
+  }, []);
 
   return { demoData, isLoading, error };
 };

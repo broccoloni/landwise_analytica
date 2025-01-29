@@ -8,6 +8,7 @@ import Loading from "@/components/Loading";
 import { useSession } from "next-auth/react";
 import { useReportsByCustomerId } from "@/hooks/useReports";
 import Link from 'next/link';
+import { getCouponName } from '@/utils/pricingTiers';
 
 const MonthlyReportsWidget: React.FC = () => {
   const { data: session, status } = useSession();
@@ -29,6 +30,8 @@ const MonthlyReportsWidget: React.FC = () => {
       setMonthlyReports(reportsThisMonth.length);
     }
   }, [reports, isLoading]);
+
+  const discount = getCouponName(monthlyReports);
 
   return (
     <Container className="bg-white w-full">
@@ -55,6 +58,11 @@ const MonthlyReportsWidget: React.FC = () => {
           <Loading />
         ) : (
           <div className="mt-2 mb-4">{monthlyReports ?? 0}</div>
+        )}
+      </div>
+      <div className="">
+        {discount && (
+          <div className="text-center text-lg">Discount: {discount}</div>
         )}
       </div>
     </Container>

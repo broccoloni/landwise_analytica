@@ -31,6 +31,71 @@ export const isValidSize = (reportSize: string | null, propertySize: string | nu
   return reportSizeLabels.indexOf(propertySize as ReportSize) <= reportSizeLabels.indexOf(reportSize as ReportSize);
 }
 
+export const isValidReport = (data: any) => {
+    const {
+      address, 
+      addressComponents,
+      bbox,
+      climateData,
+      createdAt,
+      cropHeatMapData,
+      elevationData,
+      growingSeasonData,
+      heatUnitData,
+      historicData,
+      landGeometry,
+      landUseData,
+      latitude,
+      longitude,
+      projectedData,
+      redeemedAt,
+      reportId,
+      soilData,
+      status,
+      windData,
+    } = data;
+
+    // Note that createdAt is ommitted, might add later
+
+    // Currently ommitting historicData, cropHeatMapData, and projectedData
+    if (!address || !addressComponents || !bbox || !climateData || !elevationData || !growingSeasonData || !heatUnitData || !landGeometry || !landUseData || !latitude || !longitude || !redeemedAt || !reportId || !soilData || !status || !windData) {
+      console.log("Missing generic");
+      console.log(data);
+
+      return false;
+    }
+
+    if (typeof addressComponents !== 'object' || Object.keys(addressComponents).lenth <= 1) {
+      console.log("Bad Add Comp");
+      return false;
+    }
+
+    if (!Array.isArray(bbox) || bbox.length !== 2) {
+      return false;
+    }
+
+    if (!Array.isArray(bbox[0]) || bbox[0].length !== 2) {
+      return false;
+    }
+
+    if (!Array.isArray(bbox[1]) || bbox[1].length !== 2) {
+      return false;
+    }
+
+    if (typeof climateData !== 'object' || Object.keys(climateData).lenth <= 1) {
+      console.log("Bad Climate");
+      return false;
+    }
+
+    const climateData0 = Object.values(climateData)[0];
+    if (!climateData0?.precip) {
+      console.log("Bad Climate Deep");
+      return false;
+    }
+
+    return true;
+};
+
 export const fetchReportsBySessionId = async (sessionId: string) => {
   try {
     const response = await fetch("/api/getReports/bySessionId", {
