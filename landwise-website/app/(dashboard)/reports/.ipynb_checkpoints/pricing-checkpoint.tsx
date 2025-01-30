@@ -89,8 +89,8 @@ export default function Pricing() {
 
       <div className="border-b flex justify-between text-md py-2">
       <div className="">Property Size</div>
-      <div className="text-right">Area {`m\u00B2`}</div>
-      <div className="text-right">Area {`ac.`}</div>
+      <div className="text-right">Area ({`m\u00B2`})</div>
+      <div className="text-right">Area ({`ac.`})</div>
       <div className="text-right">Base Price</div>
     </div>
     

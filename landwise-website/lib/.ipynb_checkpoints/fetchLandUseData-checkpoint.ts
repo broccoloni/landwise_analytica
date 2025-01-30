@@ -1,6 +1,6 @@
 import ee from '@google/earthengine';
 import { evaluateDictionary } from '@/utils/earthEngineUtils';
-import { Data, DataArray } from '@/types/dataTypes';
+import { ImageData, DataArray } from '@/types/dataTypes';
 
 interface LandUseDataObj {
   properties: {
@@ -9,7 +9,7 @@ interface LandUseDataObj {
 }
 
 export async function fetchLandUseData( years: number[], geometry: ee.Geometry) {
-  const results: Record<number, Data> = {};
+  const results: Record<number, ImageData> = {};
 
   for (const year of years) {
     console.log("Fetching land use data for", year);
@@ -47,7 +47,7 @@ export async function fetchLandUseData( years: number[], geometry: ee.Geometry) 
 
       // Could also potentially include:
       // .properties.landcover_class_names, .properties.landcover_class_palette, .properties.landcover_class_values, 
-      results[year] = { sampleData, height, width } as Data;
+      results[year] = { sampleData, height, width } as ImageData;
     } catch (error) {
       if (error instanceof Error) {
         console.error(`Failed to fetch land use data for year ${year}:`, error.message);

@@ -39,6 +39,7 @@ export interface ImageAndStats {
   variation: number; // For crop consistency
   avgDir: number;    // For windData
   stdDir: number;    // For windData
+  colors: string[];
 };
 
 export interface PerformanceData {

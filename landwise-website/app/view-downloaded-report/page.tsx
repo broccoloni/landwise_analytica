@@ -10,6 +10,7 @@ import Container from '@/components/Container';
 import { ArrowLeft, RotateCcw, ArrowRight } from 'lucide-react';
 import ScrollToTop from '@/components/ScrollToTop';
 import processReportData from '@/utils/frontendDataProcessing';
+import { ImageAndStats, ImageAndLegend, PerformanceData } from '@/types/dataTypes';
 
 export default function ViewDownloadedReport() {
   const [validatingReportId, setValidatingReportId] = useState(false);
@@ -57,7 +58,8 @@ export default function ViewDownloadedReport() {
         reader.onload = () => {
           try {
             const parsedData = JSON.parse(reader.result as string);
-
+            console.log("Parsed Downloaded Data", parsedData);
+              
             // Perform the validation
             const isValid = isValidReport(parsedData);
 
@@ -146,7 +148,7 @@ export default function ViewDownloadedReport() {
 
   return (
     <div className={`${roboto.className} min-h-screen px-10 sm:px-20 md:px-40 py-10`}>
-      <div className="pt-10">
+      <div className="">
         {viewData && dataLoaded ? (
           <div className="">
             <div className="flex mb-4">
@@ -185,7 +187,7 @@ export default function ViewDownloadedReport() {
             <ScrollToTop />
           </div>
         ) : (
-          <div className="">
+          <div className="pt-10">
             <div className="text-4xl mb-8 text-center">View a Downloaded Report</div>
 
             <div className="max-w-md mx-auto mb-8">

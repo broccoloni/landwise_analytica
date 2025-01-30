@@ -71,7 +71,7 @@ export default function SampleReport() {
 
   return (
     <div className={`${roboto.className} text-black px-10 sm:px-20 md:px-40 py-10`}>
-      <div className="relative py-20">
+      <div className="relative">
         <div className="flex justify-between mb-4">
           <div className={`${montserrat.className} text-xl flex justify-center items-center space-x-4`}> 
             <div className="">
@@ -84,25 +84,6 @@ export default function SampleReport() {
           <div className="space-x-4 flex">
             <DownloadButton
               reportId = {reportId}
-              latitude = {latitude} 
-              longitude = {longitude}
-              address = {address}
-              addressComponents = {addressComponents}
-              landGeometry = {landGeometry}
-              status = {status}
-              redeemedAt = {redeemedAt}
-              createdAt = {createdAt}
-              bbox = {bbox}
-              heatUnitData = {heatUnitData}
-              growingSeasonData = {growingSeasonData}
-              climateData = {climateData}
-              elevationData = {elevationData}
-              landUseData = {landUseData}
-              soilData = {soilData}
-              historicData = {historicData}
-              projectedData = {projectedData}
-              cropHeatMapData = {cropHeatMapData}
-              windData = {windData}
             />
           </div>
         </div>

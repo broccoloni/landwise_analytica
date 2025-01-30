@@ -283,7 +283,7 @@ const Soil = (
                       vmin={curContentData.min}
                       vmax={curContentData.max}
                       numIntervals={5}
-                      heatmapColors={rangeColors}
+                      heatmapColors={curContentData.colors}
                     />
                   </div>
                 </div>
@@ -356,7 +356,7 @@ const Soil = (
                       vmin={curAttributeData.min}
                       vmax={curAttributeData.max}
                       numIntervals={5}
-                      heatmapColors={rangeColors}
+                      heatmapColors={curAttributeData.colors}
                     />
                   </div>
                 </div>

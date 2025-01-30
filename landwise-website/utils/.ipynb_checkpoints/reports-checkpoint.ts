@@ -59,14 +59,14 @@ export const isValidReport = (data: any) => {
 
     // Currently ommitting historicData, cropHeatMapData, and projectedData
     if (!address || !addressComponents || !bbox || !climateData || !elevationData || !growingSeasonData || !heatUnitData || !landGeometry || !landUseData || !latitude || !longitude || !redeemedAt || !reportId || !soilData || !status || !windData) {
-      console.log("Missing generic");
+      console.log("Missing an element generic");
       console.log(data);
 
       return false;
     }
 
-    if (typeof addressComponents !== 'object' || Object.keys(addressComponents).lenth <= 1) {
-      console.log("Bad Add Comp");
+    if (typeof addressComponents !== 'object' || Object.keys(addressComponents).length <= 1) {
+      console.log("Bad Address Components");
       return false;
     }
 
@@ -79,17 +79,6 @@ export const isValidReport = (data: any) => {
     }
 
     if (!Array.isArray(bbox[1]) || bbox[1].length !== 2) {
-      return false;
-    }
-
-    if (typeof climateData !== 'object' || Object.keys(climateData).lenth <= 1) {
-      console.log("Bad Climate");
-      return false;
-    }
-
-    const climateData0 = Object.values(climateData)[0];
-    if (!climateData0?.precip) {
-      console.log("Bad Climate Deep");
       return false;
     }
 

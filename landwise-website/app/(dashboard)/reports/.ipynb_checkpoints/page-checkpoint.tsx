@@ -32,6 +32,7 @@ export default function ReportsPage() {
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', newUrl);
     clearReportContext();
+    setSessionId(null);
   };
 
   return (      

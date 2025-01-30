@@ -17,9 +17,9 @@ export const useDemoData = () => {
           throw new Error('Failed to fetch data');
         }
 
-        const jsonData = await response.json();
+        const report = await response.json();
           
-        setDemoData(jsonData as DemoData);  
+        setDemoData(report as DemoData);  
       } catch (err: any) {
         setError(err.message);
       } finally {

@@ -5,13 +5,13 @@ import chroma from 'chroma-js';
 import { getStats } from '@/utils/stats';
 import { createCanvas, CanvasRenderingContext2D } from "canvas";
 import { ImageData } from '@/types/dataTypes';
-import { valueToName } from '@/utils/labels';
+import { valueToName, valueToIndex } from '@/utils/labels';
 
 const scale = 10;
 
 export const getBandImagesLegendsUnique = (
   bands: Record<string, ImageData>,
-  labels: Record<number, number | string>[],
+  labels: any[],
   colorSet: string,
 ) => {
   try {
@@ -28,22 +28,45 @@ export const getBandImagesLegendsUnique = (
 
 export const getImageLegendUnique = (
   imageData: ImageData,
-  labels: Record<number, number | string>[],
+  labels: any[],
   colorSet: string,
 ) => {
   try {
+    if (!imageData) {
+      throw new Error("Image data not found ");
+    }
+      
+    if (!colorSet) {
+      throw new Error("Invalid colorSet");
+    }
+
+    if (!Array.isArray(labels) || labels.length === 0) {
+      throw new Error("Invalid labels array");
+    }
+          
     const colorScale = chroma.scale(colorSet as any).colors(labels.length);
-    const imageUrl = dataToUrl(imageData, null, colorScale);
+      
+    // Map image to indexes
+    const indexImageData = {
+      ...imageData,
+      sampleData: imageData.sampleData.map((value: number | null) => valueToIndex(labels, value)),
+    };
+      
+    const imageUrl = dataToUrl(indexImageData, null, colorScale);
 
-    const uniqueElements = new Set<number | null>(imageData.sampleData);
+    const uniqueElements = new Set<number | null>(indexImageData.sampleData);
     const legend: Record<string, string> = {};      
-
-    uniqueElements.forEach((value) => {
-      if (value !== null) {       
-        const index = valueToIndex(labels, value);
-        const name = labels[index].name;
+      
+    uniqueElements.forEach((index) => {
+      if (index !== null) {       
+        const labelEntry = labels[index];
+        const name = labelEntry ? labelEntry.name : null;
+          
         if (name && name !== 'NODATA' && name !== 'Cloud' && index >= 0) {
-          legend[name] = colorScale(value);
+          const itemColor = colorScale[index];
+          if (itemColor) {
+            legend[name] = chroma(itemColor).hex();
+          }
         }
       }
     });
@@ -84,10 +107,10 @@ export const getImageAndStats = (
   try {
     const { min, max, avg, std } = getStats(imageData.sampleData);
       
-    const colorScale = chroma.scale(colorPalette).domain([min, max]);
+    const colorScale = chroma.scale(colorPalette as any).domain([min, max]);
 
     const imageUrl = dataToUrl(imageData, null, colorScale);
-    return { imageUrl, min, max, avg, std };
+    return { imageUrl, min, max, avg, std, colors: colorPalette };
 
   } catch (error) {
     console.error('Error in getImageLegendUnique:', error);
@@ -97,8 +120,9 @@ export const getImageAndStats = (
 export function dataToUrl(
   imageData: ImageData,
   transparentVal: number | null,
-  colorScale: (value: number) => chroma.Color,
+  colorScale: string[] | ((value: number) => chroma.Color),
 ): string {
+    
   const { sampleData, width, height } = imageData;
 
   // Create base canvas
@@ -106,7 +130,7 @@ export function dataToUrl(
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   const canvasData = ctx.createImageData(width, height);
-
+    
   sampleData.forEach((value, i) => {
     if (value === transparentVal || value === null) {
       canvasData.data[i * 4] = 0;
@@ -114,7 +138,7 @@ export function dataToUrl(
       canvasData.data[i * 4 + 2] = 0;
       canvasData.data[i * 4 + 3] = 0;
     } else {
-      const [r, g, b] = colorScale(value).rgb();
+      const [r, g, b] = Array.isArray(colorScale) ? chroma(colorScale[value]).rgb() : colorScale(value).rgb();
       canvasData.data[i * 4] = r;
       canvasData.data[i * 4 + 1] = g;
       canvasData.data[i * 4 + 2] = b;

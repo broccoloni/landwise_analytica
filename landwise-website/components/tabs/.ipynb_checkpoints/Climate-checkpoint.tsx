@@ -54,8 +54,7 @@ const Climate = (
     return {
       x: xValues,
       y: yValues,
-      type: 'scatter',
-      mode: 'lines+markers',
+      mode: 'lines',
       name: name,
     };
   }
@@ -185,73 +184,69 @@ const Climate = (
                   )}
                 </div>
                 <div className="">
-                  {precipData && (
-                    <Plot
-                      data={[
-                        {
-                          z: [precipData.precip],
-                          x: dayStrs,                        
-                          y: [0],
-                          type: 'heatmap',
-                          colorscale: 'Blues',
-                          reversescale: true,
-                          colorbar: {
-                            len: 0.3,
-                            y: 0.15
-                          },
-                          showscale: true,
-                        },
-                        {
-                          z: [precipData.temp],
-                          x: dayStrs, 
-                          y: [1],
-                          type: 'heatmap',
-                          colorscale: 'Purples',
-                          colorbar: {
-                            len: 0.3,
-                            y: 0.5
-                          },
-                          showscale: true,
-                        },
-                        {
-                          z: [precipData.dew],
-                          x: dayStrs, 
-                          y: [2],
-                          type: 'heatmap',
-                          colorscale: 'Greens',
-                          colorbar: {
-                            len: 0.3,
-                            y: 0.85
-                          },
-                          showscale: true,
-                        },
-                      ]}
-                      layout={{
-                        xaxis: {
-                          title: 'Range Selection',
-                          tickvals: dayStrs.filter((_: string, index: number) => index % precipTickFreq === 0),
-                          // tickvals: dayStrs,
-                          rangeslider: {
-                            visible: true,
-                          },
-                          range: seasonRange,
-                        },
-                        yaxis: {
-                          title: '',
-                          tickvals: [0, 1, 2],
-                          ticktext: ['Precipitation (mm)', 'Temperature (\u00B0C)', 'Dew (\u00B0C)']
-                        },
-                        margin: {
-                          t: 10,
-                          b: 100,
-                          l: 120,
-                          r: 0,
-                        },
-                      }}
-                      style={{ width: '100%', height: '100%' }}
-                      onRelayout={handleRelayout}
-                    />
-                  )}
+                {precipData && (
+                  <Plot
+                    data={[
+                      {
+                        x: dayStrs,
+                        y: precipData.precip,
+                        type: 'bar',
+                        name: 'Precipitation (mm)',
+                        marker: { color: 'blue' },
+                        yaxis: 'y2',
+                      },
+                      {
+                        x: dayStrs,
+                        y: precipData.temp,
+                        mode: 'lines',
+                        name: 'Temperature (\u00B0C)',
+                        line: { color: 'red' },
+                      },
+                      {
+                        x: dayStrs,
+                        y: precipData.dew,
+                        mode: 'lines',
+                        name: 'Dew (\u00B0C)',
+                        line: { color: 'green' },
+                      },
+                    ]}
+                    layout={{
+                      xaxis: {
+                        title: 'Range Selection',
+                        tickvals: dayStrs.filter((_: string, index: number) => index % precipTickFreq === 0),
+                        rangeslider: { visible: true },
+                        range: seasonRange,
+                      },
+                      yaxis: {
+                        title: 'Temperature / Dew (\u00B0C)',
+                        side: 'left',
+                        zerolinecolor: 'rgba(0, 0, 0, 0.2)',
+                      },
+                      yaxis2: {
+                        title: 'Precipitation (mm)',
+                        overlaying: 'y',
+                        side: 'right',
+                      },
+                      legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        xanchor: 'left',
+                        yanchor: 'top',
+                        orientation: 'v',
+                        bgcolor: 'rgba(255, 255, 255, 0.5)',
+                      },
+                      margin: {
+                        t: 10,
+                        b: 100,
+                        l: 120,
+                        r: 80,
+                      },
+                    }}
+                    style={{ width: '100%', height: '100%' }}
+                    onRelayout={handleRelayout}
+                  />
+                )}
+
                 </div>
               </div>
             </div>
@@ -369,9 +364,9 @@ const Climate = (
                 <PlainTable
                   headers={['Variable','Average']}
                   data = {[ 
-                    { v: 'Last Frost Date', a: `${dayNumToMonthDay(Math.round(growingSeasonData.lastFrosts.avg))} \u00B1 ${growingSeasonData.lastFrosts.std} days` },
-                    { v: 'First Frost Date', a: `${dayNumToMonthDay(Math.round(growingSeasonData.firstFrosts.avg))} \u00B1 ${growingSeasonData.firstFrosts.std} days` },
-                    { v: 'Growing Season Length', a: `${growingSeasonData.seasons.avg} \u00B1 ${growingSeasonData.seasons.std} days` },
+                    { v: 'Last Frost Date', a: `${dayNumToMonthDay(Math.round(growingSeasonData.lastFrosts.avg))} \u00B1 ${Math.round(growingSeasonData.lastFrosts.std)} days` },
+                    { v: 'First Frost Date', a: `${dayNumToMonthDay(Math.round(growingSeasonData.firstFrosts.avg))} \u00B1 ${Math.round(growingSeasonData.firstFrosts.std)} days` },
+                    { v: 'Growing Season Length', a: `${Math.round(growingSeasonData.seasons.avg)} \u00B1 ${Math.round(growingSeasonData.seasons.std)} days` },
                   ]}
                 />
               </div>

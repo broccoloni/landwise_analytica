@@ -13,6 +13,7 @@ import Link from 'next/link';
 import Report from '@/components/Report';
 import ScrollToTop from '@/components/ScrollToTop';
 import processReportData from '@/utils/frontendDataProcessing';
+import { ImageAndStats, ImageAndLegend, PerformanceData } from '@/types/dataTypes';
 
 export default function ViewReport() {
   const params = useParams();
@@ -50,7 +51,7 @@ export default function ViewReport() {
   const [landUseData, setLandUseData] = useState<Record<number, ImageAndLegend>|null>(null);
   const [soilData, setSoilData] = useState<any>(null);
   const [bbox, setBbox] = useState<number[][] | null>(null);
-  const [allData, setAllData] = useState<any>(null);
+  const [rawData, setRawData] = useState<any>(null);
 
   // For managing report tabs and loading states
   // const [loadingData, setLoadingData] = useState(false);
@@ -83,10 +84,10 @@ export default function ViewReport() {
       }
 
       else {
-        
-        console.log('Fetched report:', report);
+
+        setRawData(report);
         processReportData(report);
-          
+
         // Report Context Info
         setLatitude(report.latitude || null);
         setLongitude(report.longitude || null);
@@ -217,27 +218,7 @@ export default function ViewReport() {
           <div className="space-x-4 flex">
             <DownloadButton 
               reportId = {reportId}
-              latitude = {latitude} 
-              longitude = {longitude}
-              address = {address}
-              addressComponents = {addressComponents}
-              landGeometry = {landGeometry}
-              status = {status}
-              redeemedAt = {redeemedAt}
-              createdAt = {createdAt}
-              bbox = {bbox}
-              heatUnitData = {heatUnitData}
-              growingSeasonData = {growingSeasonData}
-              climateData = {climateData}
-              elevationData = {elevationData}
-              landUseData = {landUseData}
-              soilData = {soilData}
-              historicData = {historicData}
-              projectedData = {projectedData}
-              cropHeatMapData = {cropHeatMapData}
-              windData = {windData}
             />
-            {/* <PrintButton /> */}
           </div>
         </div>
         <Container className="bg-white">

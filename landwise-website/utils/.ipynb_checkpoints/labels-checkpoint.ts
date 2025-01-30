@@ -1,13 +1,14 @@
 
-export const valueToName = (labels: Record<string, string | number>[], value: number): string | null => {
+export const valueToName = (labels: any[], value: number | null): string | null => {
+  if (value === null) return null;
   return labels.find((label) => label.value === value)?.name ?? null;
 };
 
-export const valueToIndex = (labels: Record<string, string | number>[], value: number): number | null => {
+export const valueToIndex = (labels: any[], value: number | null): number | null => {
+  if (value === null) return null;
   const index = labels.findIndex((label) => label.value === value);
   return index !== -1 ? index : null;
 };
-
 
 export const majorCommodityCrops: string[] = [
   "Flaxseed",

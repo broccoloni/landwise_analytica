@@ -26,6 +26,8 @@ export const processClimateData = (climateData: Record<number, ClimateData>) => 
       };
     });
 
+    // console.log("Backend processing climate data:", newClimateData);
+      
     return newClimateData;
   } catch (error) {
     console.error('Error processing climate data:', error);
@@ -39,11 +41,15 @@ export const processElevationData = (elevationData: { elevationData: ImageData, 
     const slopeData = { sampleData: elevationData.slope, width: width-2, height: height-2 } as ImageData;
     const convexityData = { sampleData: elevationData.convexity, width: width-2, height: height-2 } as ImageData;
       
-    return { 
+    const newElevationData = { 
       elevationData: elevationData.elevationData, 
       slopeData: { sampleData: elevationData.slope, width: width-2, height: height-2 } as ImageData, 
       convexityData: { sampleData: elevationData.convexity, width: width-2, height: height-2 } as ImageData, 
     };
+
+    // console.log("Backend processing elevation data:", newElevationData);
+      
+    return newElevationData;
       
   } catch (error) {
     console.error('Error processing elevation data:', error);
@@ -80,7 +86,7 @@ export const processGrowingSeasonData = (climateData: Record<number, ClimateData
     const lastFrosts = getStats(lastFrostDays);
     const seasons = getStats(growingSeasons);
       
-    return {
+    const growingSeasonData = {
       x,
       y0: lastFrostDays,
       y1: growingSeasons,
@@ -89,6 +95,10 @@ export const processGrowingSeasonData = (climateData: Record<number, ClimateData
       lastFrosts,
       seasons,
     };
+
+    // console.log("Backend processing growing season data:", growingSeasonData);
+      
+    return growingSeasonData;
     
   } catch (error) {
     console.error('Error processing growing season data:', error);
@@ -131,7 +141,7 @@ export const processHeatUnitData = (climateData: Record<number, ClimateData>) =>
       endOfYearGdd15.push(Object.values(gdd15Data[numericYear]).slice(-1)[0]);
     });
       
-    return {
+    const heatUnitData = {
       years,
       chu: { data: chuData, ...getStats(endOfYearChu) },
       gdd0: { data: gdd0Data, ...getStats(endOfYearGdd0) },
@@ -140,15 +150,20 @@ export const processHeatUnitData = (climateData: Record<number, ClimateData>) =>
       gdd15: { data: gdd15Data, ...getStats(endOfYearGdd15) },
     };
 
+    // console.log("Backend processing heatUnit data:", heatUnitData);
+
+
+    return heatUnitData;
+
   } catch (error) {
     console.error('Error processing heat unit data:', error);
   }
 };
 
-export const processLandUseData = (landUseDataDict: Record<number,Data>, area: number) => {
+export const processLandUseData = (landUseDataDict: Record<number,ImageData>, area: number) => {
   try {
     
-    const newLandUseData: Record<number, LandUseData> = {};
+    const newLandUseData: Record<number, any> = {};
     Object.entries(landUseDataDict).forEach(([year, values]) => {
       const numericYear = Number(year);
       const { sampleData: landUseData, width, height } = values;
@@ -177,7 +192,7 @@ export const processLandUseData = (landUseDataDict: Record<number,Data>, area: n
       let cropSum = 0;
       const cropsGrown: string[] = [];
       Object.entries(counts).forEach(([value, count]) => {
-        const itemName = valueToName(cropLabels, value);
+        const itemName = valueToName(cropLabels, Number(value));
           
         if (itemName && crops.includes(itemName)) {
           cropSum += count;
@@ -186,16 +201,18 @@ export const processLandUseData = (landUseDataDict: Record<number,Data>, area: n
           const cropPct = (count / totalSum) * 100;
 
           if (cropPct < tol) {
-            cropValuesToConvert.push(value);
+            cropValuesToConvert.push(Number(value));
           }
           
           if (count > maxCount) {
             maxCount = count;
             highestCropName = itemName;
-            highestCropValue = value;
+            highestCropValue = Number(value);
           }
         }
       });
+
+      console.log("Backend Data Processing", "crops grown", cropsGrown, "counts", counts);
 
       const convertedLandUseData: DataArray = landUseData.map((value: number | null) => {
         if (value === null) return value;
@@ -209,14 +226,22 @@ export const processLandUseData = (landUseDataDict: Record<number,Data>, area: n
         
       const cropLandPct = cropSum / totalSum;
 
+      const imageData: ImageData = {
+        sampleData: convertedLandUseData,
+        width,
+        height
+      };
+        
       newLandUseData[numericYear] = {
-        landUseData: { sampleData: convertedLandUseData, width, height } as ImageData,
+        landUseData: imageData,
         cropArea: Math.round(area * cropLandPct),
         area,
         counts
       };
     });
 
+    // console.log("Backend processing land use data:", newLandUseData);
+      
     return newLandUseData;
       
   } catch (error) {
@@ -234,7 +259,7 @@ export const processSoilData = (soilData: any) => {
 };
 
 export const processWindData = (
-  elevationData: { elevationData: Data, slope: DataArray, aspect: DataArray, convexity: DataArray }, 
+  elevationData: { elevationData: ImageData, slope: DataArray, aspect: DataArray, convexity: DataArray }, 
   climateData: Record<number, ClimateData>
 ) => {
   try {
@@ -308,10 +333,14 @@ export const processWindData = (
     const gustImageData = { sampleData: gustExposure, width, height };
     const gustDirStats = getStats(windData.gustDir);
 
-    return {
+    const newWindData = {
       wind: { windData: windImageData, avgDir: windDirStats.avg, stdDir: windDirStats.std },
       gust: { gustData: gustImageData, avgDir: gustDirStats.avg, stdDir: gustDirStats.std },
     };  
+
+    // console.log("Backend processing wind data:", newWindData);
+      
+    return newWindData;
       
   } catch (error) {
     console.error('Error processing wind data:', error);

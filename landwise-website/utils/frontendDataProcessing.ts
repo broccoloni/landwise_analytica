@@ -85,12 +85,12 @@ const processLandUseData = (data: any): void => {
       throw new Error('Land use data not found');
     }
 
-    Object.entries(landUseData).forEach(([year, yearLandUseData]) => {
-      const { landUseData: yearImageData, cropArea, area, counts } = yearLandUseData.landUseData;
+    Object.entries(landUseData).forEach(([year, yearLandUseData]: [string, any]) => {
+      const { landUseData: yearImageData, cropArea, area, counts } = yearLandUseData;        
       const { imageUrl, legend, uniqueElements } = getImageLegendUnique(yearImageData, cropLabels, colorSet);
       
       // Modify the data for the current year
-      data.landUseData[year] = {
+      data.landUseData[Number(year)] = {
         imageUrl,
         legend,
         cropArea,

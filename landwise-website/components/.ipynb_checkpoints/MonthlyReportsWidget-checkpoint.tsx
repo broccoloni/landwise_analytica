@@ -46,7 +46,7 @@ const MonthlyReportsWidget: React.FC = () => {
             Check out our prices 
             <Link
               href='/reports?tab=pricing'
-              className="font-bold text-medium-green hover:underline ml-2"
+              className="font-bold text-medium-green hover:underline ml-1"
             >
               here
             </Link>                        

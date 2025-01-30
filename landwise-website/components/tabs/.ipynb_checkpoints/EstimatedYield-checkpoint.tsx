@@ -191,6 +191,12 @@ const EstimatedYield = (
                         title: 'Yield (Bushels/Acre)',
                       },
                       legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        xanchor: 'left',
+                        yanchor: 'top',
+                        orientation: 'v',
+                        bgcolor: 'rgba(255, 255, 255, 0.5)',                          
                         title: { text: 'Administrative Level' },
                       },
                       margin: {
@@ -267,6 +273,14 @@ const EstimatedYield = (
                         b: 50,
                         l: 50,
                         r: 0
+                      },
+                      legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        xanchor: 'left',
+                        yanchor: 'top',
+                        orientation: 'v',
+                        bgcolor: 'rgba(255, 255, 255, 0.5)',
                       },
                       shapes: [
                         {

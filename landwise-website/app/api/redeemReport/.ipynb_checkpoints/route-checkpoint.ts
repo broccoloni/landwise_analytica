@@ -20,8 +20,8 @@ import {
   processSoilData 
 } from '@/utils/backendDataProcessing';
 
-// const dataYears = ['2014','2015','2016','2017', '2018', '2019', '2020', '2021', '2022','2023','2024'];
-const dataYears = [2021, 2022];
+const dataYears = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
+// const dataYears = [2021, 2022];
 
 export async function POST(request: Request) {
   try {
