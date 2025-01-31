@@ -109,7 +109,7 @@ const SettingsForm = () => {
           <button
             type="button"
             onClick={handleSaveSettings}
-            className="px-4 py-2 bg-medium-brown text-white rounded-md hover:opacity-75"
+            className="px-4 py-2 bg-medium-brown dark:bg-medium-green text-white rounded-md hover:opacity-75"
           >
             Save Settings
           </button>
@@ -117,7 +117,7 @@ const SettingsForm = () => {
           <button
             type="button"
             onClick={handleDeleteAccount}
-            className="px-4 py-2 bg-medium-brown text-white rounded-md hover:opacity-75"
+            className="px-4 py-2 bg-medium-brown dark:bg-medium-green text-white rounded-md hover:opacity-75"
           >
             Delete Account
           </button>

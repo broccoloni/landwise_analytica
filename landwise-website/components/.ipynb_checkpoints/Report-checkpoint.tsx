@@ -154,7 +154,7 @@ const Report: React.FC<ReportProps> = ({
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`py-2 px-4 w-48 rounded-t-lg ${
-              activeTab === tab ? 'bg-medium-brown text-white dark:bg-medium-green' : 'bg-white text-black'
+              activeTab === tab ? 'bg-medium-brown text-white dark:bg-medium-green' : 'bg-white text-black dark:bg-dark-gray-d dark:text-white dark:border dark:border-dark-gray-b'
             } hover:bg-medium-brown dark:hover:bg-medium-green hover:opacity-75 hover:text-white`}
           >
             {tab.replace(/([A-Z])/g, ' $1')}

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       const customerId = checkoutSession.metadata.customerId || null;
       const customerEmail =
         checkoutSession.customer_email || checkoutSession.customer_details?.email;
-
+      const emailReportIds = checkoutSession.metadata.emailReportIds === 'false' ? false : true;
       if (isNaN(quantity) || quantity <= 0 || !size) {
         console.error('Invalid quantity or size in metadata.');
         return new NextResponse('Invalid quantity or size in metadata.', { status: 400 });
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      
       const reportLink = customerId ? `${process.env.NEXTAUTH_URL}/view-report/` : `${process.env.NEXTAUTH_URL}/redeem-a-report?reportId=`;
       const subject = 'Your Report IDs';
       const text = `Thank you for your purchase! Your report IDs are: ${reportIds.join(', ')}. You can use these IDs to redeem your reports.`;
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
         </div>
       `;
 
-      if (customerEmail) {
+      if (customerEmail && emailReportIds) {
         const emailResult = await sendEmail({
           to: customerEmail,
           subject,

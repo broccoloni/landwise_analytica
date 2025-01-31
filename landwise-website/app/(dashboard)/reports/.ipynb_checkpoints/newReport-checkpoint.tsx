@@ -278,7 +278,7 @@ export default function NewReport() {
         {/* Step 1: Address Search */}
         {step === 1 && (
           <div className="">
-            <div className="text-xl text-dark-blue mb-4">Search for an Address</div>
+            <div className="text-xl text-dark-blue mb-4 dark:text-white">Search for an Address</div>
             <AddressSearch
               onAddressSelect={handleAddressSelect}
               prompt="Search for a property address"
@@ -297,7 +297,7 @@ export default function NewReport() {
                 <button
                   onClick={handleBackStep}
                   disabled={step < 2}
-                  className="flex items-center justify-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex items-center justify-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </button>
@@ -306,7 +306,7 @@ export default function NewReport() {
                 <button
                   onClick={handleNextStep}
                   disabled={!address}
-                  className="flex items-center justify-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex items-center justify-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
@@ -319,7 +319,7 @@ export default function NewReport() {
         {step === 2 && latitude !== null && longitude !== null && (
           <div className="">
             <div className="text-xl mb-4">Define The Property Boundary</div>
-            <ul className="mb-8 mx-8 space-y-2 text-dark-blue list-disc">
+            <ul className="mb-8 mx-8 space-y-2 text-dark-blue list-disc dark:text-white">
               <li className="">Click to add a boundary point</li>
               <li className="">Double-click to close the boundary</li>
               <li className="">Use the cursor to move points, if necessary</li>
@@ -342,7 +342,7 @@ export default function NewReport() {
                 <button
                   onClick={handleBackStep}
                   disabled={step < 2}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </button>
@@ -351,7 +351,7 @@ export default function NewReport() {
                 <button
                   onClick={handleNextStep}
                   disabled={!landGeometry || landGeometry.length < 3}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
@@ -375,7 +375,7 @@ export default function NewReport() {
                 {landGeometry.length > 0 ? (
                   <ul className="list-none space-y-1">
                     {landGeometry.map((point, index) => (
-                      <li key={index} className="text-dark-blue">
+                      <li key={index} className="text-dark-blue dark:text-white">
                         Point {index + 1}: ({point[0]}, {point[1]})
                       </li>
                     ))}
@@ -396,7 +396,7 @@ export default function NewReport() {
                 <button
                   onClick={handleBackStep}
                   disabled={step < 2}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </button>
@@ -405,7 +405,7 @@ export default function NewReport() {
                 <button
                   onClick={handleNextStep}
                   disabled={ !address || landGeometry.length < 3 }
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
@@ -427,7 +427,7 @@ export default function NewReport() {
                   <button
                     onClick={handleBackStep}
                     disabled={step < 2}
-                    className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                    className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                   >
                     <ArrowLeft className="h-5 w-5 mr-2" /> Back
                   </button>
@@ -443,7 +443,7 @@ export default function NewReport() {
                 <div className="flex justify-center items-center mb-8">
                   <Link
                      href={`/contact`}
-                     className="px-4 py-2 bg-medium-brown hover:opacity-75 text-white rounded"
+                     className="px-4 py-2 bg-medium-brown dark:bg-medium-green hover:opacity-75 text-white rounded"
                      target="_blank"
                      rel="noopener noreferrer"
                   >

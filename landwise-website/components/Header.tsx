@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import SubHeader from '@/components/SubHeader';
 import Logo from '@/components/Logo';
+import ThemeButton from '@/components/ThemeButton';
 
 const Header = () => {
   const { data: session, status } = useSession();
@@ -67,7 +68,7 @@ const Header = () => {
 
   return (
     <>
-      <div className={`w-full text-white bg-dark-olive dark:bg-dark-gray-a pt-4 md:px-20 lg:px-36 ${raleway.className}`}>
+      <div className={`w-full text-white bg-dark-olive dark:bg-dark-gray-a pt-4 lg:px-20 xl:px-36 ${raleway.className}`}>
         {/* Desktop Header */}
         <div className="flex justify-between items-center pb-4 px-4">
           <Logo />
@@ -83,6 +84,7 @@ const Header = () => {
             <div className="min-w-40">
               <DropdownMenu title="Our Solutions" options={businessLinks} onLinkClick={handleLinkClick} />
             </div>
+            <ThemeButton />
           </div>
 
           {/* Mobile Menu Button */}
@@ -99,7 +101,7 @@ const Header = () => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="sm:hidden bg-light-brown dark:bg-black absolute z-10 w-full">
-            <div className="bg-dark-olive dark:bg-gray-800 dark:text-white opacity-80 grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-8">
+            <div className="bg-dark-olive dark:bg-dark-gray-c dark:text-white opacity-80 grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-8">
               <ListOfLinks
                 title="Reports"
                 links={reportLinks}
@@ -121,6 +123,10 @@ const Header = () => {
                 onClick={() => toggleMenu("solutions")}
                 onLinkClick={handleLinkClick}
               />
+              <div className="flex justify-between items-center mx-4 my-2">
+                <div className="font-bold">Theme</div>
+                <ThemeButton />
+              </div>
             </div>
           </div>
         )}

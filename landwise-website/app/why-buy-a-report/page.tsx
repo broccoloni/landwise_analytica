@@ -5,8 +5,7 @@ import Link from 'next/link';
 export default function WhyBuyReport() {
   return (
     <div className={`${roboto.className} text-black dark:text-white`}>
-      {/* Hero Section */}
-      <div className="px-40 pt-20 pb-10">
+      <div className="px-10 sm:px-20 lg:px-40 pb-10 pt-20">
         <div className="">
           <div className={`${roboto.className} font-bold text-4xl mb-6`}>
             Why Buy a Report?
@@ -17,8 +16,7 @@ export default function WhyBuyReport() {
         </div>
       </div>
 
-      {/* Key Benefits Section */}
-      <div className="px-40 py-10">
+      <div className="px-10 sm:px-20 lg:px-40 py-10">
         <div className={`${roboto.className} font-bold text-2xl mb-10 text-center text-dark-blue dark:text-medium-green`}>
           Key Benefits of Our Reports
         </div>
@@ -50,8 +48,7 @@ export default function WhyBuyReport() {
         </div>
       </div>
 
-      {/* Call to Action */}
-      <div className="px-40 py-20 bg-light-yellow dark:bg-dark-gray-c">
+      <div className="px-10 sm:px-20 lg:px-40 py-20 bg-light-yellow dark:bg-dark-gray-c">
         <div className="text-center">
           <div className={`${roboto.className} font-bold text-2xl mb-4`}>
             Ready to Make Smarter Land Decisions?

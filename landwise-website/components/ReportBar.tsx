@@ -51,7 +51,7 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   if (report.status === ReportStatus.Unredeemed) {
     return (
       <div onClick={handleRedeemClick}>
-        <Container className="bg-white hover:border-black dark:text-black">
+        <Container className="bg-white  shadow-md hover:border-black dark:bg-dark-gray-d dark:border-dark-gray-b dark:hover:border-white">
           <div className="flex justify-between items-center">
             <div className="flex text-lg">
               <div className="mr-2 font-semibold">Report ID:</div>
@@ -71,17 +71,17 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
 
   return (
     <div onClick={handleViewClick}>
-      <Container className="flex justify-between items-center p-4 bg-white rounded-md shadow-md mb-4 hover:border-gray-800">
+      <Container className="flex justify-between items-center p-4 bg-white dark:bg-dark-gray-d rounded-md shadow-md mb-4 hover:border-gray-800 dark:border-dark-gray-b dark:hover:border-white">
         <div className="flex flex-col">
           <div className="text-lg"><span className="font-semibold mr-2">Report ID:</span>{report.reportId}</div>
-          <span className="text-sm text-gray-500">Address: {report.address}</span>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-white">Address: {report.address}</span>
+          <span className="text-sm text-gray-500 dark:text-white">
             Created: {report.redeemedAt ? new Date(report.redeemedAt).toLocaleDateString() : 'N/A'}
           </span>
         </div>
         <div className="flex flex-col items-end text-center">
           <div className="text-xl flex justify-center items-center p-2">View Now<ArrowRight className="h-6 w-6 ml-2" /></div>
-          <div className="text-md font-semibold text-dark-green w-full">Days Left: {daysLeft}</div>
+          <div className="text-md font-semibold text-dark-green dark:text-medium-green w-full">Days Left: {daysLeft}</div>
         </div>
       </Container>
     </div>

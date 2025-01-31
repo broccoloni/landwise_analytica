@@ -12,9 +12,10 @@ function getEnvVariable(key: string, fallback: string | null = null): string | n
 
 export async function POST(req: Request) {
   try {
-    const { quantity, customerId, couponId, priceId, size } = await req.json();
+    const { quantity, customerId, couponId, priceId, size, emailReportIds } = await req.json();
 
-    if (!quantity || quantity <= 0 || !priceId || !size) {
+    // It's okay to include emailReportIds here since it's always sent and validated from checkout session components
+    if (!quantity || quantity <= 0 || !priceId || !size || emailReportIds===undefined || emailReportIds===null) {
       return NextResponse.json({ error: 'Invalid arguments provided' }, { status: 422 });
     }
 
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
         quantity, 
         customerId, 
         size,
+        emailReportIds: emailReportIds,
       },
       redirect_on_completion: 'never',
       ui_mode: 'embedded',

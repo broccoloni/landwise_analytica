@@ -5,6 +5,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import Loading from '@/components/Loading';
 import { useCartContext } from '@/contexts/CartContext';
+import { useSession } from 'next-auth/react';
 
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY) {
   throw new Error('Missing Stripe public key in environment variables');
@@ -17,6 +18,7 @@ interface CheckoutOptions {
 }
 
 export default function CheckoutSession({ onComplete }:{ onComplete: (sessionId: string) => void; }) {
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [options, setOptions] = useState<CheckoutOptions>({ clientSecret: '' });
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -24,12 +26,14 @@ export default function CheckoutSession({ onComplete }:{ onComplete: (sessionId:
 
   const fetchClientSecret = useCallback(async () => {
     try {
+      const emailReportIds = customerId ? session?.user?.emailReportIds ?? true : true;
+        
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ quantity, customerId, couponId, priceId, size }),
+        body: JSON.stringify({ quantity, customerId, couponId, priceId, size, emailReportIds }),
       });
 
       if (!response.ok) {

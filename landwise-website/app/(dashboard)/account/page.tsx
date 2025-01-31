@@ -40,15 +40,15 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown dark:bg-gray-700">
-      <Container className="flex bg-white dark:bg-gray-800">
+    <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown dark:bg-dark-gray-d">
+      <Container className="flex bg-white dark:bg-dark-gray-c">
         <div className="w-1/4 px-4 py-8 border-r border-gray-200 dark:border-gray-900">
           <div className="text-2xl mb-4">Account Settings</div>
           <ul className="space-y-2">
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'edit' ? 'bg-medium-brown text-white dark:bg-gray-700' : ''}
-              dark:hover:bg-gray-600 dark:hover:opacity-100
+              ${selectedTab === 'edit' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              dark:hover:bg-medium-green 
               `}
               onClick={() => handleTabChange('edit')}
             >
@@ -56,8 +56,8 @@ export default function AccountPage() {
             </li>
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'password' ? 'bg-medium-brown text-white dark:bg-gray-700' : ''}
-              dark:hover:bg-gray-600 dark:hover:opacity-100
+              ${selectedTab === 'password' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              dark:hover:bg-medium-green 
               `}
               onClick={() => handleTabChange('password')}
             >
@@ -65,8 +65,8 @@ export default function AccountPage() {
             </li>
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'settings' ? 'bg-medium-brown text-white dark:bg-gray-700' : ''}
-              dark:hover:bg-gray-600 dark:hover:opacity-100
+              ${selectedTab === 'settings' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              dark:hover:bg-medium-green 
               `}
               onClick={() => handleTabChange('settings')}
             >
@@ -74,15 +74,15 @@ export default function AccountPage() {
             </li>
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'feedback' ? 'bg-medium-brown text-white dark:bg-gray-700' : ''}
-              dark:hover:bg-gray-600 dark:hover:opacity-100
+              ${selectedTab === 'feedback' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              dark:hover:bg-medium-green 
               `}
               onClick={() => handleTabChange('feedback')}
             >
               <MessageSquareMore className="h-5 w-5 mr-2" /> Feedback
             </li>
             <li 
-              className="flex items-center cursor-pointer px-4 py-2 rounded-md hover:bg-medium-brown hover:opacity-75 dark:hover:bg-gray-600 dark:hover:opacity-100 hover:text-white"
+              className="flex items-center cursor-pointer px-4 py-2 rounded-md hover:bg-medium-brown hover:opacity-75 dark:hover:bg-medium-green  hover:text-white"
               onClick={() => signOut()}
             >
               <LogOut className="h-5 w-5 mr-2" /> Sign Out

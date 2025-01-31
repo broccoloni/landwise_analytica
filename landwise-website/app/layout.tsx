@@ -6,8 +6,6 @@ import Footer from '@/components/Footer';
 import ClientProviders from './ClientProviders';
 import '@/ui/globals.css';
 import { roboto } from '@/ui/fonts';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: 'Landwise Analytica',
@@ -22,13 +20,8 @@ interface LayoutProps {
 }
 
 export default async function Layout({ children }: LayoutProps) {
-  const session = await getServerSession(authOptions);
-
-  console.log("Layout Session:", session);
-  const isDarkMode = session?.user?.theme === 'Dark';
-    
   return (
-    <html lang="en" className={isDarkMode ? "dark" : ""}>
+    <html lang="en">
       <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || ''} />
 
       <head>

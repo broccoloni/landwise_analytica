@@ -19,8 +19,8 @@ const SubHeader = () => {
 
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5 mr-1" /> },
-    { href: '/account', label: 'My Account', icon: <User className="h-5 w-5 mr-1" /> },
-    { href: '/reports', label: 'My Reports', icon: <NotebookText className="h-5 w-5 mr-1" /> },
+    { href: '/account', label: 'Account', icon: <User className="h-5 w-5 mr-1" /> },
+    { href: '/reports', label: 'Reports', icon: <NotebookText className="h-5 w-5 mr-1" /> },
   ];
 
   if (status !== 'authenticated' || !session?.user?.email) {

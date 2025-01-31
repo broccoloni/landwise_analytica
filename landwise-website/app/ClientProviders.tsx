@@ -5,6 +5,7 @@ import { SessionProvider as NextAuthProvider } from 'next-auth/react';
 import { ReportProvider } from '@/contexts/ReportContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { GoogleMapsProvider } from '@/contexts/GoogleMapsContext';
+import { SettingsProvider } from '@/contexts/settings/SettingsProvider';
 
 interface ClientProvidersProps {
   children: ReactNode;
@@ -12,15 +13,17 @@ interface ClientProvidersProps {
 
 const ClientProviders = ({ children }: ClientProvidersProps) => {
   return (
-    <CartProvider>
-      <ReportProvider>
-        <GoogleMapsProvider>
-          <NextAuthProvider>
-            {children}
-          </NextAuthProvider>
-        </GoogleMapsProvider>
-      </ReportProvider>
-    </CartProvider>
+    <NextAuthProvider>
+      <SettingsProvider>
+        <CartProvider>
+          <ReportProvider>
+            <GoogleMapsProvider>
+              {children}
+            </GoogleMapsProvider>
+          </ReportProvider>
+        </CartProvider>
+      </SettingsProvider>
+    </NextAuthProvider>
   );
 };
 

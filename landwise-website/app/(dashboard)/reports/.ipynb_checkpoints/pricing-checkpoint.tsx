@@ -58,7 +58,7 @@ export default function Pricing() {
         return (
           <div
             key={index}
-            className="flex justify-between text-sm text-gray-700 border-b py-2"
+            className="flex justify-between text-sm text-gray-700 dark:text-white border-b py-2"
           >
             <span>
               {tier === 1 ? (
@@ -98,7 +98,7 @@ export default function Pricing() {
       {reportSizeLabels.map((sizeLabel, index) => (
         <div
           key={index}
-          className="flex justify-between text-sm text-gray-700 border-b py-2"
+          className="flex justify-between text-sm text-gray-700 dark:text-white border-b py-2"
         >
           <span className="w-24">
             {toTitleCase(sizeLabel)}

@@ -36,29 +36,35 @@ export default function ReportsPage() {
   };
 
   return (      
-    <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown min-h-lg">
-      <Container className="flex bg-white">
+    <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown min-h-lg dark:bg-dark-gray-d">
+      <Container className="flex bg-white dark:bg-dark-gray-c">
         {/* Sidebar Navigation */}
         <div className="w-1/4 px-4 py-8 border-r border-gray-200">
           <div className="text-2xl mb-4">Reports</div>
           <ul className="space-y-2">
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'view-reports' ? 'bg-medium-brown text-white' : ''}`}
+              ${selectedTab === 'view-reports' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              dark:hover:bg-medium-green
+              `}
               onClick={() => handleTabChange('view-reports')}
             >
               <NotebookText className="h-5 w-5 mr-2" /> View Reports
             </li>
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'new-report' ? 'bg-medium-brown text-white' : ''}`}
+              ${selectedTab === 'new-report' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              dark:hover:bg-medium-green
+              `}
               onClick={() => handleTabChange('new-report')}
             >
               <ClipboardPlus className="h-5 w-5 mr-2" /> Order New Reports
             </li>
             <li
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'pricing' ? 'bg-medium-brown text-white' : ''}`}
+              ${selectedTab === 'pricing' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              dark:hover:bg-medium-green
+              `}
               onClick={() => handleTabChange('pricing')}
             >
               <DollarSign className="h-5 w-5 mr-2" /> Pricing

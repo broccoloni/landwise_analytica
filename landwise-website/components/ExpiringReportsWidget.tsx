@@ -38,7 +38,7 @@ const ExpiringReportsWidget: React.FC = () => {
   }, [reports, isLoading]);
 
   return (
-    <Container className="bg-white w-full">
+    <Container className="bg-white w-full dark:bg-dark-gray-c">
       <div className="flex justify-between items-center text-xl">
         <span>Reports Expiring This Week</span>
         <InfoButton>

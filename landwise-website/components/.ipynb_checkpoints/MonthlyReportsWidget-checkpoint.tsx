@@ -34,7 +34,7 @@ const MonthlyReportsWidget: React.FC = () => {
   const discount = getCouponName(monthlyReports);
 
   return (
-    <Container className="bg-white w-full">
+    <Container className="bg-white w-full dark:bg-dark-gray-c">
       <div className="flex justify-between items-center text-xl">
         <span>Reports Ordered This Month</span>
         <InfoButton>
