@@ -28,7 +28,7 @@ const SubHeader = () => {
   }
 
   return (
-    <div className={`w-full text-white bg-dark-olive opacity-80 py-4 px-4 md:px-20 lg:px-36 ${raleway.className}`}>
+    <div className={`w-full text-white bg-dark-olive opacity-80 dark:bg-dark-gray-b dark:opacity-100 py-4 px-4 md:px-20 lg:px-36 ${raleway.className}`}>
       <div className="flex-row sm:flex justify-between">
         {/* Left Side */}
         <div className="flex items-center justify-between md:justify-start md:space-x-8 w-full mb-4 sm:mb-0">

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Container from '@/components/Container';
 import Dropdown from '@/components/Dropdown';
 import NotificationBanner from '@/components/NotificationBanner';
+import Loading from '@/components/Loading';
 
 const ourEmail = process.env.NEXT_PUBLIC_EMAIL_ADDRESS;
 
@@ -77,15 +78,15 @@ export default function Feedback() {
           <NotificationBanner type='success'>{success}</NotificationBanner>
         </div>
       )}
-      <Container className="flex flex-col py-8 space-y-8 bg-white">
-        <div className="text-4xl font-bold">We'd Appreciate Your Feedback</div>
+      <Container className="flex flex-col py-8 space-y-8 bg-white dark:bg-dark-gray-c">
+        <div className="text-4xl dark:text-medium-green">We'd Appreciate Your Feedback</div>
         <div>If you have any feedback for us or features you wish would be included, you can provide that here.</div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Name
             </label>
@@ -103,7 +104,7 @@ export default function Feedback() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Email
             </label>
@@ -121,7 +122,7 @@ export default function Feedback() {
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-white"
             >
               Feedback
             </label>
@@ -129,7 +130,7 @@ export default function Feedback() {
               id="feedback"
               name="feedback"
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2 border border-gray-300 focus:border-medium-brown focus:ring-medium-brown"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2 border border-gray-300 focus:border-medium-brown focus:ring-medium-brown dark:text-black"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="If you have any feedback for us or features you wish would be included, please write it here."
@@ -140,10 +141,17 @@ export default function Feedback() {
           <div>
             <button
               type="submit"
-              className="w-full inline-flex justify-center rounded-md border border-transparent bg-medium-brown py-2 px-4 text-sm font-medium text-white shadow-sm hover:opacity-75"
+              className="w-full inline-flex justify-center items-center text-center rounded-md border border-transparent bg-medium-brown dark:bg-medium-green text-sm font-medium text-white shadow-sm hover:opacity-75 px-4 py-2"
               disabled={loading}
             >
-              {loading ? 'Sending...' : 'Submit'}
+              {loading ? (
+                <>
+                  {/* <Loading className="h-5 w-5 text-white" /> */}
+                  Sending...
+                </>
+              ) : (
+                <div>Submit</div>
+              )}
             </button>
           </div>
         </form>

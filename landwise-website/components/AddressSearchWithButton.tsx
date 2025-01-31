@@ -70,7 +70,7 @@ export default function AddressSearchWithButton({ onAddressSelect, prompt, onSub
       <button 
         onClick={onSubmit}
         disabled={!addressSelected}
-        className="bg-medium-brown text-white px-6 py-2 rounded-r-full hover:opacity-75"
+        className="bg-medium-brown dark:bg-medium-green text-white px-6 py-2 rounded-r-full hover:opacity-75"
       >
         <Search className="w-5 h-5 text-white" />
       </button>

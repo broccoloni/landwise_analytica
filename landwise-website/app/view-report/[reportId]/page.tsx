@@ -28,10 +28,12 @@ export default function ViewReport() {
     landGeometry, setLandGeometry,
     createdAt, setCreatedAt,
     redeemedAt, setRedeemedAt,
+    clearReportContext,
   } = useReportContext();
 
   useEffect(() => {
     if (urlReportId !== reportId) {
+      clearReportContext();
       setReportId(urlReportId);
     }
   }, [urlReportId, reportId]);
@@ -72,15 +74,14 @@ export default function ViewReport() {
 
       const report = result.report;
 
-      if (report.status !== ReportStatus.Redeemed || !report) {
-        setStatus(report.status || ReportStatus.Invalid);
-          
+      if (!report || report.status !== ReportStatus.Redeemed) {          
         if (!report || 
             report.status === ReportStatus.Invalid || 
             report.status === ReportStatus.Error ||
             report.status === ReportStatus.Unredeemed) {
           setDataLoaded(true);
         }
+        setStatus(report.status || ReportStatus.Invalid);
       }
 
       else {
@@ -182,7 +183,7 @@ export default function ViewReport() {
           <div className="flex justify-center items-center mt-4">
             <Link 
               href = {`/redeem-a-report?reportId=${reportId}`}
-              className="bg-medium-brown hover:opacity-75 ml px-4 py-2 text-white rounded"
+              className="bg-medium-brown dark:bg-medium-green hover:opacity-75 ml px-4 py-2 text-white rounded"
             >
               Redeem Report
             </Link>
@@ -204,7 +205,7 @@ export default function ViewReport() {
   };
     
   return (
-    <div className={`${roboto.className} text-black px-10 sm:px-20 md:px-40 py-10`}>
+    <div className={`${roboto.className} text-black dark:text-white px-10 sm:px-20 md:px-40 py-10`}>
       <div className="relative">
         <div className="flex justify-between mb-4">
           <div className={`${montserrat.className} text-xl flex justify-center items-center space-x-4`}> 
@@ -221,7 +222,7 @@ export default function ViewReport() {
             />
           </div>
         </div>
-        <Container className="bg-white">
+        <Container className="bg-white dark:bg-dark-gray-c">
           {dataLoaded && status === ReportStatus.Redeemed ? (
             <Report 
               reportId = {reportId}

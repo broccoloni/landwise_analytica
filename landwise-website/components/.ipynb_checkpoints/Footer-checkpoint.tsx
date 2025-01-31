@@ -53,7 +53,7 @@ const Footer = () => {
   ];
 
   return (
-    <div className={`w-full text-white bg-dark-brown py-10 sm:py-24 px-10 md:px-20 lg:px-40 ${raleway.className}`}>
+    <div className={`w-full text-white bg-dark-brown dark:bg-dark-gray-a py-10 sm:py-24 px-10 md:px-20 lg:px-40 ${raleway.className}`}>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-8">
         <ListOfLinks
           title="Reports"

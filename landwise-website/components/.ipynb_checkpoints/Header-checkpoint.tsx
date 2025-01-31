@@ -67,7 +67,7 @@ const Header = () => {
 
   return (
     <>
-      <div className={`w-full text-white bg-dark-olive pt-4 md:px-20 lg:px-36 ${raleway.className}`}>
+      <div className={`w-full text-white bg-dark-olive dark:bg-dark-gray-a pt-4 md:px-20 lg:px-36 ${raleway.className}`}>
         {/* Desktop Header */}
         <div className="flex justify-between items-center pb-4 px-4">
           <Logo />
@@ -98,8 +98,8 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="sm:hidden bg-light-brown absolute z-10 w-full">
-            <div className="bg-dark-olive opacity-80 grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-8">
+          <div className="sm:hidden bg-light-brown dark:bg-black absolute z-10 w-full">
+            <div className="bg-dark-olive dark:bg-gray-800 dark:text-white opacity-80 grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-8">
               <ListOfLinks
                 title="Reports"
                 links={reportLinks}

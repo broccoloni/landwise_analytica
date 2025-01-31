@@ -144,15 +144,15 @@ export default function GetReport() {
       </div>
 
       <div className="flex justify-center items-center mb-8">
-        <div className="bg-medium-brown text-white px-4 py-2 rounded-l border border-gray-800">Property Size</div>
+        <div className="bg-medium-brown dark:bg-medium-green text-white px-4 py-2 rounded-l border border-gray-800">Property Size</div>
         <div className="inline-flex rounded-r">
         {reportSizeLabels.map((sizeOption) => (
           <button
             key={sizeOption}
             onClick={() => handleSizeChange(sizeOption)}
-            className={`px-4 py-2 opacity-90 hover:opacity-75 hover:bg-medium-brown hover:text-white border-t border-r border-b border-gray-500 ${
+            className={`px-4 py-2 opacity-90 hover:opacity-75 hover:bg-medium-brown dark:hover:bg-medium-green hover:text-white border-t border-r border-b border-gray-500 ${
               size === sizeOption
-                ? 'bg-medium-brown text-white'
+                ? 'bg-medium-brown text-white dark:bg-medium-green'
                 : 'bg-white text-gray-800'
             } ${sizeOption !== reportSizeLabels.slice(-1)[0] ? '' : 'rounded-r'}`}
           >
@@ -171,7 +171,7 @@ export default function GetReport() {
                 {reportSizeLabels.map((sizeLabel, index) => (
                   <div
                     key={index}
-                    className="flex justify-between text-sm text-gray-700 border-b py-2"
+                    className="flex justify-between text-sm text-gray-700 dark:text-white border-b py-2"
                   >
                     <span className="w-24">
                       {toTitleCase(sizeLabel)}
@@ -207,7 +207,7 @@ export default function GetReport() {
 
       {size && size === 'jumbo' ? (
         <div className="flex justify-center items-center">
-          <Container className="text-black  bg-white border border-gray-300 rounded-lg shadow-lg max-w-sm">
+          <Container className="text-black bg-white dark:bg-gray-100 border border-gray-300 rounded-lg shadow-lg max-w-sm">
             <div className="font-semibold text-2xl text-center text-dark-blue mb-8">{toTitleCase(size)} Report</div>
 
             <div className="mb-8">To purchase a <span className="font-bold">{toTitleCase(size)}</span> report, please contact us to request a quote using the button below</div>
@@ -240,7 +240,7 @@ export default function GetReport() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 justify-items-stretch">
         {/* Single Report Container */}
         <div className="flex flex-col mx-auto md:mx-0 md:ml-auto ">
-          <Container className="text-black w-full pt-16 bg-white border border-gray-300 rounded-lg shadow-lg">
+          <Container className="text-black w-full pt-16 bg-white dark:bg-gray-100 border border-gray-300 rounded-lg shadow-lg">
             <div className="flex flex-col">
               <div className="font-semibold text-2xl text-center text-dark-blue">Single Report</div>
               {address && validSize &&(
@@ -258,8 +258,16 @@ export default function GetReport() {
                 </>
               )}
               <div className={`${roboto.className} text-center text-4xl mt-4 mb-8`}>
-                ${dollarsOne}
-                <span className="text-sm relative bottom-4">{centsOne}</span>
+                {dollarsOne && centsOne ? (
+                  <>
+                    ${dollarsOne}
+                    <span className="text-sm relative bottom-4">{centsOne}</span>
+                  </>
+                ) : (
+                  <div className="flex justify-center items-center">
+                    <Loading className="h-5 w-5" />
+                  </div>
+                )}
               </div>
               <div className="mx-10 my-4">
                 <div className="mb-2">
@@ -298,7 +306,7 @@ export default function GetReport() {
           <div className="bg-medium-green w-full rounded-t-lg text-white text-center text-xl flex justify-center items-center h-10">
             Best Deal
           </div>
-          <Container className="text-black w-full bg-white border border-gray-300 rounded-lg shadow-lg pt-6 rounded-t-none">
+          <Container className="text-black w-full bg-white dark:bg-gray-100 border border-gray-300 rounded-lg shadow-lg pt-6 rounded-t-none">
             <div className="flex flex-col">
               <div className="font-semibold text-2xl text-center text-dark-blue">Three Reports</div>
               {address && validSize && (
@@ -317,12 +325,24 @@ export default function GetReport() {
                 </>
               )}
               <div className={`${roboto.className} mt-4 text-center text-4xl`}>
-                ${dollarsThree}
-                <span className="text-sm relative bottom-4">{centsThree}</span>
+                {dollarsThree && centsThree ? (
+                  <>
+                    ${dollarsThree}
+                    <span className="text-sm relative bottom-4">{centsThree}</span>
+                  </>
+                ) : (
+                  <div className="flex justify-center items-center">
+                    <Loading className="h-5 w-5" />
+                  </div>
+                )}
               </div>
               <div className="flex h-8 justify-center items-center text-gray-500">
-                <div className="mr-2 font-bold">{discountPct}% off</div>
-                <div className="line-through">{priceOne ? `$${(3*priceOne).toFixed(2)}` : <Loading className="h-5 w-5" />}</div>
+                {discountPct && priceOne && (
+                  <>
+                    <div className="mr-2 font-bold">{discountPct}% off</div>
+                    <div className="line-through">${(3*priceOne).toFixed(2)}</div>
+                  </>
+                )}
               </div>
               <div className="mx-10 my-4">
                 <div className="mb-2">
@@ -359,7 +379,7 @@ export default function GetReport() {
       )}
 
       <div className="md:mx-10 lg:mx-20 mt-20 hidden sm:block">
-        <div className="text-2xl text-dark-blue font-bold text-center mb-8">
+        <div className="text-2xl text-dark-blue dark:text-medium-green font-bold text-center mb-8">
           The world's first data-driven land assessment platform
         </div>
         <div className="grid grid-cols-4 lg:grid-cols-4 gap-4 mb-12">
@@ -432,9 +452,9 @@ export default function GetReport() {
       </div>
 
         
-      <div className="text-sm text-gray-600 mb-12 mt-10 sm:mt-20 md:mx-10 lg:mx-36">
+      <div className="text-sm text-gray-600 dark:text-white mb-12 mt-10 sm:mt-20 md:mx-10 lg:mx-36">
         <span className="text-[0.5rem] align-super leading-none mr-1 font-bold">1</span>
-        Reports can be redeemed at any time and will be available for 180 days after redemption.
+        Reports can be redeemed at any time within one year, and will be available for 180 days after redemption.
       </div>
         
     </div>

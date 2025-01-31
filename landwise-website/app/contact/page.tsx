@@ -95,16 +95,11 @@ export default function Contact() {
   };
     
   return (
-    <div 
-      className={`flex-row py-20
-        ${tab === 'form' ? 'px-80' : 'px-40'}
-      `}
-    >        
-
-      <div className={`${roboto.className} text-2xl grid grid-cols-2 text-center space-x-4 mx-auto`}>
+    <div className={`flex-row py-20 ${tab === 'form' ? 'px-80' : 'px-40'}`}>        
+      <div className={`${roboto.className} text-2xl grid grid-cols-2 text-center space-x-4 mx-4`}>
         <button 
           className={`rounded-t-xl px-4 py-2 border-t border-l border-r hover:opacity-75
-            ${tab === 'form' ? 'bg-white text-black' : 'bg-medium-brown text-white'}
+            ${tab === 'form' ? 'bg-white text-black dark:bg-dark-gray-c dark:text-medium-green' : 'bg-medium-brown text-white dark:text-medium-green dark:bg-dark-gray-b'}
           `}
           onClick={() => setTab('form')}
         >
@@ -112,7 +107,7 @@ export default function Contact() {
         </button>
         <button 
           className={`rounded-t-xl px-4 py-2 border-t border-l border-r hover:opacity-75
-            ${tab === 'direct' ? 'bg-white text-black' : 'bg-medium-brown text-white'}
+            ${tab === 'direct' ? 'bg-white text-black dark:bg-dark-gray-c dark:text-medium-green' : 'bg-medium-brown text-white dark:text-medium-green dark:bg-dark-gray-b'}
           `}
           onClick={() => setTab('direct')}
         >
@@ -121,7 +116,7 @@ export default function Contact() {
       </div>
         
       {tab === 'form' ? (
-        <Container className="flex flex-col py-8 space-y-8 bg-white">
+        <Container className="flex flex-col py-8 space-y-8 bg-white dark:bg-dark-gray-c border-t-none ">
           {error && (
             <div className="mb-4">
               <NotificationBanner type='error'>{error}</NotificationBanner>
@@ -138,7 +133,7 @@ export default function Contact() {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Name
               </label>
@@ -156,7 +151,7 @@ export default function Contact() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Email
               </label>
@@ -174,7 +169,7 @@ export default function Contact() {
             <div>
               <label
                 htmlFor="subject"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Subject
               </label>
@@ -193,7 +188,7 @@ export default function Contact() {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
                >
                  Message
                </label>
@@ -201,7 +196,7 @@ export default function Contact() {
                  id="message"
                  name="message"
                  rows={4}
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2 border border-gray-300 focus:border-medium-brown focus:ring-medium-brown"
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-4 py-2 border border-gray-300 focus:border-medium-brown focus:ring-medium-brown dark:text-black"
                  value={message}
                  onChange={(e) => setMessage(e.target.value)}
                  placeholder="Please write your message here."
@@ -212,7 +207,7 @@ export default function Contact() {
             <div>
               <button
                 type="submit"
-                className="w-full inline-flex justify-center rounded-md border border-transparent bg-medium-brown py-2 px-4 text-sm font-medium text-white shadow-sm hover:opacity-75"
+                className="w-full inline-flex justify-center rounded-md border border-transparent bg-medium-brown py-2 px-4 text-sm font-medium text-white shadow-sm hover:opacity-75 dark:bg-medium-green"
                 disabled={loading}
               >
                 {loading ? 'Sending...' : 'Submit'}
@@ -222,12 +217,12 @@ export default function Contact() {
         </Container>
 
       ) : (
-        <Container>
+        <Container className="bg-white dark:bg-dark-gray-c">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mx-auto justify-center items-start">
             {employees.map((person, index) => (
               <div
                 key={index}
-                className="flex border-y border-gray-500 py-8 mx-2 w-full bg-white h-lg"
+                className="flex border-y border-gray-500 py-8 mx-2 w-full bg-white dark:bg-dark-gray-d h-lg"
               >
                 <div className="ml-4 flex-shrink-0">
                   <Image

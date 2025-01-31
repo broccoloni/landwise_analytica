@@ -114,25 +114,25 @@ export default function Terms() {
     <div className={`${roboto.className} min-h-screen px-80 pt-10 flex-row justify-between`}>
       <div className="pt-10">
         <div className="text-4xl mb-8">View an Redeemed Report</div>
-        <div className="text-2xl font-semibold mb-4">Enter Report ID</div>
+        <div className="text-2xl mb-4">Enter Report ID</div>
         <input
           id="reportId"
           type="text"
           value={reportId || ''}
           onChange={handleReportIdChange}
           maxLength={14}
-          className="mt-1 block w-full px-3 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="mt-1 block w-full px-3 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-black"
           placeholder="XXXX-XXXX-XXXX"
         />
 
         <ReportStatusDisplay />
           
-        <div className="flex justify-center w-full">
+        <div className="flex justify-end w-full">
           <div className="">            
             <button
               onClick={handleSubmit}
               disabled={reportId?.length !== 14}
-              className="mt-4 bg-medium-brown text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+              className="mt-4 bg-medium-brown dark:bg-medium-green text-white px-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
             >
               View Report
             </button>

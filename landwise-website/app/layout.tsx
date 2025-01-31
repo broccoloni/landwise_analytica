@@ -6,6 +6,8 @@ import Footer from '@/components/Footer';
 import ClientProviders from './ClientProviders';
 import '@/ui/globals.css';
 import { roboto } from '@/ui/fonts';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: 'Landwise Analytica',
@@ -19,9 +21,14 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default async function Layout({ children }: LayoutProps) {
+  const session = await getServerSession(authOptions);
+
+  console.log("Layout Session:", session);
+  const isDarkMode = session?.user?.theme === 'Dark';
+    
   return (
-    <html lang="en">
+    <html lang="en" className={isDarkMode ? "dark" : ""}>
       <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || ''} />
 
       <head>
@@ -32,7 +39,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="min-h-screen flex flex-col">
             <Header />
           
-            <main className={`${roboto.className} flex-1 bg-light-brown text-black`}>
+            <main className={`${roboto.className} flex-1 bg-light-brown text-black dark:bg-dark-gray-d dark:text-white`}>
               {children}
             </main>
           

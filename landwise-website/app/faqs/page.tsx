@@ -110,7 +110,7 @@ export default function FaqsPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-3xl font-bold mb-6 text-center">
+      <h2 className="text-3xl mb-6 text-center">
         Frequently Asked Questions
       </h2>
       <div className="space-y-4">
@@ -120,7 +120,7 @@ export default function FaqsPage() {
             className="border border-gray-300 rounded-lg shadow-sm overflow-hidden"
           >
             <button
-              className="w-full text-left px-4 py-3 bg-white hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-medium-brown"
+              className="w-full text-left px-4 py-3 bg-white hover:bg-gray-200 dark:bg-dark-gray-c dark:hover:bg-dark-gray-d focus:outline-none focus:ring-2 focus:ring-medium-brown dark:focus:ring-medium-green"
               onClick={() => toggleQuestion(index)}
             >
               <div className="flex justify-between items-center">
@@ -133,7 +133,7 @@ export default function FaqsPage() {
               </div>
             </button>
             {activeIndex === index && (
-              <div className="px-4 py-3 text-gray-700 bg-white border-t">
+              <div className="px-4 py-3 text-gray-700 bg-white dark:bg-dark-gray-c dark:text-white border-t">
                 {faq.answer}
               </div>
             )}
@@ -141,11 +141,11 @@ export default function FaqsPage() {
         ))}
       </div>
       <div className="mt-6 text-center">
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-white">
           Can't find the answer you're looking for?{' '}
           <Link
             href="/feedback" 
-            className="text-medium-brown font-medium hover:underline"
+            className="text-medium-brown dark:text-medium-green font-medium hover:underline"
           >
             Submit your feedback
           </Link>{' '}

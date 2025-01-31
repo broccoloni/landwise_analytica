@@ -24,7 +24,7 @@ export default function DefineBounrdary() {
   };
 
   return (
-    <div className={`${roboto.className} text-black min-h-screen py-10 flex-row justify-between`}>
+    <div className={`${roboto.className} min-h-screen py-10 flex-row justify-between`}>
       <div className="mx-auto px-5 sm:px-20 md:px-40 lg:px-60 xl:px-80 py-10">
         <div className="text-4xl font-bold mb-8 text-center">Your Almost There!</div>
         <div className="mb-8">
@@ -32,7 +32,7 @@ export default function DefineBounrdary() {
         </div>
           
         <div className="text-2xl font-semibold mb-4">Define The Property Boundary</div>
-        <ul className="mb-8 mx-8 space-y-2 text-dark-blue list-disc">
+        <ul className="mb-8 mx-8 space-y-2 text-dark-blue dark:text-white list-disc">
           <li className="">Click to add a boundary point</li>
           <li className="">Double-click to close the boundary</li>
           <li className="">Use the cursor to move points, if necessary</li>
@@ -50,12 +50,12 @@ export default function DefineBounrdary() {
           />
         </div>
 
-        <div className="flex justify-center w-full">
+        <div className="flex justify-end w-full">
           <div className="">            
             <button
               onClick={handleGetReport}
               disabled={landGeometry.length < 3}
-              className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+              className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
             >
               Get My Report
               <ArrowRight className="h-5 w-5 ml-2" />

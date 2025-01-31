@@ -129,7 +129,7 @@ const Report: React.FC<ReportProps> = ({
   return (
     <div>
       <section id="summary">
-        <div className={`${merriweather.className} text-medium-brown text-3xl pb-2`}>
+        <div className={`${merriweather.className} text-medium-brown dark:text-medium-green text-3xl pb-2`}>
           Summary
         </div>
         <div className="w-full sm:flex flex-row">
@@ -148,14 +148,14 @@ const Report: React.FC<ReportProps> = ({
           </div>
         </div>
       </section>
-      <div className="flex justify-center space-x-8 border-b border-medium-brown mb-4 mt-10">
+      <div className="flex justify-center space-x-8 border-b border-medium-brown dark:border-medium-green mb-4 mt-10">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`py-2 px-4 w-48 rounded-t-lg ${
-              activeTab === tab ? 'bg-medium-brown text-white' : 'bg-white text-black'
-            } hover:bg-medium-brown hover:opacity-75 hover:text-white`}
+              activeTab === tab ? 'bg-medium-brown text-white dark:bg-medium-green' : 'bg-white text-black'
+            } hover:bg-medium-brown dark:hover:bg-medium-green hover:opacity-75 hover:text-white`}
           >
             {tab.replace(/([A-Z])/g, ' $1')}
           </button>

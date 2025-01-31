@@ -50,7 +50,7 @@ export default function Form() {
         </div>
       )}
       <div className="flex flex-col gap-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
+        <label htmlFor="email" className="text-sm font-medium dark:text-white">
           Email
         </label>
         <input
@@ -64,7 +64,7 @@ export default function Form() {
         />
       </div>
       <div className="flex flex-col gap-y-2">
-        <label htmlFor="password" className="text-sm font-medium">
+        <label htmlFor="password" className="text-sm font-medium dark:text-white">
           Password
         </label>
         <input
@@ -80,7 +80,7 @@ export default function Form() {
       <button
         type="submit"
         disabled={loading}
-        className={`w-full px-4 py-2 font-semibold text-white bg-medium-brown rounded-md hover:opacity-75 ${
+        className={`w-full px-4 py-2 font-semibold text-white bg-medium-brown rounded-md hover:opacity-75 dark:bg-medium-green ${
           loading ? 'opacity-70 cursor-not-allowed' : ''
         }`}
       >

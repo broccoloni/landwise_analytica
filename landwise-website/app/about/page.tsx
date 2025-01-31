@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export default function About() {
   return (
-    <div className={`${roboto.className} text-black`}>
+    <div className={`${roboto.className}`}>
       {/* About Section */}
       <div className="px-40 py-20">
         <div className="max-w-3xl">
@@ -29,7 +29,7 @@ export default function About() {
       </div>
 
       {/* Solution Section */}
-      <div className="px-40 pt-20 pb-10 bg-gradient-to-r from-medium-yellow to-dark-blue text-white"
+      <div className="px-40 pt-20 pb-10 bg-gradient-to-r from-medium-yellow to-dark-blue dark:from-dark-blue dark:to-dark-gray-c text-white"
            style={{ borderTopLeftRadius: '10%', borderTopRightRadius: '10%' }}    
       >
         <div className={`${roboto.className} font-bold text-2xl mb-4`}>Our Solution</div>
@@ -49,46 +49,48 @@ export default function About() {
       </div>
 
       {/* Why Choose Us Section */}
-      <div className="px-40 pt-10 pb-20 bg-gradient-to-r from-medium-yellow to-dark-blue text-white"
-           style={{ borderBottomLeftRadius: '10%', borderBottomRightRadius: '10%' }}
-      >
-        <div className={`${roboto.className} font-bold text-2xl mb-10`}>Why Choose Us?</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg">
-            <div className="font-semibold text-xl mb-2">Accurate Data</div>
-            <p>
-              Our reports are powered by cutting-edge data models that assess land viability based on climate, soil, and other key metrics.
-            </p>
-          </Container>
-          <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg">
-            <div className="font-semibold text-xl mb-2">Time and Cost Efficiency</div>
-            <p>
-              By reducing the need for traditional methods like soil sampling, we save you both time and money.
-            </p>
-          </Container>
-          <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg">
-            <div className="font-semibold text-xl mb-2">Scalable Solutions</div>
-            <p>
-              Whether you're dealing with a single plot of land or managing large portfolios, our platform can scale with your needs.
-            </p>
-          </Container>
-          <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg">
-            <div className="font-semibold text-xl mb-2">Future-Proofing Agriculture</div>
-            <p>
-              With a strong focus on data-driven solutions, we’re helping the agricultural industry become more adaptable to changing climate conditions and market demands.
-            </p>
-          </Container>
-          <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg">
-            <div className="font-semibold text-xl mb-2">Sustainability Focused</div>
-            <p>
-              Our solutions promote sustainable farming practices that help protect the environment while maximizing crop yields.
-            </p>
-          </Container>
+      <div className="bg-light-brown dark:bg-dark-gray-c">
+        <div className="px-40 pt-10 pb-20 bg-gradient-to-r from-medium-yellow to-dark-blue dark:from-dark-blue dark:to-dark-gray-c text-white"
+             style={{ borderBottomLeftRadius: '10%', borderBottomRightRadius: '10%' }}
+        >
+          <div className={`${roboto.className} font-bold text-2xl mb-10`}>Why Choose Us?</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+              <div className="font-semibold text-xl mb-2 dark:text-medium-green">Accurate Data</div>
+              <p>
+                Our reports are powered by cutting-edge data models that assess land viability based on climate, soil, and other key metrics.
+              </p>
+            </Container>
+            <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+              <div className="font-semibold text-xl mb-2 dark:text-medium-green">Time and Cost Efficiency</div>
+              <p>
+                By reducing the need for traditional methods like soil sampling, we save you both time and money.
+              </p>
+            </Container>
+            <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+              <div className="font-semibold text-xl mb-2 dark:text-medium-green">Scalable Solutions</div>
+              <p>
+                Whether you're dealing with a single plot of land or managing large portfolios, our platform can scale with your needs.
+              </p>
+            </Container>
+            <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+              <div className="font-semibold text-xl mb-2 dark:text-medium-green">Future-Proofing Agriculture</div>
+              <p>
+                With a strong focus on data-driven solutions, we’re helping the agricultural industry become more adaptable to changing climate conditions and market demands.
+              </p>
+            </Container>
+            <Container className="text-black transition-transform transform hover:scale-105 duration-200 p-8 bg-white border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+              <div className="font-semibold text-xl mb-2 dark:text-medium-green">Sustainability Focused</div>
+              <p>
+                Our solutions promote sustainable farming practices that help protect the environment while maximizing crop yields.
+              </p>
+            </Container>
+          </div>
         </div>
       </div>
 
       {/* Team Section */}
-      <div className="px-40 pt-20 bg-light-yellow">
+      <div className="px-40 pt-20 bg-light-yellow dark:bg-dark-gray-c">
         <div className={`${roboto.className} font-bold text-2xl mb-8 text-center`}>Our Team</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mx-auto justify-center items-center">
           <div className="flex flex-col items-center">
@@ -134,7 +136,7 @@ export default function About() {
       </div>
 
       {/* Supporters Section */}
-      <div className="px-40 py-20 bg-light-yellow">
+      <div className="px-40 py-20 bg-light-yellow dark:bg-dark-gray-c">
         <div className={`${roboto.className} font-bold text-2xl mb-8 text-center`}>Our Supporters</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-8 mx-auto justify-center items-center">
           <div className="flex justify-center items-center">

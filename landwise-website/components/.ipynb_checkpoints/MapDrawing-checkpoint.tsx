@@ -218,7 +218,7 @@ export default function MapDrawing({
         <div className="">
           <div className="inline-flex justify-start rounded-md mr-4">
             <button
-              className={`py-2 px-4 bg-medium-brown text-white ${!isPlacingMode && 'opacity-75'} border border-white rounded-l-md hover:opacity-75`}
+              className={`py-2 px-4 bg-medium-brown dark:bg-dark-green text-white ${!isPlacingMode && 'opacity-75'} border border-white rounded-l-md hover:opacity-75`}
               onClick={() => {
                 setIsPlacingMode(false);
                 if (!isPolygonClosed) {
@@ -229,7 +229,7 @@ export default function MapDrawing({
               <MousePointer />
             </button>
             <button
-              className={`py-2 px-4 bg-medium-brown text-white ${isPlacingMode && 'opacity-75'} border border-white rounded-r-md hover:opacity-75`}
+              className={`py-2 px-4 bg-medium-brown dark:bg-dark-green text-white ${isPlacingMode && 'opacity-75'} border border-white rounded-r-md hover:opacity-75`}
               onClick={() => {
                 setIsPlacingMode(true);
                 setIsPolygonClosed(false); // Reopen the polygon when switching back to placing mode
@@ -242,21 +242,21 @@ export default function MapDrawing({
         <div className="">
           <div className="inline-flex rounded-md">
             <button
-              className="bg-medium-brown text-white py-2 px-4 rounded-l-md border border-white hover:opacity-75"
+              className="bg-medium-brown dark:bg-dark-green text-white py-2 px-4 rounded-l-md border border-white hover:opacity-75"
               onClick={handleUndo}
               disabled={points.length === 0}
             >
               <Undo />
             </button> 
             <button
-              className="bg-medium-brown text-white py-2 px-4 border border-white hover:opacity-75"
+              className="bg-medium-brown dark:bg-dark-green text-white py-2 px-4 border border-white hover:opacity-75"
               onClick={handleRedo}
               disabled={redoStack.length === 0}
             >
               <Redo />
             </button> 
             <button
-              className="bg-medium-brown text-white py-2 px-4 rounded-r-md border border-white hover:opacity-75"
+              className="bg-medium-brown dark:bg-dark-green text-white py-2 px-4 rounded-r-md border border-white hover:opacity-75"
               onClick={handleReset}
             >
               <RotateCcw />
@@ -267,8 +267,8 @@ export default function MapDrawing({
 
       <div className="flex space-x-2">
         <div className="w-[50%] flex justify-between text-center">
-          <div className="w-44 bg-medium-brown text-white rounded-tl border-t border-l border-r border-gray-800 px-4 py-2">Area </div>
-          <div className="w-full px-4 py-2 bg-white text-black rounded-tr border-t border-r border-gray-800">
+          <div className="w-44 bg-medium-brown dark:bg-dark-green text-white rounded-tl border-t border-l border-r border-gray-800 dark:border-white px-4 py-2">Area </div>
+          <div className="w-full px-4 py-2 bg-white text-black rounded-tr border-t border-r border-gray-800 dark:border-white">
             {area ? (
               <div className="flex">
                 <div className="mr-2">{`${area} m\u00B2`},</div>
@@ -280,8 +280,8 @@ export default function MapDrawing({
           </div>
         </div>
         <div className="w-[50%] flex justify-between text-center">
-          <div className="w-44 bg-medium-brown text-white rounded-tl border-t border-l border-r border-gray-800 px-4 py-2">Property Size </div>
-          <div className="w-full px-4 py-2 bg-white text-black rounded-tr border-t border-r border-gray-800">
+          <div className="w-44 bg-medium-brown dark:bg-dark-green text-white rounded-tl border-t border-l border-r border-gray-800 dark:border-white px-4 py-2">Property Size </div>
+          <div className="w-full px-4 py-2 bg-white text-black rounded-tr border-t border-r border-gray-800 dark:border-white">
             {size ? (
               <div className="">{toTitleCase(size)}</div>
             ) : (

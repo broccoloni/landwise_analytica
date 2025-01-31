@@ -40,8 +40,7 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   // Pre-redirect logic for unredeemed reports
   const handleRedeemClick = () => {
     clearReportContext();
-    setReportId(report.reportId);
-    router.push('/redeem-a-report');
+    router.push(`/redeem-a-report?reportId=${report.reportId}`);
   };
 
   const handleViewClick = () => {
@@ -52,7 +51,7 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   if (report.status === ReportStatus.Unredeemed) {
     return (
       <div onClick={handleRedeemClick}>
-        <Container className="bg-white hover:border-black">
+        <Container className="bg-white hover:border-black dark:text-black">
           <div className="flex justify-between items-center">
             <div className="flex text-lg">
               <div className="mr-2 font-semibold">Report ID:</div>

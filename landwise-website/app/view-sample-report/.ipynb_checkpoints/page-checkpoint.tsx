@@ -70,7 +70,7 @@ export default function SampleReport() {
   }, [demoData, isLoading, error]);
 
   return (
-    <div className={`${roboto.className} text-black px-10 sm:px-20 md:px-40 py-10`}>
+    <div className={`${roboto.className} text-black dark:text-white px-10 sm:px-20 md:px-40 py-10`}>
       <div className="relative">
         <div className="flex justify-between mb-4">
           <div className={`${montserrat.className} text-xl flex justify-center items-center space-x-4`}> 
@@ -87,7 +87,7 @@ export default function SampleReport() {
             />
           </div>
         </div>
-        <Container className="bg-white">
+        <Container className="bg-white dark:bg-dark-gray-c">
             <Report
               reportId = {reportId}
               latitude = {latitude} 

@@ -87,7 +87,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ reportId }) => {
     <div className="flex justify-center items-center">
       <button
         onClick={handleJSON}
-        className={`flex items-center justify-center px-4 py-2 bg-medium-brown text-white rounded mr-4 
+        className={`flex items-center justify-center px-4 py-2 bg-medium-brown text-white dark:bg-medium-green rounded mr-4 
           ${isDownloading ? "opacity-50 cursor-not-allowed" : "hover:opacity-75"}
         `}
         disabled={isDownloading}
@@ -104,6 +104,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ reportId }) => {
           </>
         )}
       </button>
+      <div className="flex justify-center items-center mt-2">
       <InfoButton>
         <div className={`${roboto.className} text-center text-lg mb-4`}>Report Download</div>
         <div className="mb-4">
@@ -135,6 +136,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ reportId }) => {
           </Link>           
         </div>
       </InfoButton>
+      </div>
     </div>
   );
 };

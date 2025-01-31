@@ -115,6 +115,27 @@ const Topography = (
       }
     }
   }, [windExposureType, windData]);
+
+  const [bgColor, setBgColor] = useState('#FFFFFF');
+  const [innerBgColor, setInnerBgColor] = useState('#FFFFFF');
+  const [textColor, setTextColor] = useState('#000000');
+  const [accentColor, setAccentColor] = useState('#6F4F28');
+  useEffect(() => {
+    const computedStyle = getComputedStyle(document.documentElement);
+    const isDarkMode = document.documentElement.classList.contains('dark');
+
+    if (isDarkMode) {
+      setBgColor(computedStyle.getPropertyValue('--dark-gray-c').trim() || '#2C2C2C');
+      setInnerBgColor(computedStyle.getPropertyValue('--dark-gray-d').trim() || '#3A3A3A');
+      setTextColor('#FFFFFF');
+      setAccentColor(computedStyle.getPropertyValue('--medium-green').trim() || '#7CB342');
+    } else {
+      setBgColor('#FFFFFF');
+      setInnerBgColor('#FFFFFF');
+      setTextColor('#000000');
+      setAccentColor(computedStyle.getPropertyValue('--medium-brown').trim() || '#6F4F28');
+    }
+  }, []);
       
   return (
     <div>
@@ -171,6 +192,11 @@ const Topography = (
                             ? year.toString()
                             : ''
                         }))}
+                        sx={{
+                          color: accentColor,
+                          '& .MuiSlider-markLabel': { color: textColor },
+                          '& .MuiSlider-valueLabel': { color: textColor },
+                        }}
                         valueLabelDisplay="auto"
                       />
                     </div>

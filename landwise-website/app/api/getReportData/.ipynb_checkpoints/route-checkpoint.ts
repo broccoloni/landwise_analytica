@@ -27,16 +27,25 @@ export async function POST(req: NextRequest) {
 
     const report = reports[0];
 
-    if (report.status !== ReportStatus.Redeemed) { 
-      return NextResponse.json({ message: "Report is not in a redeemed state - cannot fetch report data", report }, { status: 400 });
+    if (report.status === ReportStatus.Redeemed) {
+      const getResponse = await getReportFromS3(reportId);        
+      if (!getResponse.success) {
+        throw new Error(getResponse.message);
+      }
+      return NextResponse.json({ report: getResponse.report }, { status: 200 });
+        
+    } else if ([ReportStatus.Error, ReportStatus.Invalid, ReportStatus.Expired].includes(report.status)) {
+      return NextResponse.json(
+        { message: "Report is not in a redeemed state - cannot fetch report data", report },
+        { status: 400 }
+      );
+        
+    } else {
+      return NextResponse.json(
+        { message: "Report is processing", report },
+        { status: 200 }
+      );
     }
-    
-    const getResponse = await getReportFromS3(reportId);        
-    if (!getResponse.success) {
-      throw new Error(getResponse.message);
-    }
-      
-    return NextResponse.json({ report: getResponse.report }, { status: 200 });
 
   } catch (error) {
     console.error('Error in getReportData route:', error);

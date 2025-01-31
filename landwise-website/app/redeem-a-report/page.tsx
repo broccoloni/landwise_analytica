@@ -12,7 +12,7 @@ import { useReportContext } from '@/contexts/ReportContext';
 import Loading from '@/components/Loading';
 import { ReportStatus } from '@/types/statuses'; 
 import { fetchReportsById, redeemReport, isValidSize, getAcresFromSize, sqMetersPerAcre } from '@/utils/reports';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ReportSize } from '@/types/reportSizes';
 import NotificationBanner from '@/components/NotificationBanner';
 import { toTitleCase } from '@/utils/string';
@@ -22,6 +22,7 @@ const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false
 
 export default function RedeemReport() {    
   const router = useRouter();
+
   const { 
     reportId, setReportId, 
     address, setAddress, 
@@ -34,12 +35,17 @@ export default function RedeemReport() {
   } = useReportContext();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const queryReportId = params.get('reportId') as string;
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const queryReportId = params.get('reportId');
 
-    if (queryReportId) {
-      setReportId(queryReportId);
+      setReportId(null);
       setStatus(null);
+
+      if (queryReportId) {
+        setTimeout(() => setReportId(queryReportId), 0);
+        setTimeout(() => setStatus(null), 0);        
+      }
     }
   }, []);
     
@@ -113,8 +119,6 @@ export default function RedeemReport() {
     topRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
-
-    
   const ReportStatusDisplay = () => {
     if (validatingReportId) {
       return (
@@ -194,9 +198,9 @@ export default function RedeemReport() {
   }, [drawingSize, reportSize, validSize]);
 
   return (      
-    <div className={`${roboto.className} text-black min-h-screen flex-row justify-between`} ref={topRef}>
+    <div className={`${roboto.className} min-h-screen flex-row justify-between`} ref={topRef}>
       <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20 mx-auto">
-        <div className="text-4xl font-bold mb-8 text-center">Redeem a Report</div>
+        <div className="text-4xl mb-8 text-center">Redeem a Report</div>
         <div className="mb-8 px-10 mx-auto max-w-2xl">
           <ProgressBar currentStep={step} totalSteps={stepNames.length} stepNames={stepNames} />
         </div>
@@ -204,14 +208,14 @@ export default function RedeemReport() {
         {/* Step 1: Enter Report ID */}
         {step === 1 && (
           <div className="sm:px-10 mx-auto max-w-2xl">
-            <div className="text-2xl font-semibold mb-4">Enter Report ID</div>
+            <div className="text-2xl mb-4">Enter Report ID</div>
             <input
               id="reportId"
               type="text"
               value={reportId || ''}
               onChange={handleReportIdChange}
               maxLength={14}
-              className="mt-1 block w-full px-3 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-lg dark:text-black border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="XXXX-XXXX-XXXX"
             />
 
@@ -222,7 +226,7 @@ export default function RedeemReport() {
                 <button
                   onClick={handleBackStep}
                   disabled={step < 2}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </button>
@@ -231,7 +235,7 @@ export default function RedeemReport() {
                 <button
                   onClick={handleNextStep}
                   disabled={reportId?.length !== 14}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
@@ -262,7 +266,7 @@ export default function RedeemReport() {
                 <button
                   onClick={handleBackStep}
                   disabled={step < 2}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </button>
@@ -271,7 +275,7 @@ export default function RedeemReport() {
                 <button
                   onClick={handleNextStep}
                   disabled={!address}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
@@ -284,7 +288,7 @@ export default function RedeemReport() {
         {step === 3 && latitude !== null && longitude !== null && (
           <div className="mx-auto max-w-4xl">
             <div className="text-2xl font-semibold mb-4">Define The Property Boundary</div>
-            <ul className="mb-8 mx-8 space-y-2 text-dark-blue list-disc">
+            <ul className="mb-8 mx-8 space-y-2 text-dark-blue dark:text-white list-disc">
               <li className="">Click to add a boundary point</li>
               <li className="">Double-click to close the boundary</li>
               <li className="">Use the cursor to move points, if necessary</li>
@@ -322,7 +326,7 @@ export default function RedeemReport() {
                 <button
                   onClick={handleBackStep}
                   disabled={step < 2}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </button>
@@ -331,7 +335,7 @@ export default function RedeemReport() {
                 <button
                   onClick={handleNextStep}
                   disabled={landGeometry.length < 3 || !validSize}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-6 pr-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Next <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
@@ -372,7 +376,7 @@ export default function RedeemReport() {
               <div className="">            
                 <button
                   onClick={handleBackStep}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white pl-4 pr-6 py-2 rounded-lg hover:opacity-75"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </button>
@@ -381,7 +385,7 @@ export default function RedeemReport() {
                 <button
                   onClick={handleRedeem}
                   disabled={ !reportId || !address || !addressComponents || landGeometry.length < 3 || !validSize}
-                  className="flex justify-center items-center mt-4 bg-medium-brown text-white px-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
+                  className="flex justify-center items-center mt-4 bg-medium-brown dark:bg-medium-green text-white px-4 py-2 rounded-lg hover:opacity-75 disabled:opacity-50"
                 >
                   Redeem Report
                 </button>

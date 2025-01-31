@@ -118,6 +118,27 @@ const EstimatedYield = (
     );
   };
 
+  const [bgColor, setBgColor] = useState('#FFFFFF');
+  const [innerBgColor, setInnerBgColor] = useState('#FFFFFF');
+  const [textColor, setTextColor] = useState('#000000');
+  const [accentColor, setAccentColor] = useState('#6F4F28');
+  useEffect(() => {
+    const computedStyle = getComputedStyle(document.documentElement);
+    const isDarkMode = document.documentElement.classList.contains('dark');
+
+    if (isDarkMode) {
+      setBgColor(computedStyle.getPropertyValue('--dark-gray-c').trim() || '#2C2C2C');
+      setInnerBgColor(computedStyle.getPropertyValue('--dark-gray-d').trim() || '#3A3A3A');
+      setTextColor('#FFFFFF');
+      setAccentColor(computedStyle.getPropertyValue('--medium-green').trim() || '#7CB342');
+    } else {
+      setBgColor('#FFFFFF');
+      setInnerBgColor('#FFFFFF');
+      setTextColor('#000000');
+      setAccentColor(computedStyle.getPropertyValue('--medium-brown').trim() || '#6F4F28');
+    }
+  }, []);
+
   return (
     <div>
       <div className={`${merriweather.className} flex text-accent-dark text-2xl pb-2`}>
@@ -182,6 +203,9 @@ const EstimatedYield = (
                       },
                     ]}
                     layout={{
+                      paper_bgcolor: bgColor,
+                      plot_bgcolor: innerBgColor,
+                      font: { color: textColor },
                       barmode: 'group',
                       xaxis: {
                         title: 'Year & Crop Grown',
@@ -266,6 +290,9 @@ const EstimatedYield = (
                       },
                     ]}
                     layout={{
+                      paper_bgcolor: bgColor,
+                      plot_bgcolor: innerBgColor,
+                      font: { color: textColor },
                       xaxis: { title: "Year" },
                       yaxis: { title: "Yield (Bushels/Acre)" },
                       margin: {
@@ -285,8 +312,8 @@ const EstimatedYield = (
                       shapes: [
                         {
                           type: "line",
-                          x0: 2024,
-                          x1: 2024,
+                          x0: 2025,
+                          x1: 2025,
                           y0: 0,
                           y1: 1,
                           xref: "x",

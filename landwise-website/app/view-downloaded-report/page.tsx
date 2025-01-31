@@ -153,14 +153,14 @@ export default function ViewDownloadedReport() {
           <div className="">
             <div className="flex mb-4">
               <button
-                className="flex pl-2 pr-4 py-2 rounded bg-medium-brown text-white hover:opacity-75"
+                className="flex pl-2 pr-4 py-2 rounded bg-medium-brown dark:bg-medium-green text-white hover:opacity-75"
                 onClick={handleReset}
               >
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 View Another Report
               </button>
             </div>
-            <Container className="bg-white">
+            <Container className="bg-white dark:bg-dark-gray-c">
               <Report 
                 reportId={reportId}
                 latitude={latitude} 
@@ -222,7 +222,7 @@ export default function ViewDownloadedReport() {
             <div className="flex justify-center space-x-2">
               {dataLoaded && (
                 <button 
-                  className="flex justify-center items-center pl-2 pr-4 py-2 rounded bg-medium-brown text-white hover:opacity-75"
+                  className="flex justify-center items-center pl-2 pr-4 py-2 rounded bg-medium-brown dark:bg-medium-green text-white hover:opacity-75"
                   onClick={handleReset}
                 >
                   <RotateCcw className="h-5 w-5 mr-2" />
@@ -231,7 +231,7 @@ export default function ViewDownloadedReport() {
               )}
                 
               <button 
-                className="flex justify-center items-center pl-4 pr-2 py-2 rounded bg-medium-brown text-white hover:opacity-75"
+                className="flex justify-center items-center pl-4 pr-2 py-2 rounded bg-medium-brown dark:bg-medium-green text-white hover:opacity-75"
                 onClick={() => setViewData(true)}
                 disabled={!dataLoaded}
               >

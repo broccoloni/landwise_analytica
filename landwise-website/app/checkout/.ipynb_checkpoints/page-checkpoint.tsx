@@ -91,7 +91,7 @@ export default function Checkout() {
     <div className={`${roboto.className} px-10 sm:px-20 md:px-40 py-10 sm:py-20`} ref={topRef}>
       {sessionId ? (
         <div className="">
-          <div className="text-2xl text-center mb-12 font-bold">
+          <div className="text-2xl text-center mb-12 font-bold dark:text-medium-green">
             Thank You For Your Purchase!
           </div>
           <div className="mb-8 max-w-2xl mx-auto">You will be sent an email with these report IDs to be redeemed at any time. After being redeemed, you will have 180 days to view and download your report.</div>

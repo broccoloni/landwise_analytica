@@ -42,7 +42,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex-row">
+    <div className="flex-row">        
 
       {/* First section */}
       <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20">
@@ -53,7 +53,7 @@ export default function Home() {
                 Modernize the way you buy farmland
               </div>
               <div className="flex justify-center mb-12">
-                <div className="w-[90%] text-dark-blue">
+                <div className="w-[90%] text-dark-blue dark:text-gray-200">
                   Our reports provide data-driven insights essential for land suitability assessments, all with just a few clicks
                 </div>
               </div>
@@ -71,7 +71,7 @@ export default function Home() {
               </div>
               <div className="flex justify-center mb-4">
                 <button
-                  className="bg-medium-brown rounded-lg px-4 py-2 w-[90%] text-white text-md text-center hover:opacity-75"
+                  className="bg-medium-brown dark:bg-medium-green rounded-lg px-4 py-2 w-[90%] text-white text-md text-center hover:opacity-75"
                   onClick={handleGetReport}
                   >
                   Get a Report
@@ -80,7 +80,7 @@ export default function Home() {
               <div className="flex justify-center">
                 <Link
                   href="/view-sample-report"
-                  className="text-md text-black hover:text-medium-brown hover:underline"
+                  className="text-md text-black hover:text-medium-brown dark:text-white dark:hover:text-medium-green hover:underline"
                 >
                   View a Sample Report
                 </Link>
@@ -103,20 +103,20 @@ export default function Home() {
       </div>
 
       {/* Second section */}
-      <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20 bg-white">
+      <div className="px-10 sm:px-20 md:px-40 py-10 sm:py-20 bg-white dark:bg-dark-gray-c">
         <div className="flex-row justify-center">
           <div className="">
-            <div className={`${roboto.className} font-bold text-4xl mb-8 text-dark-blue`}>
+            <div className={`${roboto.className} font-bold text-4xl mb-8 text-dark-blue dark:text-white`}>
               Farming is ancient; The way you buy land doesn’t need to be.
             </div>
-            <div className="text-xl mb-12">
+            <div className="text-xl mb-12 dark:text-gray-100">
               Our platform provides you with essential land suitability insights, helping you make better-informed decisions. Here are just a few of the key data points we evaluate:
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             <div className="flex justify-center items-center">
-              <Container className="bg-white w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
-                <div className="font-semibold text-xl mb-2 text-medium-brown">Estimated Yields</div>
+              <Container className="w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+                <div className="font-semibold text-xl mb-2 text-medium-brown dark:text-medium-green">Estimated Yields</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Historic crop production</li>
                   <li>Predicted future crop production</li>
@@ -126,8 +126,8 @@ export default function Home() {
             </div>
         
             <div className="flex justify-center items-center">
-              <Container className="bg-white w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
-                <div className="font-semibold text-xl mb-2 text-medium-brown">Climate</div>
+              <Container className="w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+                <div className="font-semibold text-xl mb-2 text-medium-brown dark:text-medium-green">Climate</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Historic precipitation, dew point & temperatures</li>
                   <li>Historic growing degree days & corn heat units</li>
@@ -137,8 +137,8 @@ export default function Home() {
             </div>
         
             <div className="flex justify-center items-center">
-              <Container className="bg-white w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
-                <div className="font-semibold text-xl mb-2 text-medium-brown">Topography</div>
+              <Container className="w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+                <div className="font-semibold text-xl mb-2 text-medium-brown dark:text-medium-green">Topography</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Property area & layout</li>
                   <li>Elevation & slope data</li>
@@ -148,8 +148,8 @@ export default function Home() {
             </div>
         
             <div className="flex justify-center items-center">
-              <Container className="bg-white w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg">
-                <div className="font-semibold text-xl mb-2 text-medium-brown">Soil</div>
+              <Container className="w-full h-full text-black transition-transform transform hover:scale-105 duration-200 bg-light-yellow border border-gray-300 rounded-lg shadow-lg dark:bg-gray-600 dark:text-white">
+                <div className="font-semibold text-xl mb-2 text-medium-brown dark:text-medium-green">Soil</div>
                 <ul className="list-disc space-y-2 pl-3">
                   <li>Taxonomy & Texture</li>
                   <li>Water, sand, clay & organic carbon content</li>
@@ -159,7 +159,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex justify-center">
-            <div className="bg-medium-brown rounded-lg px-4 py-2 w-64 text-center hover:opacity-75">
+            <div className="bg-medium-brown dark:bg-medium-green rounded-lg px-4 py-2 w-64 text-center hover:opacity-75">
               <Link
                 href="/view-sample-report"
                 className="text-md text-white"

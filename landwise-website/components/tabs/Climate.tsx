@@ -122,7 +122,28 @@ const Climate = (
       }
     }
   }, [seasonRange, precipData]);
-    
+
+  const [bgColor, setBgColor] = useState('#FFFFFF');
+  const [innerBgColor, setInnerBgColor] = useState('#FFFFFF');
+  const [textColor, setTextColor] = useState('#000000');
+  const [accentColor, setAccentColor] = useState('#6F4F28');
+  useEffect(() => {
+    const computedStyle = getComputedStyle(document.documentElement);
+    const isDarkMode = document.documentElement.classList.contains('dark');
+
+    if (isDarkMode) {
+      setBgColor(computedStyle.getPropertyValue('--dark-gray-c').trim() || '#2C2C2C');
+      setInnerBgColor(computedStyle.getPropertyValue('--dark-gray-d').trim() || '#3A3A3A');
+      setTextColor('#FFFFFF');
+      setAccentColor(computedStyle.getPropertyValue('--medium-green').trim() || '#7CB342');
+    } else {
+      setBgColor('#FFFFFF');
+      setInnerBgColor('#FFFFFF');
+      setTextColor('#000000');
+      setAccentColor(computedStyle.getPropertyValue('--medium-brown').trim() || '#6F4F28');
+    }
+  }, []);
+      
   return (
     <div>
       <div className={`${merriweather.className} text-2xl pb-2`}>
@@ -178,6 +199,11 @@ const Climate = (
                             ? year.toString()
                             : ''
                         }))}
+                        sx={{
+                          color: accentColor,
+                          '& .MuiSlider-markLabel': { color: textColor },
+                          '& .MuiSlider-valueLabel': { color: textColor },
+                        }}
                         valueLabelDisplay="auto"
                       />
                     </div>
@@ -211,6 +237,9 @@ const Climate = (
                       },
                     ]}
                     layout={{
+                      paper_bgcolor: bgColor,
+                      plot_bgcolor: innerBgColor,
+                      font: { color: textColor },
                       xaxis: {
                         title: 'Range Selection',
                         tickvals: dayStrs.filter((_: string, index: number) => index % precipTickFreq === 0),
@@ -316,7 +345,12 @@ const Climate = (
                       label: (year === Math.min(...heatUnitData.years) || year === Math.max(...heatUnitData.years) || year === tempYear)
                         ? year.toString()
                           : ''
-                      }))}
+                    }))}
+                    sx={{
+                      color: accentColor,
+                      '& .MuiSlider-markLabel': { color: textColor },
+                      '& .MuiSlider-valueLabel': { color: textColor },
+                    }}
                     valueLabelDisplay="auto"
                   />
                   </div>
@@ -325,6 +359,9 @@ const Climate = (
                   <Plot
                     data={tempData}
                     layout={{
+                      paper_bgcolor: bgColor,
+                      plot_bgcolor: innerBgColor,
+                      font: { color: textColor },
                       xaxis: { title: 'Date' },
                       yaxis: { title: 'Cumulative Heat Units' },
                       margin: {
@@ -398,13 +435,15 @@ const Climate = (
                         orientation: 'v',
                         hoverinfo: 'text',
                         text: growingSeasonData.desc,
-                        // text: Object.entries(growingSeasonData).map((year, data) => `Year: ${year}<br>Growing Season Length: ${data.} days<br>Last Frost Date: ${dayNumToMonthDay(lastFrost)}<br>First Frost Date: ${dayNumToMonthDay(firstFrost)}`),
                         textposition: 'none',
                         marker: { color: 'green' },
                         showlegend: false,
                       },
                     ]}
                     layout={{
+                      paper_bgcolor: bgColor,
+                      plot_bgcolor: innerBgColor,
+                      font: { color: textColor },
                       barmode: 'stack', // Stack the two series to simulate offset bars
                       xaxis: {
                         title: 'Year',
