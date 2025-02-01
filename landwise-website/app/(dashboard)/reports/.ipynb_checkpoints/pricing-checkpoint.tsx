@@ -106,12 +106,12 @@ export default function Pricing() {
           <span className="w-24 text-right">
             {sizeLabel === 'jumbo' 
               ? `> ${Math.round(reportSizeAcres.slice(-1)[0] * sqMetersPerAcre)}`
-              : Math.round(reportSizeAcres[index] * sqMetersPerAcre)} {`m\u00B2`}
+              : Math.round(reportSizeAcres[index] * sqMetersPerAcre)}
           </span>
           <span className="w-24 text-right">
             {sizeLabel === 'jumbo' 
               ? `> ${Math.round(reportSizeAcres.slice(-1)[0])}`
-              : Math.round(reportSizeAcres[index])} ac.
+              : Math.round(reportSizeAcres[index])}
           </span>
           <span className="w-24 text-right">
             {sizeLabel === 'jumbo' ? (

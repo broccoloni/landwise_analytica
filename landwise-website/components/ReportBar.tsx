@@ -52,12 +52,12 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
     return (
       <div onClick={handleRedeemClick}>
         <Container className="bg-white  shadow-md hover:border-black dark:bg-dark-gray-d dark:border-dark-gray-b dark:hover:border-white">
-          <div className="flex justify-between items-center">
-            <div className="flex text-lg">
+          <div className="flex-row lg:flex justify-between items-center">
+            <div className="flex-row sm:flex text-center justify-center items-center text-lg">
               <div className="mr-2 font-semibold">Report ID:</div>
               <div className={`font-normal ${montserrat.className}`}>{report.reportId}</div>
             </div>
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center mt-4 lg:mt-0">
               <div className="mr-2">Redeem Now</div>
               <ArrowRight className="h-5 w-5" />
             </div>
@@ -70,18 +70,29 @@ const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   const daysLeft = calculateDaysLeft(report.createdAt);
 
   return (
-    <div onClick={handleViewClick}>
-      <Container className="flex justify-between items-center p-4 bg-white dark:bg-dark-gray-d rounded-md shadow-md mb-4 hover:border-gray-800 dark:border-dark-gray-b dark:hover:border-white">
-        <div className="flex flex-col">
-          <div className="text-lg"><span className="font-semibold mr-2">Report ID:</span>{report.reportId}</div>
-          <span className="text-sm text-gray-500 dark:text-white">Address: {report.address}</span>
-          <span className="text-sm text-gray-500 dark:text-white">
-            Created: {report.redeemedAt ? new Date(report.redeemedAt).toLocaleDateString() : 'N/A'}
-          </span>
-        </div>
-        <div className="flex flex-col items-end text-center">
-          <div className="text-xl flex justify-center items-center p-2">View Now<ArrowRight className="h-6 w-6 ml-2" /></div>
-          <div className="text-md font-semibold text-dark-green dark:text-medium-green w-full">Days Left: {daysLeft}</div>
+    <div onClick={handleViewClick} className="w-full">
+      <Container className="w-full flex justify-between items-center p-4 bg-white dark:bg-dark-gray-d rounded-md shadow-md mb-4 hover:border-gray-800 dark:border-dark-gray-b dark:hover:border-white">
+        <div className="w-full flex-row md:flex justify-between">
+          <div className="flex-row">
+            <div className="flex-row sm:flex text-center justify-center items-center text-lg mb-2 md:text-left md:justify-start">
+              <div className="mr-2 font-semibold">Report ID:</div>
+              <div className={`font-normal ${montserrat.className}`}>{report.reportId}</div>
+            </div>
+            <div className="flex-row sm:flex text-sm">
+              <div className="mr-2 font-semibold">Address:</div>
+              <div className={`font-normal ${montserrat.className}`}>{report.address}</div>
+            </div>
+            <div className="flex text-center text-sm">
+              <div className="mr-2 font-semibold">Created:</div>
+              <div className={`font-normal ${montserrat.className}`}>
+                {report.redeemedAt ? new Date(report.redeemedAt).toLocaleDateString() : 'N/A'}
+              </div>
+            </div>
+          </div>
+          <div className="flex-row text-center mt-4 md:mt-0">
+            <div className="text-xl flex justify-center items-center p-2">View Now<ArrowRight className="h-6 w-6 ml-2" /></div>
+            <div className="text-md font-semibold text-dark-green dark:text-medium-green w-full">Days Left: {daysLeft}</div>
+          </div>
         </div>
       </Container>
     </div>

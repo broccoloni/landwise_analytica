@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
 import ProgressBar from '@/components/ProgressBar';
-import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X, NotebookText, MousePointer, Dot } from 'lucide-react';
 import { useReportContext } from '@/contexts/ReportContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
@@ -284,7 +284,7 @@ export default function NewReport() {
               prompt="Search for a property address"
             />
 
-            <div className={`mx-auto w-96 ${latitude && 'my-8'}`}>
+            <div className={`mx-auto max-w-96 ${latitude && 'my-8'}`}>
               <AddressDisplay
                 addressComponents={addressComponents}
                 latitude={latitude}
@@ -321,7 +321,11 @@ export default function NewReport() {
             <div className="text-xl mb-4">Define The Property Boundary</div>
             <ul className="mb-8 mx-8 space-y-2 text-dark-blue list-disc dark:text-white">
               <li className="">Click to add a boundary point</li>
-              <li className="">Double-click to close the boundary</li>
+              <li className="">
+                <div className="flex">
+                  Double-click to close the boundary, or toggle between <MousePointer className="mx-1"/> and <Dot className="ml-1"/> 
+                </div>  
+              </li>
               <li className="">Use the cursor to move points, if necessary</li>
             </ul>
 
@@ -422,8 +426,8 @@ export default function NewReport() {
                 <Loading />
               </div>
             ) : session?.user?.status && session?.user?.status === RealtorStatus.Active && size && size !== 'jumbo' ? (
-              <div className="flex justify-center">
-                <div className="mr-4 w-32">
+              <div className="flex-row md:flex justify-center">
+                <div className="mr-4 mb-4 w-32">
                   <button
                     onClick={handleBackStep}
                     disabled={step < 2}

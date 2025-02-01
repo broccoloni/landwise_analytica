@@ -9,24 +9,31 @@ import FeedbackForm from './feedbackForm';
 import { Pencil, LogOut, Lock, Settings, MessageSquareMore } from 'lucide-react';
 import Loading from '@/components/Loading';
 import Container from '@/components/Container';
+import { toTitleCase } from '@/utils/string';
+import Dropdown from '@/components/Dropdown';
 
 export default function AccountPage() {
   const { data: session, status } = useSession();
 
-  const [selectedTab, setSelectedTab] = useState<'edit' | 'password' | 'settings' | 'feedback'>('edit');
+  const [selectedTab, setSelectedTab] = useState<'Account Details' | 'Change Password' | 'Settings' | 'Feedback'>('Edit');
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab') as 'edit' | 'password' | 'settings' | 'feedback';
+    const tab = params.get('tab') as 'Account Details' | 'Change Password' | 'Settings' | 'Feedback';
 
     if (tab) {
       setSelectedTab(tab);
     }
+    else {
+      handleTabChange('Account Details');
+    }
   }, []);
 
-  const handleTabChange = (tab: 'edit' | 'password' | 'settings' | 'feedback') => {
-    setSelectedTab(tab);
+  const handleTabChange = (tab: 'Account Details' | 'Change Password' | 'Settings' | 'Feedback') => {
+    const path = tab.toLowerCase().replace(' ','-');
+      
+    setSelectedTab(path);
     const params = new URLSearchParams(window.location.search);
-    params.set('tab', tab);
+    params.set('tab', path);
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', newUrl);
   };
@@ -40,58 +47,75 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown dark:bg-dark-gray-d">
-      <Container className="flex bg-white dark:bg-dark-gray-c">
-        <div className="w-1/4 px-4 py-8 border-r border-gray-200 dark:border-gray-900">
-          <div className="text-2xl mb-4">Account Settings</div>
-          <ul className="space-y-2">
-            <li
+    <div className="px-10 sm:px-20 md:px-30 lg:px-40 py-10 bg-light-brown min-h-lg dark:bg-dark-gray-d">
+      <Container className="flex-row lg:flex bg-white dark:bg-dark-gray-c">
+        {/* Navigation */}
+        <div className="w-full lg:w-1/4 px-0 md:px-4 py-0 lg:py-8 border-gray-200 border-b lg:border-b-0 lg:border-r">
+          <div className="text-2xl mb-4">Account</div>
+
+          {/* Mobile dropdown display */}
+          <div className="md:hidden mb-4">
+            <div className="mb-4 flex justify-center">
+              <Dropdown
+                options={['Account Details', 'Change Password', 'Settings', 'Feedback']}
+                selected={toTitleCase(selectedTab.replace('-',' '))}
+                onSelect={(selected) => handleTabChange(selected)}
+                className="px-auto"
+              />
+            </div>
+          </div>
+            
+          {/* Tablet / Desktop display */}
+          <div className="hidden md:grid grid-cols-5 lg:grid-cols-1 mb-4 space-y-2">
+            <div
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'edit' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              ${selectedTab === 'account-details' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
               dark:hover:bg-medium-green 
               `}
-              onClick={() => handleTabChange('edit')}
+              onClick={() => handleTabChange('Account Details')}
             >
               <Pencil className="h-5 w-5 mr-2" /> Account Details
-            </li>
-            <li
+            </div>
+            <div
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
-              ${selectedTab === 'password' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
+              ${selectedTab === 'change-password' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
               dark:hover:bg-medium-green 
               `}
-              onClick={() => handleTabChange('password')}
+              onClick={() => handleTabChange('Change Password')}
             >
               <Lock className="h-5 w-5 mr-2" /> Change Password
-            </li>
-            <li
+            </div>
+            <div
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
               ${selectedTab === 'settings' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
               dark:hover:bg-medium-green 
               `}
-              onClick={() => handleTabChange('settings')}
+              onClick={() => handleTabChange('Settings')}
             >
               <Settings className="h-5 w-5 mr-2" /> Settings
-            </li>
-            <li
+            </div>
+            <div
               className={`flex items-center cursor-pointer rounded-md px-4 py-2 hover:bg-medium-brown hover:opacity-75 hover:text-white
               ${selectedTab === 'feedback' ? 'bg-medium-brown text-white dark:bg-medium-green' : ''}
               dark:hover:bg-medium-green 
               `}
-              onClick={() => handleTabChange('feedback')}
+              onClick={() => handleTabChange('Feedback')}
             >
               <MessageSquareMore className="h-5 w-5 mr-2" /> Feedback
-            </li>
-            <li 
+            </div>
+            <div 
               className="flex items-center cursor-pointer px-4 py-2 rounded-md hover:bg-medium-brown hover:opacity-75 dark:hover:bg-medium-green  hover:text-white"
               onClick={() => signOut()}
             >
               <LogOut className="h-5 w-5 mr-2" /> Sign Out
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
-        <div className="w-3/4 px-8 py-8">
-          {selectedTab === 'edit' && <InfoForm />}
-          {selectedTab === 'password' && <PasswordForm />}
+          
+        {/* Content Area */}
+        <div className="w-full lg:w-3/4 px-0 md:px-8 py-8">
+          {selectedTab === 'account-details' && <InfoForm />}
+          {selectedTab === 'change-password' && <PasswordForm />}
           {selectedTab === 'settings' && <SettingsForm />}
           {selectedTab === 'feedback' && <FeedbackForm />}
         </div>

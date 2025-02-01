@@ -10,6 +10,7 @@ import { roboto, montserrat } from '@/ui/fonts';
 import { useCartContext } from '@/contexts/CartContext';
 import { fetchReportsBySessionId, redeemReport, isValidSize } from '@/utils/reports';
 import { reportSizeLabels } from '@/types/reportSizes';
+import Container from '@/components/Container';
 
 export default function Checkout() {
   // Note: Report details is too long to store in stripe metadata
@@ -90,7 +91,7 @@ export default function Checkout() {
   return (
     <div className={`${roboto.className} px-10 sm:px-20 md:px-40 py-10 sm:py-20`} ref={topRef}>
       {sessionId ? (
-        <div className="">
+        <Container className="bg-white dark:bg-dark-gray-c">
           <div className="text-2xl text-center mb-12 font-bold dark:text-medium-green">
             Thank You For Your Purchase!
           </div>
@@ -128,7 +129,7 @@ export default function Checkout() {
               </div>
             )}
           </div>
-        </div>
+        </Container>
       ) : (
         <CheckoutSession onComplete={handleComplete} />
       )}

@@ -133,7 +133,7 @@ const Report: React.FC<ReportProps> = ({
           Summary
         </div>
         <div className="w-full sm:flex flex-row">
-          <div className="w-[44%] p-4 mx-12">
+          <div className="w-[44%] p-4 mx-0 lg:mx-12">
             <div className={`${montserrat.className} flex justify-between mb-2 text-2xl`}>
               Property
             </div>

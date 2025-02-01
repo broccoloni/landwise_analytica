@@ -70,7 +70,7 @@ export default function Dashboard() {
 
     
   return (
-    <div className="px-10 sm:px-20 md:px-40 py-10 bg-light-brown dark:bg-dark-gray-d">
+    <div className="px-10 sm:px-20 md:px-30 lg:px-40 py-10 bg-light-brown dark:bg-dark-gray-d">
       {notification && (
         <div className="mb-4">
           <NotificationBanner type={notificationType}>
@@ -90,17 +90,17 @@ export default function Dashboard() {
       )}
       <Container className="bg-white dark:bg-dark-gray-c">
         <div className="text-4xl mb-8 text-center">Dashboard</div>
-        <div className="ml-4">
+        <div className="md:mx-4">
           <div className="flex items-center justify-center mb-8 text-lg">
-            <PartyPopper className="h-6 w-6 mr-4" />
+            <PartyPopper className="h-6 w-6 mr-4 flex-shrink-0" />
             Welcome to the pilot program!
           </div>
           <div className="flex items-center mb-4">
-            <LayoutDashboard className="h-5 w-5 mx-4" />
+            <LayoutDashboard className="h-5 w-5 mr-4 flex-shrink-0" />
             On this dashboard you'll recieve updates, notifications, and information about the reports you've ordered
           </div>
           <div className="flex items-center mb-4">
-            <User className="h-5 w-5 mx-4" />
+            <User className="h-5 w-5 mr-4 flex-shrink-0" />
             <span>
               You can view and change your account information and settings as well as submit feedback under the
               <Link
@@ -112,7 +112,7 @@ export default function Dashboard() {
             </span>
           </div>
           <div className="flex items-center mb-4">
-            <NotebookText className="h-5 w-5 mx-4" />
+            <NotebookText className="h-5 w-5 mr-4 flex-shrink-0" />
             <span>
               You can view the reports you've ordered, order new ones, and view report pricing from the
               <Link
@@ -124,17 +124,19 @@ export default function Dashboard() {
             </span>
           </div>
           <div className="flex items-center">
-            <Handshake className="h-5 w-5 mx-4" />
-            The  
-            <span className="mx-1 font-bold">First 3 Reports</span>
-            of the pilot program are 
-            <span className="ml-1 font-bold">Free</span>
+            <Handshake className="h-5 w-5 mr-4 flex-shrink-0" />
+            <span>
+              The  
+              <span className="mx-1 font-bold">First 3 Reports</span>
+              of the pilot program are 
+              <span className="ml-1 font-bold">Free</span>
+            </span>
           </div>
         </div>
       </Container>
-      <div className="flex mt-8 space-x-8">
-        <MonthlyReportsWidget />
-        <ExpiringReportsWidget />
+      <div className="flex-row md:flex mt-8 space-y-8 md:space-y-0 md:space-x-8">
+          <MonthlyReportsWidget />
+          <ExpiringReportsWidget />
       </div>
         
     </div>

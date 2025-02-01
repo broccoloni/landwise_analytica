@@ -70,18 +70,20 @@ export default function SampleReport() {
   }, [demoData, isLoading, error]);
 
   return (
-    <div className={`${roboto.className} text-black dark:text-white px-10 sm:px-20 md:px-40 py-10`}>
+    <div className={`${roboto.className} text-black dark:text-white px-5 sm:px-10 md:px-20 lg:px-30 xl:px-40 py-10`}>
       <div className="relative">
-        <div className="flex justify-between mb-4">
-          <div className={`${montserrat.className} text-xl flex justify-center items-center space-x-4`}> 
-            <div className="">
-              Report: {reportId}
+        <div className="flex-row sm:flex justify-between mb-4">
+          <div className={`${montserrat.className} text-xl flex-row md:flex justify-center items-center mb-4 sm:mb-0`}> 
+            <div className="flex">
+              <div className="mr-1">Report:</div> 
+              <div>{reportId}</div>
             </div>
-            <div className="">
-              Date: {redeemedAt}
+            <div className="flex md:ml-4">
+              <div className="mr-1">Date:</div>
+              <div>{redeemedAt}</div>
             </div>
           </div>
-          <div className="space-x-4 flex">
+          <div className="space-x-4 flex justify-center">
             <DownloadButton
               reportId = {reportId}
             />

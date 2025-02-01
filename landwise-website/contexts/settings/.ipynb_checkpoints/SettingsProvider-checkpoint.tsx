@@ -106,5 +106,5 @@ export const SettingsProvider: FC<SettingsProviderProps> = (props) => {
 };
 
 SettingsProvider.propTypes = {
-  children: PropTypes.node.isRequired,
+  children: PropTypes.any.isRequired,
 };

@@ -17,18 +17,18 @@ export default function ViewReports() {
     
   return (
     <div>
-      <h2 className="text-2xl mb-4">Your Reports</h2>
+      <div className="hidden lg:block text-2xl mb-4">Your Reports</div>
       {isLoading ? (
         <div className="p-20">
           <Loading />
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="w-full space-y-4">
           {!reports || reports.length === 0 ? (
             <p>No reports found. Order a new report to get started!</p>
           ) : (
             reports.map((report) => (
-              <div key={report.reportId} className="">
+              <div key={report.reportId} className="w-full">
                 <ReportBar report={report} />
               </div>
             ))

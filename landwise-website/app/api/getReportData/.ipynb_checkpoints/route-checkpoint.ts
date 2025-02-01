@@ -34,8 +34,12 @@ export async function POST(req: NextRequest) {
       }
       return NextResponse.json({ report: getResponse.report }, { status: 200 });
         
-    } else if ([ReportStatus.Error, ReportStatus.Invalid, ReportStatus.Expired].includes(report.status)) {
-      return NextResponse.json(
+      } else if (
+          report.status === ReportStatus.Error || 
+          report.status === ReportStatus.Invalid || 
+          report.status === ReportStatus.Expired
+      ) {
+        return NextResponse.json(
         { message: "Report is not in a redeemed state - cannot fetch report data", report },
         { status: 400 }
       );
