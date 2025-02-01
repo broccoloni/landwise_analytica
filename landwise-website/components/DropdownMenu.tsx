@@ -11,15 +11,15 @@ interface DropdownMenuProps {
 
 const DropdownMenu: React.FC<DropdownMenuProps> = ({ title, options, onLinkClick, className='' }) => {
   return (
-    <div className={`relative inline-block group ${className}`}>
+    <div className={`relative inline-block group ${className} z-0`}>
       {/* Dropdown Trigger */}
-      <div className="flex items-center p-2 cursor-pointer">
+      <div className="flex items-center p-2 cursor-pointer z-0">
         <span className="text-left text-lg">{title}</span>
         <ChevronDown className="w-5 h-5 ml-2 group-hover:rotate-180 transition-all" />
       </div>
 
       {/* Dropdown Menu */}
-      <div className="absolute flex-row text-md left-0 top-full hidden group-hover:block min-w-max bg-white dark:bg-dark-gray-d border border-gray-300 dark:border-dark-gray-c text-black dark:text-white rounded shadow-lg mt-0 z-10">
+      <div className="absolute flex-row text-md left-0 top-full hidden group-hover:block min-w-max bg-white dark:bg-dark-gray-d border border-gray-300 dark:border-dark-gray-c text-black dark:text-white rounded shadow-lg mt-0 z-20">
         {options.map((option) => (
           <Link 
             key={option.path}

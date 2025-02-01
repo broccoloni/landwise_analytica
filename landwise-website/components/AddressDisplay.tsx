@@ -39,11 +39,11 @@ const AddressDisplay = ({ addressComponents, latitude, longitude }: AddressProps
       </div>
       <div className="flex justify-between mb-2">
         <p className="mr-4">Longitude:</p>
-        <p>{longitude}</p>
+        <p>{longitude.toFixed(6)}</p>
       </div>
       <div className="flex justify-between mb-2">
         <p className="mr-4">Latitude:</p>
-        <p>{latitude}</p>
+        <p>{latitude.toFixed(6)}</p>
       </div>
     </div>
   );

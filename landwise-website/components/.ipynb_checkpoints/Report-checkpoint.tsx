@@ -7,6 +7,8 @@ import Topography from '@/components/tabs/Topography';
 import Soil from '@/components/tabs/Soil';
 import AddressDisplay from '@/components/AddressDisplay';
 import SummaryScore from '@/components/SummaryScore';
+import Dropdown from '@/components/Dropdown';
+import { toTitleCase } from '@/utils/string';
 
 interface ReportProps {
   reportId: string | null;
@@ -54,7 +56,7 @@ const Report: React.FC<ReportProps> = ({
   windData,
 }) => {  
     
-  const [activeTab, setActiveTab] = useState('Climate');
+  const [activeTab, setActiveTab] = useState('estimated-yield');
 
 
   // Score trackers - Delete soon
@@ -64,7 +66,7 @@ const Report: React.FC<ReportProps> = ({
   const [soilScore, setSoilScore] = useState<number|null>(null);
     
   const tabs = [
-    'EstimatedYield',
+    'Estimated Yield',
     'Climate',
     'Topography',
     'Soil',
@@ -72,7 +74,7 @@ const Report: React.FC<ReportProps> = ({
     
   const renderActiveComponent = () => {
     switch (activeTab) {
-      case 'EstimatedYield':
+      case 'estimated-yield':
         return (
           <EstimatedYield
             lat={latitude}
@@ -85,7 +87,7 @@ const Report: React.FC<ReportProps> = ({
             setScore={setEstimatedYieldScore}
           />
         );
-      case 'Climate':
+      case 'climate':
         return (
           <Climate
             lat={latitude}
@@ -97,7 +99,7 @@ const Report: React.FC<ReportProps> = ({
             setScore={setClimateScore}
           />
         );      
-      case 'Topography':
+      case 'topography':
         return (
           <Topography
             lat={latitude}
@@ -110,7 +112,7 @@ const Report: React.FC<ReportProps> = ({
             setScore={setTopographyScore}
           />
         );
-      case 'Soil':
+      case 'soil':
         return (
           <Soil
             lat={latitude}
@@ -132,8 +134,8 @@ const Report: React.FC<ReportProps> = ({
         <div className={`${merriweather.className} text-medium-brown dark:text-medium-green text-3xl pb-2`}>
           Summary
         </div>
-        <div className="w-full sm:flex flex-row">
-          <div className="w-[44%] p-4 mx-0 lg:mx-12">
+        <div className="w-full lg:flex lg:min-w-[40%] flex-row">
+          <div className="p-4 mx-0 lg:mx-12">
             <div className={`${montserrat.className} flex justify-between mb-2 text-2xl`}>
               Property
             </div>
@@ -143,21 +145,33 @@ const Report: React.FC<ReportProps> = ({
               longitude={longitude} 
             />
           </div>
-          <div className="w-[56%] p-4">
+          <div className="lg:max-w-[54%] p-4">
             <SummaryScore />
           </div>
         </div>
       </section>
-      <div className="flex justify-center space-x-8 border-b border-medium-brown dark:border-medium-green mb-4 mt-10">
+
+      {/* Mobile Dropdown */}
+      <div className="mb-4 flex justify-center sm:hidden border-b border-gray-200 pb-4">
+        <Dropdown
+          options={tabs}
+          selected={toTitleCase(activeTab.replace('-',' '))}
+          onSelect={(selected) => setActiveTab(selected.toLowerCase().replace(' ','-'))}
+          className="px-auto"
+        />
+      </div>
+        
+      {/* Desktop / tablet tabs */}
+      <div className="hidden sm:flex justify-center space-x-1 md:space-x-4 lg:space-x-8 border-b border-medium-brown dark:border-medium-green mb-4 mt-10">
         {tabs.map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => setActiveTab(tab.toLowerCase().replace(' ','-'))}
             className={`py-2 px-4 w-48 rounded-t-lg ${
-              activeTab === tab ? 'bg-medium-brown text-white dark:bg-medium-green' : 'bg-white text-black dark:bg-dark-gray-d dark:text-white dark:border dark:border-dark-gray-b'
+              activeTab === tab.toLowerCase().replace(' ','-') ? 'bg-medium-brown text-white dark:bg-medium-green' : 'bg-white text-black dark:bg-dark-gray-d dark:text-white dark:border dark:border-dark-gray-b'
             } hover:bg-medium-brown dark:hover:bg-medium-green hover:opacity-75 hover:text-white`}
           >
-            {tab.replace(/([A-Z])/g, ' $1')}
+            {tab}
           </button>
         ))}
       </div>

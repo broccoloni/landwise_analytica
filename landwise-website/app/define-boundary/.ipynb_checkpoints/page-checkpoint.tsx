@@ -27,7 +27,7 @@ export default function DefineBounrdary() {
     <div className={`${roboto.className} min-h-screen py-10 flex-row justify-between`}>
       <div className="mx-auto px-5 sm:px-20 md:px-40 lg:px-60 xl:px-80 py-10">
         <div className="text-4xl font-bold mb-8 text-center">Your Almost There!</div>
-        <div className="mb-8">
+        <div className="mb-8 w-full">
           <ProgressBar currentStep={2} totalSteps={stepNames.length} stepNames={stepNames} />
         </div>
           

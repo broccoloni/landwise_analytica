@@ -12,6 +12,7 @@ import PlainTable from '@/components/PlainTable';
 import WindDirectionDisplay from "@/components/WindDirectionDisplay";
 import { rangeColors } from '@/utils/colorPalettes';
 import { ImageAndLegend, ImageAndStats, PerformanceData} from '@/types/dataTypes';
+import InfoButton from '@/components/InfoButton';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
@@ -138,16 +139,23 @@ const Soil = (
       
   return (
     <div>
-      <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-        Soil
-      </div>
 
       {/* Soil Classifications */}
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Soil Classifications</div>
-        {curClassificationData ? (
-          <div className="flex w-full">
-            <div className="w-[40%] mt-8 p-4">
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Soil Calssifications</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Soil Classifications
+            </div>
+            <div className="text-sm">
+              This section lists the soil classifications and textures and shows how they are arranged across the land.
+            </div>
+          </InfoButton>
+        </div>
+          {curClassificationData ? (
+          <div className="flex-row w-full">
+            <div className="w-full my-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
               <PlainTable             
                 headers={['Variable', 'Classifications Found']}
@@ -171,10 +179,10 @@ const Soil = (
                 ]}
               />
             </div>
-            <div className="w-[60%] flex-row">
-              <div className="flex w-full">
+            <div className="w-full flex-row">
+              <div className="flex-row md:flex w-full">
                 <div className="w-full">
-                  <div className="flex justify-center items-center h-16">
+                  <div className="flex-row md:flex space-y-2 mb-4 md:mb-0 md:space-y-0 justify-center items-center min-h-16">
                     <div className={`${montserrat.className} mr-4`}>Classification Type:</div>                    
                     <Dropdown 
                       options={['Taxonomy','Texture']} 
@@ -196,7 +204,7 @@ const Soil = (
                     <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curClassificationData.imageUrl} />
                   )}
                 </div>
-                <div className="flex-row ml-2 justify-start items-center mt-16">
+                <div className="flex-row ml-2 justify-start items-center mt-4 md:mt-16">
                   <Legend legend={curClassificationData.legend} />
                 </div>
               </div>
@@ -209,10 +217,20 @@ const Soil = (
 
       {/* Soil Content */}
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Soil Content</div>
-        {curContentData ? (
-          <div className="flex w-full">
-            <div className="w-[40%] mt-8 p-4">
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Soil Contents</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Soil Contents
+            </div>
+            <div className="text-sm">
+              This section provides details on specific soil contents and their distribution over the land. We show the average soil water, sand, clay, and organic carbon content at the surface level and depths of 10cm and 30cm.
+            </div>
+          </InfoButton>
+        </div>
+          {curContentData ? (
+          <div className="flex-row w-full">
+            <div className="w-full my-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
               <PlainTable             
                 headers={['Variable', 'Average at Surface','Average at 10cm','Average at 30cm']}
@@ -244,10 +262,10 @@ const Soil = (
                 ]}
               />
             </div>
-            <div className="w-[60%] flex-row">
-              <div className="flex w-full">
+            <div className="w-full flex-row">
+              <div className="flex-row md:flex w-full">
                 <div className="w-full">
-                  <div className="flex justify-center items-center h-16">
+                  <div className="flex-row md:flex space-y-2 mb-4 md:mb-0 md:space-y-0 justify-center items-center min-h-16">
                     <div className={`${montserrat.className} mr-4`}>Content Type:</div>                    
                     <Dropdown 
                       options={['Water (Field Capacity / 33kPa)','Sand', 'Clay', 'Organic Carbon']} 
@@ -265,10 +283,10 @@ const Soil = (
                     <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curContentData.imageUrl} />
                   )}
                 </div>
-                <div className="flex-row ml-2 justify-start items-center mt-16">
-                  <div className={`${merriweather.className} mb-2 text-center flex-row justify-center items-center text-center`}>
+                <div className="flex-row ml-2 justify-start items-center mt-4 md:mt-16">
+                  <div className={`${merriweather.className} mb-2 text-center flex md:flex-row justify-center items-center text-center`}>
                     <div>Soil Content</div>
-                    <div>
+                    <div className="ml-1 md:ml-0">
                       {contentView === 'Water (Field Capacity / 33kPa)' ? (
                         "(%)"
                       ) : contentView === 'Organic Carbon' ? (
@@ -297,10 +315,20 @@ const Soil = (
 
       {/* Soil Attributes */}
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Soil Attributes</div>
-        {curAttributeData ? (
-          <div className="flex w-full">
-            <div className="w-[40%] mt-8 p-4">
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Soil Attributes</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Soil Attributes
+            </div>
+            <div className="text-sm">
+              This section outlines the soil water pH and bulk density along with their average throughout land at surface level and depths of 10cm and 30cm.
+            </div>
+          </InfoButton>
+        </div>
+          {curAttributeData ? (
+          <div className="flex-row w-full">
+            <div className="w-full my-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
               <PlainTable             
                 headers={['Variable', 'Average at Surface','Average at 10cm','Average at 30cm']}
@@ -320,10 +348,10 @@ const Soil = (
                 ]}
               />
             </div>
-            <div className="w-[60%] flex-row">
-              <div className="flex w-full">
+            <div className="w-full flex-row">
+              <div className="flex-row md:flex w-full">
                 <div className="w-full">
-                  <div className="flex justify-center items-center h-16">
+                  <div className="flex-row md:flex space-y-2 mb-4 md:mb-0 md:space-y-0 justify-center items-center min-h-16">
                     <div className={`${montserrat.className} mr-4`}>Attribute Type:</div>                    
                     <Dropdown 
                       options={['Water pH','Bulk Density']} 
@@ -341,7 +369,7 @@ const Soil = (
                     <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curAttributeData.imageUrl} />
                   )}
                 </div>
-                <div className="flex-row ml-2 justify-start items-center mt-16">
+                <div className="flex-row ml-2 justify-start items-center mt-4 md:mt-16">
                   <div className={`${merriweather.className} mb-2 text-center flex-row justify-center items-center text-center`}>
                     <div>
                       {attributeView === 'Water pH' ? (

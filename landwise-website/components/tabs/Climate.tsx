@@ -11,6 +11,7 @@ import PlainTable from '@/components/PlainTable';
 import { debounce } from 'lodash';
 import Loading from '@/components/Loading';
 import { ImageAndLegend, ImageAndStats, PerformanceData} from '@/types/dataTypes';
+import InfoButton from '@/components/InfoButton';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -146,16 +147,24 @@ const Climate = (
       
   return (
     <div>
-      <div className={`${merriweather.className} text-2xl pb-2`}>
-        Climate
-      </div>
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Precipitation, Temperature & Dew</div>
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Precipitation, Temperature & Dew</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Precipitation, Temperature & Dew
+            </div>
+            <div className="text-sm">
+              This section shows historic climate data, including precipitation, temperature and dew point temperature. The range selector at the bottom of the plot can be used to calculate averages over a selected region. 
+            </div>
+          </InfoButton>
+        </div>
+          
         {precipData ? (
-          <div className = "flex">
-            <div className = "w-[40%]">
-              <div className = "mt-8 p-4 mx-4">
-                <div className={`${montserrat.className} mb-4 flex justify-between`}>
+          <div className = "flex-row">
+            <div className = "w-full">
+              <div className = "my-4">
+                <div className={`${montserrat.className} mx-4 mb-4 flex justify-between`}>
                   <div>
                     Summary of Selected Range
                   </div>
@@ -179,14 +188,14 @@ const Climate = (
                 )}
               </div>
             </div>
-            <div className="w-[60%]">
+            <div className="w-full">
               <div className="flex-row justify-center items-center">
-                <div className="flex justify-center items-center text-center">
-                  <div className={`${montserrat.className} mr-8`}>
+                <div className="flex-row md:flex justify-center items-center text-center">
+                  <div className={`${montserrat.className} md:mr-8`}>
                     Daily Average Climate Variables
                   </div>
                   {climateData && (
-                    <div className="w-56">
+                    <div className="w-56 mx-auto">
                       <Slider
                         value={precipYear ?? Object.keys(climateData).map(Number)[0]}
                         onChange={(event, newValue) => setPrecipYear(newValue as number)}
@@ -266,9 +275,9 @@ const Climate = (
                       },
                       margin: {
                         t: 10,
-                        b: 100,
-                        l: 120,
-                        r: 80,
+                        b: 80,
+                        l: 40,
+                        r: 40,
                       },
                     }}
                     style={{ width: '100%', height: '100%' }}
@@ -285,11 +294,22 @@ const Climate = (
         )}
       </div>
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Temperature Suitability</div>
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Heat Units</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Heat Units
+            </div>
+            <div className="text-sm">
+              This section displays historic accumulated heat units over the year, including corn heat units and growing degree days with four different base temperatures. The heat units can be used to estimate crop development rates and milestones when adequate moisture and maintenance is provided.
+            </div>
+          </InfoButton>
+        </div>
+          
         {heatUnitData ? (
-          <div className="flex">
-            <div className="w-[40%]">
-              <div className = "mt-8 p-4 mx-4">
+          <div className="flex-row">
+            <div className="w-full">
+              <div className = "my-4">
                 <div className={`${montserrat.className} mb-4`}>
                   End of Completed Season Averages
                 </div>
@@ -327,13 +347,13 @@ const Climate = (
                 </div>
               </div> 
             </div>
-            <div className="w-[60%]">
+            <div className="w-full">
               <div className="flex-row justify-center items-center">
-                <div className="flex justify-center items-center text-center">
-                  <div className={`${montserrat.className} mr-8`}>
+                <div className="flex-row md:flex justify-center items-center text-center">
+                  <div className={`${montserrat.className} md:mr-8 text-center`}>
                     Year:
                   </div>
-                  <div className="w-56">
+                  <div className="w-56 mx-auto">
                   <Slider
                     value={tempYear ?? heatUnitData.years[0]}
                     onChange={(event, newValue) => setTempYear(newValue as number)}
@@ -366,7 +386,7 @@ const Climate = (
                       yaxis: { title: 'Cumulative Heat Units' },
                       margin: {
                         t: 20,
-                        b: 40,
+                        b: 80,
                         l: 60,
                         r: 20
                       },
@@ -390,11 +410,22 @@ const Climate = (
         )}
       </div>
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Growing Season Length</div>
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Growing Seasons</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Growing Seasons
+            </div>
+            <div className="text-sm">
+              This section provides a visualization of the historic growing seasons. Hover over bars in the plot to see specific first and last frost dates.
+            </div>
+          </InfoButton>
+        </div>
+          
         {growingSeasonData ? (
-          <div className="flex">
-            <div className="w-[40%]">
-              <div className = "mt-8 mx-4">
+          <div className="flex-row">
+            <div className="w-full">
+              <div className = "my-8">
                 <div className={`${montserrat.className} mb-4`}>
                   Summary
                 </div>
@@ -408,9 +439,9 @@ const Climate = (
                 />
               </div>
             </div>
-            <div className="w-[60%]">
+            <div className="w-full">
               <div className="flex-row">
-                <div className={`${montserrat.className} w-full text-center`}>
+                <div className={`${montserrat.className} w-full text-center mb-4`}>
                   Completed Growing Seasons
                 </div>
                 <div className="">
@@ -459,8 +490,8 @@ const Climate = (
                       },
                       margin: {
                         t: 0,
-                        b: 40,
-                        l: 100,
+                        b: 80,
+                        l: 80,
                         r: 0,
                       },
                     }}

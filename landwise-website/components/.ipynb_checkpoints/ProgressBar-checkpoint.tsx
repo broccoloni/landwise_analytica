@@ -10,7 +10,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalSteps, step
   const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
 
   return (
-    <div className="w-full h-16">
+    <div className="w-full h-16 px-4">
       {/* Progress Bar */}
       <div className="relative flex items-center">
         {/* Progress Track */}

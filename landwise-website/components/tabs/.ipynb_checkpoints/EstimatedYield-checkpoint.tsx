@@ -11,6 +11,7 @@ import { majorCommodityCrops } from '@/utils/labels';
 import { getAvg, getStd } from '@/utils/stats';
 import { ImageAndLegend, ImageAndStats, PerformanceData } from '@/types/dataTypes';
 import { heatColors } from '@/utils/colorPalettes';
+import InfoButton from '@/components/InfoButton';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
@@ -141,21 +142,23 @@ const EstimatedYield = (
 
   return (
     <div>
-      <div className={`${merriweather.className} flex text-accent-dark text-2xl pb-2`}>
-        <div className="">Estimated Yield</div>
-        {score && (
-          <div className=""> - {score}%</div>
-        )}
-      </div>
 
       {/* Estimated Historic Yield */}
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>
-          Estimated Historic Yield
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Estimated Historic Yield</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Estimated Historic Yield
+            </div>
+            <div className="text-sm">
+              This section details the estimated yield of the major commodity crop that was grown on the land. We use our proprietary machine-learning models along with historical soil-climate-landscape variables and Canada's land inventory maps to estimate these values and compare them to neighboring and national levels.
+            </div>
+          </InfoButton>
         </div>
         {historicData && bbox ? ( 
-          <div className="flex">
-            <div className="w-[40%] mt-8 p-4">
+          <div className="flex-row">
+            <div className="w-full my-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>
                 Performance Comparison
               </div>
@@ -174,9 +177,9 @@ const EstimatedYield = (
                 <div className="">{`${Math.round(historicData.avgNaPerf)} \u00B1 ${Math.round(historicData.stdNaPerf)}`}</div>
               </div>
             </div>
-            <div className="w-[60%]">
+            <div className="w-full">
               <div className="flex-row justify-center items-center w-full">
-                <div className={`${montserrat.className} w-full text-center`}>Estimated Historic Yield</div>                    
+                <div className={`${montserrat.className} w-full text-center mb-4`}>Estimated Historic Yield</div>                    
                 <div className="">
                   <Plot
                     data={[
@@ -244,25 +247,33 @@ const EstimatedYield = (
 
       {/* Estimated Projected Yield */}
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>
-          Estimated Projected Yield
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Estimated Projected Yield</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Estimated Projected Yield
+            </div>
+            <div className="text-sm">
+              This section outlines the estimated yield projections of the major commodity crop that could be grown on the land. We use our proprietary machine-learning models along with soil-climate-landscape variables and CMIP6 climate projections to estimate these values.
+            </div>
+          </InfoButton>
         </div>
         {curProjectedData && bbox ? ( 
-          <div className="flex">
-            <div className="w-[44%] mt-8 p-4">
+          <div className="flex-row">
+            <div className="w-full mt-4 mb-4">
               <ProjectionDisplay />
             </div>
-            <div className="w-[56%]">
+            <div className="w-full">
               <div className="flex-row justify-center items-center w-full">
-                <div className="flex justify-center items-center">
-                  <div className={`${montserrat.className} mr-4`}>Estimated Projected Yield for:</div>                    
+                <div className="flex-row md:flex justify-center items-center space-y-4 mb-4 md:mb-0">
+                  <div className={`${montserrat.className} md:mr-4`}>Estimated Projected Yield for:</div>                    
                   <Dropdown 
                     options={majorCommodityCrops} 
                     selected={projectedCrop} 
                     onSelect={(option: string) => setProjectedCrop(option)} 
                   />
                 </div>
-                <div className="">
+                <div className="w-full">
                   <Plot
                     style={{ width: '100%', height: '100%' }}
                     className="mt-0"
@@ -332,17 +343,27 @@ const EstimatedYield = (
         )}
       </div>
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg `}>Yield Consistency Across Property</div>
-        {curHeatmapData && bbox ? (
-          <div className="flex">
-            <div className="w-[40%] mt-8 p-4">
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Yield Distribution</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Yield Distribution
+            </div>
+            <div className="text-sm">
+              This section details how the estimated yield fluctuates across the land for a variety of major commodity crops. We use our proprietary machine-learning models along with current soil-climate-landscape variables to estimate these values.
+            </div>
+          </InfoButton>
+        </div>
+          {curHeatmapData && bbox ? (
+          <div className="flex-row">
+            <div className="w-full mt-4 mb-4 ">
               <CropConsistencyDisplay />
             </div>
-            <div className="w-[60%]">
-              <div className="flex w-full">
+            <div className="w-full">
+              <div className="flex-row md:flex w-full">
                 <div className="w-full">
-                  <div className="flex justify-center items-center h-16">
-                    <div className={`${montserrat.className} mr-4`}>Yield Heatmap for:</div>                    
+                  <div className="flex-row md:flex justify-center items-center space-y-4 min-h-16 mb-4 md:mb-0">
+                    <div className={`${montserrat.className} md:mr-4`}>Yield Heatmap for:</div>                    
                     <Dropdown 
                       options={majorCommodityCrops} 
                       selected={heatmapCrop} 
@@ -351,11 +372,11 @@ const EstimatedYield = (
                   </div>
                   <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curHeatmapData.imageUrl} />
                 </div>
-                <div className="flex-row ml-2 justify-start items-center mt-16">
+                <div className="flex-row md:ml-2 justify-start items-center mt-4 md:mt-16">
                   <div className={`${merriweather.className} text-center`}>
                       Yield
                   </div>
-                  <div className="mb-2">(Bushels/Acre)</div>
+                  <div className="mb-2 text-center">(Bushels/Acre)</div>
                   <div className="flex justify-center">
                     <ColorBar
                       vmin={curHeatmapData.min}

@@ -13,6 +13,7 @@ import WindDirectionDisplay from "@/components/WindDirectionDisplay";
 import { ImageAndLegend, ImageAndStats, PerformanceData} from '@/types/dataTypes';
 import { rangeColors } from '@/utils/colorPalettes';
 import { sqMetersPerAcre } from '@/utils/reports';
+import InfoButton from '@/components/InfoButton';
 
 const MapImage = dynamic(() => import('@/components/MapImage'), { ssr: false });
 
@@ -139,19 +140,26 @@ const Topography = (
       
   return (
     <div>
-      <div className={`${merriweather.className} text-accent-dark text-2xl pb-2`}>
-        Topography
-      </div>
 
       {/* Size & Layout Section */}
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Size & Layout</div>
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Size & Layout</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Size & Layout
+            </div>
+            <div className="text-sm">
+              This section provides a visual display of the historical land use. Use the slider at the top to see how the use of land has changed throughout the years. The overall property size and historical cropland are also provided.
+            </div>
+          </InfoButton>
+        </div>
         {landUseData && bbox && curLandUseData? (
-          <div className="flex w-full">
-            <div className="w-[40%] mt-8 p-4">
+          <div className="flex-row w-full">
+            <div className="w-full my-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
               <PlainTable
-                headers={['Land Section', '% of Land', 'Area (m\u00B2)', 'Area (ac)']}
+                headers={['Land Section', '% of Land', 'Area (m\u00B2)', 'Area (ac.)']}
                 data={[
                   { 
                     a: 'Total Property',
@@ -174,12 +182,12 @@ const Topography = (
                 ]}
               />
             </div>
-            <div className="w-[60%] flex-row">
-              <div className="flex w-full">
+            <div className="w-full flex-row">
+              <div className="flex-row md:flex w-full">
                 <div className="flex-row w-full">
-                  <div className="flex justify-center items-center h-16">
-                    <div className={`${montserrat.className} mr-8`}>Year:</div>
-                    <div className="w-56">
+                  <div className="flex-row md:flex justify-center items-center min-h-16">
+                    <div className={`${montserrat.className} text-center md:mr-8`}>Year:</div>
+                    <div className="w-56 mx-auto">
                       <Slider
                         value={landUsageYear ?? landUsageYears[0]}
                         onChange={(event, newValue) => setLandUsageYear(newValue as number)}
@@ -205,7 +213,7 @@ const Topography = (
                     <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curLandUseData.imageUrl} />
                   )}
                 </div>
-                <div className="ml-2 mt-8">
+                <div className="mt-4 md:ml-2 md:mt-16">
                   <Legend legend={curLandUseData.legend} />
                 </div>
               </div>
@@ -218,10 +226,20 @@ const Topography = (
         
       {/* Elevation Section */}
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Elevation</div>
-        {elevationData && curElevationData && bbox ? (
-          <div className="flex w-full">
-            <div className="w-[40%] p-4 mt-8">
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Elevation</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Elevation
+            </div>
+            <div className="text-sm">
+              The section shows how the elevation, slope and convexity are distributed throughout the land. 
+            </div>
+          </InfoButton>
+        </div>
+          {elevationData && curElevationData && bbox ? (
+          <div className="flex-row w-full">
+            <div className="w-full my-4">
               <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
               <PlainTable             
                 headers={['Elevation View', 'Average']}
@@ -233,10 +251,10 @@ const Topography = (
               />
             </div>
 
-            <div className="w-[60%] flex-row">
-              <div className="flex w-full">
+            <div className="w-full flex-row">
+              <div className="flex-row md:flex w-full">
                 <div className="w-full">
-                  <div className="flex justify-center items-center h-16">
+                  <div className="flex-row md:flex justify-center items-center space-y-4 mb-4 md:mb-0 min-h-16">
                     <div className={`${montserrat.className} mr-4`}>Elevation View:</div>                    
                     <Dropdown 
                       options={['Elevation', 'Slope', 'Convexity']} 
@@ -248,7 +266,7 @@ const Topography = (
                     <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curElevationData.imageUrl} />
                   )}
                 </div>
-                <div className="flex-row ml-2 justify-start items-center mt-16">
+                <div className="flex-row md:ml-2 justify-start items-center mt-4 md:mt-16">
                   <div className={`${merriweather.className} mb-2 text-center`}>
                       {elevationView}
                   </div>
@@ -270,24 +288,36 @@ const Topography = (
       </div>
 
       <div className="py-4 border-b border-gray-500">
-        <div className={`${montserrat.className} text-lg`}>Wind Exposure</div>
-        {windData && curWindExposure && bbox ? (
-          <div className="flex w-full">
-            <div className="w-[40%] p-4 mt-8">
-              <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
-              <PlainTable             
-                headers={['Exposure Type', 'Average']}
-                data={[
-                  { 
-                    type:'Wind Speed', 
-                    avg:`${(windData?.wind?.avg ?? 0).toFixed(2)} \u00B1 ${(windData?.wind?.std ?? 0).toFixed(2)}`,
-                  },
-                  { 
-                    type:'Wind Gust', 
-                    avg:`${(windData?.gust?.avg ?? 0).toFixed(2)} \u00B1 ${(windData?.gust?.std ?? 0).toFixed(2)}`,
-                  },
-                ]}
-              />
+        <div className={`${montserrat.className} text-lg flex justify-between`}>
+          <div>Wind Exposure</div>
+          <InfoButton>
+            <div className="text-center text-lg mb-4">
+              Wind Exposure
+            </div>
+            <div className="text-sm">
+              This section estimates areas most exposed to the wind as calculated from the wind or gust direction and speed, and the slope and aspect of the land. A graphical display of the average wind or gust direction and its standard deviation is also provided.
+            </div>
+          </InfoButton>
+        </div>        
+          {windData && curWindExposure && bbox ? (
+          <div className="flex-row w-full mb-4">
+            <div className="flex-row md:flex justify-between w-full my-4">
+              <div className="w-full p-4">
+                <div className={`${montserrat.className} mb-4 mx-4`}>Summary</div>
+                <PlainTable             
+                  headers={['Exposure Type', 'Average']}
+                  data={[
+                    { 
+                      type:'Wind Speed', 
+                      avg:`${(windData?.wind?.avg ?? 0).toFixed(2)} \u00B1 ${(windData?.wind?.std ?? 0).toFixed(2)}`,
+                    },
+                    {   
+                      type:'Wind Gust', 
+                      avg:`${(windData?.gust?.avg ?? 0).toFixed(2)} \u00B1 ${(windData?.gust?.std ?? 0).toFixed(2)}`,
+                    },
+                  ]}
+                />
+              </div>
               <div className="flex-row justify-center mx-4">
                 <div className="w-full mb-20">{`Average ${windExposureType} Direction (and Standard Deviation):`}</div>
                 <div className="h-20">
@@ -299,10 +329,10 @@ const Topography = (
               </div>
             </div>
 
-            <div className="w-[60%] flex-row">
-              <div className="flex w-full">
+            <div className="w-full flex-row">
+              <div className="flex-row md:flex w-full">
                 <div className="w-full">
-                  <div className="flex justify-center items-center h-16">
+                  <div className="flex-row md:flex justify-center items-center space-y-4 mb-4 md:mb-0 min-h-16">
                     <div className={`${montserrat.className} mr-4`}>Wind Exposure Type:</div>                    
                     <Dropdown 
                       options={['Wind','Gust']} 
@@ -314,7 +344,7 @@ const Topography = (
                     <MapImage latitude={lat} longitude={lng} zoom={15} bbox={bbox} imageUrl={curWindExposure.imageUrl} />
                   )}
                 </div>
-                <div className="flex-row ml-2 justify-start items-center mt-16">
+                <div className="flex-row md:ml-2 justify-start items-center mt-4 md:mt-16">
                   <div className={`${merriweather.className} mb-2 text-center`}>
                     Exposure
                   </div>
