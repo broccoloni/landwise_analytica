@@ -5,31 +5,25 @@ import Image from 'next/image';
 import Link from 'next/link';
 import AddressSearchWithButton from '@/components/AddressSearchWithButton';
 import Container from '@/components/Container';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { useReportContext } from '@/contexts/ReportContext';
+import { ReportContext } from '@/contexts/report/ReportContext';
 
 export default function Home() {
 
   const router = useRouter();
   const { 
-    address, setAddress, 
-    latitude, setLatitude, 
-    longitude, setLongitude, 
-    setAddressComponents, 
-    setLandGeometry,
+    address, 
+    latitude, 
+    longitude, 
     clearReportContext,
-  } = useReportContext();
+    handleUpdate: updateReport,
+  } = useContext(ReportContext);
     
-  const handleAddressSelect = (selectedAddress: string, lat: number, lng: number, components: Record<string, string>) => {      
-    setAddress(selectedAddress);
-    setLatitude(lat);
-    setLongitude(lng);
-    setAddressComponents(components);
-    setLandGeometry([]);
+  const handleAddressSelect = (selectedAddress: string, lat: number, lng: number, components: Record<string, string>) => {  
+    updateReport({ address: selectedAddress, latitude: lat, longitude: lng, addressComponents: components, landGeometry: [] });
   };
 
-  // Look into using react context for cleaner approach or if url might be too long
   const handleAddressSubmit = () => {
     if (address !== null && latitude !== null && longitude !== null) {
       router.push('/define-boundary');

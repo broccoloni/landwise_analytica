@@ -1,12 +1,12 @@
 'use client';
 
 import { roboto } from '@/ui/fonts';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ProgressBar from '@/components/ProgressBar';
-import { useReportContext } from '@/contexts/ReportContext';
+import { ReportContext } from '@/contexts/report/ReportContext';
 import { calculatePolygonArea } from '@/utils/calculateArea';
 import { ArrowRight } from 'lucide-react';
 
@@ -15,12 +15,12 @@ const MapDrawing = dynamic(() => import('@/components/MapDrawing'), { ssr: false
 
 export default function DefineBounrdary() {
   const router = useRouter();
-  const { latitude, longitude, landGeometry, setLandGeometry, reportSize, setReportSize } = useReportContext();
+  const { landGeometry, size } = useContext(ReportContext);
 
   const stepNames = ['Select Address', 'Define Boundary', 'Purchase Report'];
 
   const handleGetReport = () => {
-    router.push(`/get-a-report?size=${reportSize}`);
+    router.push(`/get-a-report?size=${size}`);
   };
 
   return (
@@ -39,15 +39,7 @@ export default function DefineBounrdary() {
         </ul>
 
         <div className="w-full">
-          <MapDrawing
-            latitude={latitude}
-            longitude={longitude}
-            zoom={15}
-            points={landGeometry}
-            setPoints={setLandGeometry}
-            size={reportSize}
-            setSize={setReportSize}
-          />
+          <MapDrawing />
         </div>
 
         <div className="flex justify-end w-full">

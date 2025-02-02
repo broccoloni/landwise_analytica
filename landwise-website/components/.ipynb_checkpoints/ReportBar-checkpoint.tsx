@@ -1,12 +1,12 @@
 'use client'; // This is important because we are calling new Date, which could cause a hydration error otherwise
 
-import React from "react";
+import React, { useContext } from "react";
 import { useRouter } from 'next/navigation';
 import Container from '@/components/Container';
 import { ArrowRight } from 'lucide-react';
 import { ReportStatus } from "@/types/statuses";
 import { montserrat } from '@/ui/fonts';
-import { useReportContext } from '@/contexts/ReportContext';
+import { ReportContext } from '@/contexts/report/ReportContext';
 
 // Helper function to calculate days left
 const calculateDaysLeft = (createdAt: string): number => {
@@ -35,7 +35,7 @@ interface ReportBarProps {
 
 const ReportBar: React.FC<ReportBarProps> = ({ report }) => {
   const router = useRouter();
-  const { setReportId, setStatus, clearReportContext } = useReportContext();
+  const { clearReportContext } = useContext(ReportContext);
 
   // Pre-redirect logic for unredeemed reports
   const handleRedeemClick = () => {

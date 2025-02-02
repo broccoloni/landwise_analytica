@@ -1,6 +1,10 @@
-import { ReportSize, reportSizeLabels, reportSizeAcres } from '@/types/reportSizes';
+import type { ReportSize } from '@/types/report';
 
 export const sqMetersPerAcre = 4046.8565;
+
+export const reportSizeLabels: ReportSize[] = ['small', 'medium', 'large', 'xlarge', 'jumbo'];
+export const reportSizeAcres = [70, 400, 1000, 2000];
+
 
 const getSizeFromAcres = (acres: number | null): ReportSize => {
   if (acres === null) return null;

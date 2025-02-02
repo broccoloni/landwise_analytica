@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import Loading from '@/components/Loading';
-import { useCartContext } from '@/contexts/CartContext';
+import { CartContext } from '@/contexts/cart/CartContext';
 import { useSession } from 'next-auth/react';
 
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY) {
@@ -17,12 +17,12 @@ interface CheckoutOptions {
   clientSecret: string;
 }
 
-export default function CheckoutSession({ onComplete }:{ onComplete: (sessionId: string) => void; }) {
+export default function CheckoutSession() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [options, setOptions] = useState<CheckoutOptions>({ clientSecret: '' });
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const { quantity, couponId, customerId, priceId, size } = useCartContext();
+  const [sessionId, setSessionId] = useState('');
+  const { quantity, couponId, customerId, priceId, size, handleUpdate: updateCart } = useContext(CartContext);
 
   const fetchClientSecret = useCallback(async () => {
     try {
@@ -45,7 +45,6 @@ export default function CheckoutSession({ onComplete }:{ onComplete: (sessionId:
       if (!data.clientSecret || !data.sessionId) {
         throw new Error('Required data missing from response.');
       }
-
       setSessionId(data.sessionId);
       setOptions({ clientSecret: data.clientSecret });
     } catch (error) {
@@ -66,7 +65,7 @@ export default function CheckoutSession({ onComplete }:{ onComplete: (sessionId:
       console.log("Session ID is null on completiong");
       return;
     }
-    onComplete(sessionId);
+    updateCart({ quantity: 0, customerId: null, couponId: null, priceId: null, size: null, sessionId });
   };
 
   return (

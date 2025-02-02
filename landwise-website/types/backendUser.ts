@@ -12,7 +12,6 @@ export interface BackendUser extends Partial<DefaultUser> {
   notificationsEnabled?: boolean;
   realtyGroup?: string;
   status?: string;
-  theme?: string;
 
   // Additional attributes for backend
   emailVerificationToken?: string;

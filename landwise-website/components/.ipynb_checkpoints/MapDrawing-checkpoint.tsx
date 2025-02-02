@@ -2,12 +2,13 @@
 
 import { MapContainer, TileLayer, Polygon, CircleMarker, useMapEvents, useMap, ScaleControl } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { MousePointer, Dot, Undo, Redo, RotateCcw } from 'lucide-react';
 import { calculatePolygonArea } from '@/utils/calculateArea';
 import { LatLngTuple } from 'leaflet';
 import { sqMetersPerAcre, getSizeFromSqM } from '@/utils/reports';
 import { toTitleCase } from '@/utils/string';
+import { ReportContext } from '@/contexts/report/ReportContext';
 
 let L: typeof import("leaflet") | null = null;
 
@@ -15,15 +16,7 @@ if (typeof window !== "undefined") {
   L = require("leaflet");
 }
 
-interface MapDrawingProps {
-  latitude: string | number | null;
-  longitude: string | number | null;
-  zoom: number;
-  points: number[][];
-  setPoints: React.Dispatch<React.SetStateAction<number[][]>>;
-  size: string | null;
-  setSize: React.Dispatch<React.SetStateAction<string | null>>;
-}
+const initialZoom = 15;
 
 interface MapClickHandlerProps {
   onPointAdd: (point: number[]) => void;
@@ -46,24 +39,16 @@ const ChangeView = ({ lat, lng, zoom }: { lat: number; lng: number; zoom: number
 
 
 // Main MapDrawing component
-export default function MapDrawing({
-  latitude: initialLatitude,
-  longitude: initialLongitude,
-  zoom: initialZoom,
-  points,
-  setPoints,
-  size,
-  setSize,
-}: MapDrawingProps) {
+export default function MapDrawing() {
   const [hoverPoint, setHoverPoint] = useState<number[] | null>(null);
   const [isPolygonClosed, setIsPolygonClosed] = useState(false);
-  const [latitude, setLatitude] = useState<string|number|null>(initialLatitude);
-  const [longitude, setLongitude] = useState<string|number|null>(initialLongitude);
   const [zoom, setZoom] = useState<number>(initialZoom);
   const [redoStack, setRedoStack] = useState<number[][]>([]);
   const [isPlacingMode, setIsPlacingMode] = useState(true);
   const [draggedPointIndex, setDraggedPointIndex] = useState<number | null>(null);
 
+  const { latitude, longitude, landGeometry: points, size, handleUpdate: updateReport } = useContext(ReportContext);
+    
   useEffect(() => {
     if (L) {
       L.Map.addInitHook("addHandler", "touchZoom", L.Map.TouchZoom);
@@ -74,23 +59,16 @@ export default function MapDrawing({
   if (latitude === null || longitude === null) {
     throw new Error('Both Latitude and Longitude must be provided to MapDrawing');
   }
-  const lat = parseFloat(String(latitude));
-  const lng = parseFloat(String(longitude));
-
-
-  if (isNaN(lat) || isNaN(lng)) {
-    throw new Error('Invalid Latitude or Longitude provided to MapDrawing');
-  }
 
   const handleCenterChange = (newLat: number, newLng: number) => {
-    setLatitude(newLat.toString());
-    setLongitude(newLng.toString());
+    updateReport({ latitude: newLat, longitude: newLng });
   };
+    
 
   const handlePointAdd = (point: number[]) => {
     if (isPlacingMode && !isPolygonClosed) {
       if (points.length === 0 || (point[0] !== points[points.length - 1][0] || point[1] !== points[points.length - 1][1])) {
-        setPoints([...points, point]);
+        updateReport({ landGeometry: [...points, point] });
       }
       if (redoStack.length !== 0) {
         setRedoStack([]);
@@ -103,7 +81,7 @@ export default function MapDrawing({
     if (!isPlacingMode && draggedPointIndex !== null) {
       const updatedPoints = [...points];
       updatedPoints[draggedPointIndex] = point;
-      setPoints(updatedPoints);
+      updateReport({ landGeometry: updatedPoints });
     }
   };
 
@@ -130,20 +108,20 @@ export default function MapDrawing({
       const lastPoint = points[points.length - 1];
         
       setRedoStack([...redoStack, lastPoint]);
-      setPoints(points.slice(0, -1));
+      updateReport({ landGeometry: points.slice(0, -1) });
     }
   };
 
   const handleRedo = () => {
     if (redoStack.length > 0) {
       const lastRedoPoint = redoStack[redoStack.length - 1];
-      setPoints([...points, lastRedoPoint]);
+      updateReport({ landGeometry: [...points, lastRedoPoint] });
       setRedoStack(redoStack.slice(0, -1));
     }
   };
     
   const handleReset = () => {
-    setPoints([]);
+    updateReport({ landGeometry: [] });
     setIsPolygonClosed(false);
     setIsPlacingMode(true);
     setHoverPoint(null);
@@ -259,10 +237,10 @@ export default function MapDrawing({
     if (area !== null) {
       const newSize = getSizeFromSqM(area);
       if (newSize !== size) {
-        setSize(newSize);
+        updateReport({ size: newSize });
       }
     } else if (area === null && size) {
-        setSize(null);
+        updateReport({ size: null });
     } 
   }, [area, size]);
 
@@ -350,7 +328,7 @@ export default function MapDrawing({
           doubleClickZoom={false}
       >
         <ScaleControl position="bottomleft" maxWidth={200} metric={true} imperial={true} />
-        <ChangeView lat={lat} lng={lng} zoom={zoom} />
+        <ChangeView lat={latitude} lng={longitude} zoom={zoom} />
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         />

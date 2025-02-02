@@ -2,8 +2,8 @@
 
 import { ReactNode } from 'react';
 import { SessionProvider as NextAuthProvider } from 'next-auth/react';
-import { ReportProvider } from '@/contexts/ReportContext';
-import { CartProvider } from '@/contexts/CartContext';
+import { ReportProvider } from '@/contexts/report/ReportProvider';
+import { CartProvider } from '@/contexts/cart/CartProvider';
 import { GoogleMapsProvider } from '@/contexts/GoogleMapsContext';
 import { SettingsProvider } from '@/contexts/settings/SettingsProvider';
 

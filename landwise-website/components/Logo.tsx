@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { abhaya } from '@/ui/fonts';
-import { useReportContext } from '@/contexts/ReportContext';
+import { ReportContext } from '@/contexts/report/ReportContext';
+import { useContext } from 'react';
 import Image from 'next/image';
 
 const Logo = () => {
-  const { clearReportContext } = useReportContext();
+  const { clearReportContext } = useContext(ReportContext);
 
   return (
     <Link href="/" >

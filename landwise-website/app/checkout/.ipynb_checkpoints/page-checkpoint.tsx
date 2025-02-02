@@ -2,14 +2,13 @@
 
 import CheckoutSession from '@/components/CheckoutSession';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import Loading from '@/components/Loading';
 import ReportBar from '@/components/ReportBar';
-import { useReportContext } from '@/contexts/ReportContext';
+import { ReportContext } from '@/contexts/report/ReportContext';
 import { roboto, montserrat } from '@/ui/fonts';
-import { useCartContext } from '@/contexts/CartContext';
-import { fetchReportsBySessionId, redeemReport, isValidSize } from '@/utils/reports';
-import { reportSizeLabels } from '@/types/reportSizes';
+import { CartContext } from '@/contexts/cart/CartContext';
+import { fetchReportsBySessionId, redeemReport, isValidSize, reportSizeLabels } from '@/utils/reports';
 import Container from '@/components/Container';
 
 export default function Checkout() {
@@ -19,20 +18,11 @@ export default function Checkout() {
   // redeem the report with those details, which are still in the reportContext
   const router = useRouter();
   const [loadingReports, setLoadingReports] = useState(true);
-  const { address, addressComponents, landGeometry, reportSize } = useReportContext();
-  const { setQuantity, setCouponId, setCustomerId, sessionId, setSessionId } = useCartContext();
-
+  const { address, addressComponents, landGeometry, size: reportSize } = useContext(ReportContext);
+  const { sessionId, handleUpdate: cartUpdate } = useContext(CartContext);
+    
   const [reports, setReports] = useState<any[]>([]);
   const topRef = useRef<HTMLDivElement>(null);
-    
-  const handleComplete = (completedSessionId: string) => {
-    console.log("(checkout) complete", completedSessionId);
-    setQuantity(null);
-    setCouponId(null);
-    setCustomerId(null);
-    setSessionId(completedSessionId);
-    topRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }
 
   const fetchReports = async () => {
     if (!sessionId) {
@@ -63,10 +53,6 @@ export default function Checkout() {
 
     return () => clearInterval(intervalId);
   }, [reports, sessionId]);
-
-  useEffect(() => {
-    console.log(reports[0]?.reportId, address);
-  }, [reports[0]?.reportId, address]);
 
   const handleRedeem = async () => {
     if (!reports[0]?.reportId || !address || !addressComponents || landGeometry.length < 3) {
@@ -131,7 +117,7 @@ export default function Checkout() {
           </div>
         </Container>
       ) : (
-        <CheckoutSession onComplete={handleComplete} />
+        <CheckoutSession />
       )}
     </div>
   );

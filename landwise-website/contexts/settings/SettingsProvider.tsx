@@ -10,11 +10,6 @@ const STORAGE_KEY = 'landwise.analytica.settings';
 const restoreSettings = (): Settings | null => {
   let value = null;
 
-  if (window.location.pathname == '/') {
-    console.log('on homepage');
-    return value;
-  }
-
   try {
     const restored: string | null = window.localStorage.getItem(STORAGE_KEY);
 
@@ -23,7 +18,7 @@ const restoreSettings = (): Settings | null => {
       if (value.theme) {
         console.log('restore' + value.theme);
         const root = document.querySelector(':root');
-        root && root.classList.remove('light', 'dark');
+        root && root.classList.remove('dark', 'light');
         root && root.classList.add(value.theme);
       }
     }

@@ -3,7 +3,7 @@ import type {Settings} from '@/types/settings';
 
 export const defaultSettings: Settings = {
   locale: 'en-US',
-  theme: 'light',
+  theme: 'dark',
 };
 
 export interface SettingsContextType {

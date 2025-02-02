@@ -34,7 +34,6 @@ export const authOptions: AuthOptions = {
           emailReportIds,
           notificationsEnabled,
           status,
-          theme,
         } = sessionUser;
           
         if (!id && !email) {
@@ -42,7 +41,7 @@ export const authOptions: AuthOptions = {
           return session;
         }
           
-        if (id && email && firstName && lastName && realtyGroup && createdAt && lastLogin && emailReportIds && notificationsEnabled && status && theme) {
+        if (id && email && firstName && lastName && realtyGroup && createdAt && lastLogin && emailReportIds && notificationsEnabled && status) {
           console.log('Got session for', session?.user?.email, session.user);
           return session;
         }
@@ -177,7 +176,6 @@ export const authOptions: AuthOptions = {
             emailReportIds: true,
             notificationsEnabled: true,
             status: RealtorStatus.Unverified,
-            theme: 'Light',
             password,
             emailVerificationToken: '',
             emailVerificationTokenExpires: '',

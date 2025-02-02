@@ -16,7 +16,6 @@ declare module "next-auth" {
       notificationsEnabled: boolean;
       realtyGroup: string;
       status: string;
-      theme: string;
     }> & DefaultSession["user"];
   }
 
@@ -34,7 +33,6 @@ declare module "next-auth" {
     notificationsEnabled?: boolean;
     realtyGroup?: string;
     status?: string;
-    theme?: string;
     password?: string;
   }
 }
@@ -54,6 +52,5 @@ declare module "next-auth/jwt" {
     notificationsEnabled: boolean;
     realtyGroup: string;
     status: string;
-    theme: string;
   }> {}
 }

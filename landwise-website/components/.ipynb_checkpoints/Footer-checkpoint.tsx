@@ -3,11 +3,11 @@
 import { raleway } from '@/ui/fonts';
 import Link from 'next/link';
 import ListOfLinks from '@/components/ListOfLinks';
-import { useState, useEffect } from 'react';
-import { useReportContext } from '@/contexts/ReportContext';
+import { useState, useEffect, useContext } from 'react';
+import { ReportContext } from '@/contexts/report/ReportContext';
 
 const Footer = () => {
-  const { clearReportContext } = useReportContext();
+  const { clearReportContext } = useContext(ReportContext);
     
   const [currentYear, setCurrentYear] = useState<string | null>(null);
 

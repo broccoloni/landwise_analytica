@@ -2,35 +2,35 @@
 
 import { montserrat, roboto, merriweather, raleway } from '@/ui/fonts';
 import Container from '@/components/Container';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import { Check, RotateCcw } from 'lucide-react';
-import { useReportContext } from '@/contexts/ReportContext';
-import { useCartContext } from '@/contexts/CartContext';
+import { CartContext } from "@/contexts/cart/CartContext";
+import { ReportContext } from '@/contexts/report/ReportContext';
 import { useRouter } from 'next/navigation';
-import { ReportSize, reportSizeLabels, reportSizeAcres } from '@/types/reportSizes';
+import type { ReportSize } from '@/types/reportSizes';
 import { toTitleCase } from '@/utils/string';
 import InfoButton from '@/components/InfoButton';
-import { sqMetersPerAcre, isValidSize } from '@/utils/reports';
+import { sqMetersPerAcre, isValidSize, reportSizeLabels, reportSizeAcres } from '@/utils/reports';
 import NotificationBanner from '@/components/NotificationBanner';
 import Loading from '@/components/Loading';
 
 export default function GetReport() {
   const router = useRouter();
-  const { setQuantity, setCouponId, setCustomerId, setSessionId, setSize, size, setPriceId } = useCartContext();
-  const { address, clearReportContext, reportSize } = useReportContext();
+  const { size:cartSize, handleUpdate: updateCart } = useContext(CartContext);
+  const { address, clearReportContext, size:reportSize, handleUpdate: updateReport } = useContext(ReportContext);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlSize = params.get('size') as ReportSize;
 
     if (urlSize) {
-      setSize(urlSize);
+      updateCart({ size: urlSize });
     }
   }, []);
 
   const handleSizeChange = (selectedSize: ReportSize) => {
-    setSize(selectedSize);
+    updateCart({ size:selectedSize });
     const params = new URLSearchParams(window.location.search);
     params.set('size', selectedSize || 'medium');
     const newUrl = `${window.location.pathname}?${params.toString()}`;
@@ -82,52 +82,44 @@ export default function GetReport() {
   const [dollarsThree, centsThree] = priceThree ? priceThree.toFixed(2).split('.') : ['', ''];
 
   useEffect(() => {
-    if (prices && coupon && size !== 'jumbo') {
+    if (prices && coupon && cartSize !== 'jumbo') {
       
-      const curSize = size || 'medium';
+      const curSize = cartSize || 'medium';
       const curPrice = prices.find((price: any) => price.lookup_key === curSize);
         
-      setPriceOne(curPrice.unit_amount / 100);
-      setPriceThree(3 * curPrice.unit_amount / 100 * (100 - coupon.percent_off) / 100);
-      setDiscountPct(coupon.percent_off);
+      setPriceOne(curPrice?.unit_amount / 100);
+      setPriceThree(3 * (curPrice?.unit_amount || 0) / 100 * (100 - coupon?.percent_off) / 100);
+      setDiscountPct(coupon?.percent_off);
     }
-  },[prices, coupon, size]);
+  },[prices, coupon, cartSize]);
 
 
   const [validSize, setValidSize] = useState(true);
   useEffect(() => {
-    if (address && size && reportSize) {
-      if (!isValidSize(size, reportSize) && validSize) {
+    if (address && cartSize && reportSize) {
+      if (!isValidSize(cartSize, reportSize) && validSize) {
         setValidSize(false);
       }
-      else if (isValidSize(size, reportSize) && !validSize) {
+      else if (isValidSize(cartSize, reportSize) && !validSize) {
         setValidSize(true);
       }
     }
-  },[address, size, reportSize, validSize]);
+  },[address, cartSize, reportSize, validSize]);
 
     
   const handleBuyOne = async () => {
-    const curSize = size || 'medium';
+    const curSize = cartSize || 'medium';
     const curPrice = prices.find((price: any) => price.lookup_key === curSize);
-      
-    setQuantity(1);
-    setCustomerId(null);
-    setCouponId(null);
-    setSessionId(null);
-    setPriceId(curPrice.id);
+
+    updateCart({ quantity: 1, customerId: null, couponId: null, sessionId: null, priceId: curPrice.id });
     router.push('/checkout');
   };
 
   const handleBuyThree = async () => {
-    const curSize = size || 'medium';
+    const curSize = cartSize || 'medium';
     const curPrice = prices.find((price: any) => price.lookup_key === curSize);
       
-    setQuantity(3);
-    setCouponId(coupon.id || null);
-    setCustomerId(null);
-    setSessionId(null);
-    setPriceId(curPrice.id);
+    updateCart({ quantity: 3, customerId: null, couponId: coupon.id || null, sessionId: null, priceId: curPrice.id });
     router.push('/checkout');
   };
 
@@ -151,7 +143,7 @@ export default function GetReport() {
             key={sizeOption}
             onClick={() => handleSizeChange(sizeOption)}
             className={`px-4 py-2 opacity-90 hover:opacity-75 hover:bg-medium-brown dark:hover:bg-medium-green hover:text-white border-t border-r border-b border-gray-500 ${
-              size === sizeOption
+              cartSize === sizeOption
                 ? 'bg-medium-brown text-white dark:bg-medium-green'
                 : 'bg-white text-gray-800'
             } ${sizeOption !== reportSizeLabels.slice(-1)[0] ? '' : 'rounded-r'}`}
@@ -205,12 +197,12 @@ export default function GetReport() {
         </div>
       )}
 
-      {size && size === 'jumbo' ? (
+      {cartSize && cartSize === 'jumbo' ? (
         <div className="flex justify-center items-center">
           <Container className="text-black bg-white dark:bg-gray-100 border border-gray-300 rounded-lg shadow-lg max-w-sm">
-            <div className="font-semibold text-2xl text-center text-dark-blue mb-8">{toTitleCase(size)} Report</div>
+            <div className="font-semibold text-2xl text-center text-dark-blue mb-8">{toTitleCase(cartSize)} Report</div>
 
-            <div className="mb-8">To purchase a <span className="font-bold">{toTitleCase(size)}</span> report, please contact us to request a quote using the button below</div>
+            <div className="mb-8">To purchase a <span className="font-bold">{toTitleCase(cartSize)}</span> report, please contact us to request a quote using the button below</div>
 
             <div className="flex justify-center items-center mb-8">
               <Link
@@ -227,7 +219,7 @@ export default function GetReport() {
             <div className="mb-4">
               <div className="mb-2">We do this to</div>
               <ul className="list-disc ml-5">
-                <li>Ensure the authenticity of {size} report requests</li>
+                <li>Ensure the authenticity of {cartSize} report requests</li>
                 <li>Verify the intended property boundary</li>
                 <li>Prevent processing from interfering with our other operations</li>
               </ul>
@@ -271,7 +263,7 @@ export default function GetReport() {
               </div>
               <div className="mx-10 my-4">
                 <div className="mb-2">
-                  For <span className="font-bold">one {size || 'medium'}-sized</span> property
+                  For <span className="font-bold">one {cartSize || 'medium'}-sized</span> property
                   <span className="text-[0.5rem] align-super leading-none mr-1 font-bold">1</span>
                 </div>
                 <ul className="text-sm list-disc mb-2">
@@ -313,7 +305,7 @@ export default function GetReport() {
                 <>
                   <div className="text-xs mx-10 mt-4 h-12">
                     <div>{address}</div>
-                    <div className="ml-2 h-4">+2 other {size}-sized properties</div>
+                    <div className="ml-2 h-4">+2 other {cartSize}-sized properties</div>
                   </div>
                   <button 
                     className="flex justify-center items-center mt-2 text-black text-xs hover:text-medium-brown hover:underline"
@@ -346,7 +338,7 @@ export default function GetReport() {
               </div>
               <div className="mx-10 my-4">
                 <div className="mb-2">
-                  For <span className="font-bold">three {size || 'medium'}-sized</span> properties
+                  For <span className="font-bold">three {cartSize || 'medium'}-sized</span> properties
                   <span className="text-[0.5rem] align-super leading-none mr-1 font-bold">1</span>
                 </div>
                 <ul className="text-sm list-disc mb-2">

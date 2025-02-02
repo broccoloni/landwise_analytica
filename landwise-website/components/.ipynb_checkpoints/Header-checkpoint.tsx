@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { montserrat, roboto, merriweather, nunito, raleway, abhaya } from '@/ui/fonts';
 import Link from 'next/link';
 import PlantInHandIcon from '@/components/PlantInHandIcon';
 import DropdownMenu from '@/components/DropdownMenu';
 import { Menu } from 'lucide-react';
 import ListOfLinks from '@/components/ListOfLinks';
-import { useReportContext } from '@/contexts/ReportContext';
+import { ReportContext } from '@/contexts/report/ReportContext';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import SubHeader from '@/components/SubHeader';
@@ -17,7 +17,7 @@ import ThemeButton from '@/components/ThemeButton';
 const Header = () => {
   const { data: session, status } = useSession();
 
-  const { clearReportContext } = useReportContext();
+  const { clearReportContext } = useContext(ReportContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentOpenMenu, setCurrentOpenMenu] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false); // Track if the component is mounted

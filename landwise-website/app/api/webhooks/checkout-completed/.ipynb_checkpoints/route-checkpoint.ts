@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
             <div style="margin-top: 20px; font-size: 0.9em; color: #777; text-align: center;">
               <p>If you did not make this purchase, please ignore this email or 
               <a 
-                href="mailto:${process.env.EMAIL_USER}?subject=Question about redeeming report&body=" 
+                href="mailto:${process.env.EMAIL_SUPPORT}?subject=Question about redeeming report&body=" 
                 style="color: #4CAF50; text-decoration: none;"
               >
                 contact us

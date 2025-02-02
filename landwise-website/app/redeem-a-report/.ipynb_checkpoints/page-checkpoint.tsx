@@ -1,14 +1,14 @@
 'use client';
 
 import { roboto } from '@/ui/fonts';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import dynamic from 'next/dynamic';
 import AddressSearch from '@/components/AddressSearch';
 import AddressDisplay from '@/components/AddressDisplay';
 import ProgressBar from '@/components/ProgressBar';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, X, NotebookText } from 'lucide-react';
-import { useReportContext } from '@/contexts/ReportContext';
+import { ReportContext } from '@/contexts/report/ReportContext';
 import Loading from '@/components/Loading';
 import { ReportStatus } from '@/types/statuses'; 
 import { fetchReportsById, redeemReport, isValidSize, getAcresFromSize, sqMetersPerAcre } from '@/utils/reports';
@@ -24,27 +24,26 @@ export default function RedeemReport() {
   const router = useRouter();
 
   const { 
-    reportId, setReportId, 
-    address, setAddress, 
-    latitude, setLatitude, 
-    longitude, setLongitude, 
-    landGeometry, setLandGeometry, 
-    addressComponents, setAddressComponents,
-    status, setStatus,
-    reportSize, setReportSize,
-  } = useReportContext();
+    reportId, 
+    address, 
+    latitude, 
+    longitude, 
+    landGeometry, 
+    addressComponents,
+    status,
+    size: reportSize,
+    handleUpdate: updateReport,
+  } = useContext(ReportContext);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const queryReportId = params.get('reportId');
 
-      setReportId(null);
-      setStatus(null);
+      updateReport({ reportId: null, status: null });
 
       if (queryReportId) {
-        setTimeout(() => setReportId(queryReportId), 0);
-        setTimeout(() => setStatus(null), 0);        
+        setTimeout(() => updateReport({ reportId: null, status: null }), 0);
       }
     }
   }, []);
@@ -66,15 +65,11 @@ export default function RedeemReport() {
       value = value.slice(0, 9) + '-' + value.slice(9);
     }
     
-    setReportId(value);
-    if (status !== null) setStatus(null);
+    updateReport({ reportId: value });
   };
 
   const handleAddressSelect = (address: string, lat: number, lng: number, components: Record<string, string>) => {
-    setAddress(address);
-    setLatitude(lat);
-    setLongitude(lng);
-    setAddressComponents(components);
+    updateReport({ address, latitude: lat, longitude: lng, addressComponents: components });
   };
 
   const topRef = useRef<HTMLDivElement>(null);
@@ -96,21 +91,18 @@ export default function RedeemReport() {
       setValidatingReportId(true);
       const reports = await fetchReportsById(reportId);
       const report = reports[0];
-      setStatus(report?.status || ReportStatus.Invalid);
-      setReportSize(report?.size);
+ 
+      updateReport({ size: report?.size, status: report?.status || ReportStatus.Invalid });       
       setValidatingReportId(false);
         
       if (report?.status === ReportStatus.Unredeemed) {
-        setAddressComponents(null);
-        setAddress(null);
-        setLatitude(null);
-        setLongitude(null);
+        updateReport({ address: null, latitude: null, longitude: null, addressComponents: null });
         setStep(prevStep => prevStep + 1);
       } else {
         console.error('Report is not in an unredeemed state.');
       }
     } else if (step === 2) {
-      setLandGeometry([]);
+      updateReport({ landGeometry: [] });
       setStep(prevStep => prevStep + 1);
     }
     else if (step === 3) {
